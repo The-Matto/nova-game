@@ -5,8 +5,6 @@ import {keyActions, keyStates} from "../InputMaps.ts";
 export function ReactInputHandler() {
 
     useEffect(() => {
-
-        console.log('keyDowndasdas');
         const handleKeyDown = (event: KeyboardEvent) => {
             keyStates[ event.code ] = false;
             console.log('keyDown', event.code);

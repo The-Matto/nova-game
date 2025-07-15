@@ -1,8 +1,9 @@
 ﻿import  {NVActor} from "../Actor.ts";
 import {NVCamera} from "../Camera.ts";
+import {RegisterClass} from "../ClassDescripter.ts";
 
 
-
+@RegisterClass("NVPlayerCharacter")
 export class NVPlayerCharacter extends NVActor {
 
     private static Camera : NVCamera = new NVCamera();
@@ -12,6 +13,10 @@ export class NVPlayerCharacter extends NVActor {
     }
 
 
+    Tick(_deltaTime: number) {
+        super.Tick(_deltaTime);
+        console.log("PLAYER TICK")
+    }
 
 
 }

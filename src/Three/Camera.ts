@@ -1,5 +1,5 @@
 ﻿import * as THREE from "three";
-
+import {NVStaticMeshActor} from "./Actors/StaticMeshActor.ts";
 //Nova
 export class NVCamera {
 

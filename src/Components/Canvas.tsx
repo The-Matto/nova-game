@@ -1,5 +1,5 @@
 ﻿// src/components/ThreeCanvas.tsx
-import {useRef, useEffect, useState} from 'react';
+import {useRef, useEffect} from 'react';
 
 import {Game} from "../Three/Game.ts";
 
@@ -31,18 +31,10 @@ export const ThreeCanvas = () => {
         console.log("Creating Game")
         const game : Game = new Game();
         //game.Start();
-        //TODO Clean this up a bit!
 
+        //TODO Clean this up a bit!
         container.appendChild(game.renderer.renderer.domElement);
 
-      //  const scene = new THREE.Scene();
-      //  const ACamera : NVCamera = new NVCamera();
-//
-      //  const renderer = new THREE.WebGLRenderer();
-      //  renderer.setSize(window.innerWidth /4 , window.innerHeight / 4);
-
-      //  ACamera.GetCamera().position.z = 15;
-//
       //  const cube = new THREE.Mesh(
       //      new THREE.BoxGeometry(),
       //      new THREE.MeshBasicMaterial({ color: 0x00ff00 })

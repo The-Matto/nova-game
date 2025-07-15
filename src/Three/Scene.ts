@@ -1,32 +1,52 @@
 ﻿
 import * as THREE from "three"
 import type {NVActor} from "./Actor.ts";
-import {PlayerController} from "./Actors/PlayerController.ts";
+import {ClassRegistry, type SpawnDescriptor} from "./ClassDescripter.ts";
+import {SceneBuilder} from "./SceneBuilder.ts";
 
 export class Scene {
 
-    private readonly scene;
+    private static scene : THREE.Scene;
 
-    private sceneActors = new Set<NVActor>();
+    private static sceneActors = new Set<NVActor>();
 
-    private PlayerController = new PlayerController();
     constructor() {
-        this.scene = new THREE.Scene();
+        Scene.scene = new THREE.Scene();
 
-        this.scene.background = new THREE.Color( 0x88ccee );
-        this.scene.fog = new THREE.Fog( 0x88ccee, 0, 50 );
+        Scene.scene.background = new THREE.Color( 0x88ccee );
+        Scene.scene.fog = new THREE.Fog( 0x88ccee, 0, 50 );
+
+        new SceneBuilder("/TestWorld.json");
+       // const a : SpawnDescriptor = {class : "NVPlayerCharacter", location: new THREE.Vector3(1,1,1) };
+       // this.SpawnActor(a);
 
     }
 
-    public AddSceneActor(actor : NVActor){
-        this.scene.add(actor.MeshRender);
+    public static AddSceneActor(actor : NVActor){
+        console.log("AddSceneActor", actor);
+        Scene.scene.add(actor.MeshRender);
     }
 
     public GetScene(): THREE.Object3D {
-        return this.scene;
+        return Scene.scene;
     }
 
     public GetSceneActors() : Set<NVActor>{
-        return this.sceneActors;
+        return Scene.sceneActors;
+    }
+
+    public static SpawnActor(Descripter : SpawnDescriptor) : NVActor {
+        const ClassRef: unknown = ClassRegistry.get(Descripter.class);
+
+        const CreatedObj : unknown = new ClassRef();
+
+        const Actor : NVActor = (CreatedObj as NVActor);
+        this.AddSceneActor(Actor);
+        this.sceneActors.add(Actor);
+
+        Actor.SetWorldLocation(Descripter.location)
+
+        console.log("Spawn actor - ", Descripter.class);
+        return Actor;
     }
 }

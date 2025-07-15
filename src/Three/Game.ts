@@ -23,9 +23,10 @@ export class Game {
     //Called every game frame
     Tick(){
         const deltaTime : number = Math.min( 0.05, this.clock.getDelta() );
-
+       // console.log(Game.scene.GetSceneActors());
         //Call tick on every registered actor
         for(const actor of Game.scene.GetSceneActors()) {
+
             if (actor.CanCallTick()) {
                 actor.Tick(deltaTime);
             }

@@ -1,0 +1,20 @@
+﻿{
+  "actorsToSpawn" : [
+{
+  "class": "NVStaticMeshActor",
+  "location": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+  }
+},
+  {
+    "class": "NVStaticMeshActor",
+    "location": {
+      "x": 2,
+      "y": 0,
+      "z": -5
+    }
+  }
+  ]
+}
