@@ -1,0 +1,64 @@
+﻿// src/components/ThreeCanvas.tsx
+import {useRef, useEffect, useState} from 'react';
+
+import {Game} from "../Three/Game.ts";
+
+
+export const ThreeCanvas = () => {
+    const canvasRef = useRef<HTMLDivElement>(null);
+
+    //Refresh game on page save -- Ensure canvas gets properly reloaded after modifications to ThreeJS Code
+    useEffect(() => {
+        if (import.meta.env.DEV && import.meta.hot) {
+            import.meta.hot.accept(() => {
+                window.location.reload();
+            });
+        }
+    }, []);
+
+
+    useEffect(() => {
+        const container = canvasRef.current;
+        if (!container) return;
+
+        // Pre-clean any existing canvas
+        const existingCanvas = container.querySelector('canvas');
+        if (existingCanvas) {
+            container.removeChild(existingCanvas);
+            console.log("Removed existing canvas before mount");
+        }
+
+        console.log("Creating Game")
+        const game : Game = new Game();
+        //game.Start();
+        //TODO Clean this up a bit!
+
+        container.appendChild(game.renderer.renderer.domElement);
+
+      //  const scene = new THREE.Scene();
+      //  const ACamera : NVCamera = new NVCamera();
+//
+      //  const renderer = new THREE.WebGLRenderer();
+      //  renderer.setSize(window.innerWidth /4 , window.innerHeight / 4);
+
+      //  ACamera.GetCamera().position.z = 15;
+//
+      //  const cube = new THREE.Mesh(
+      //      new THREE.BoxGeometry(),
+      //      new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+      //  );
+
+
+        //TODO Reimplement this!
+    //    return () => {
+    //        console.log("ThreeCanvas cleanup");
+    //        renderer.dispose();
+    //        if (container.contains(renderer.domElement)) {
+    //            container.removeChild(renderer.domElement);
+    //            console.log("Canvas removed on unmount");
+    //        }
+    //    };
+    }, []);
+
+    return <div ref={canvasRef} />;
+};
