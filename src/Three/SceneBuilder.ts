@@ -9,7 +9,6 @@ export class SceneBuilder{
             .then(data => {
 
                 data.actorsToSpawn.forEach((entry : SpawnDescriptor) => {
-                    console.log(entry);
                     Scene.SpawnActor(entry);
                 });
 

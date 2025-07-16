@@ -2,6 +2,7 @@
 import {useRef, useEffect} from 'react';
 
 import {Game} from "../Three/Game.ts";
+import {InputInfo} from "../InputMaps.ts";
 
 
 export const ThreeCanvas = () => {
@@ -35,7 +36,22 @@ export const ThreeCanvas = () => {
         //TODO Clean this up a bit!
         container.appendChild(game.renderer.renderer.domElement);
 
-      //  const cube = new THREE.Mesh(
+        container.addEventListener('click', () => {
+            container.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === container) {
+                console.log('Pointer locked!');
+                InputInfo.gameHasFocus = true;
+            } else {
+                console.log('Pointer unlocked.');
+                InputInfo.gameHasFocus = false;
+            }
+        });
+
+
+        //  const cube = new THREE.Mesh(
       //      new THREE.BoxGeometry(),
       //      new THREE.MeshBasicMaterial({ color: 0x00ff00 })
       //  );

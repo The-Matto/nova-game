@@ -1,11 +1,22 @@
 ﻿
 import * as THREE from "three";
+import type {SpawnDescriptor} from "./ClassDescripter.ts";
+import type {NVComponent} from "./Components/NVComponent.ts";
 
 //Base class which every game object inherits from
 export class NVActor {
 
+    components : Set<NVComponent> = new Set();
+
+    constructor(_Descripter : SpawnDescriptor) {
+
+    }
     //Called when object is spawned
-    BeginPlay() : void {};
+    BeginPlay() : void {
+        for (const component in this.components) {
+            component.BeginPlay();
+        }
+    };
 
     //Called when object is destroyed
     BeginDestroy() : void {};

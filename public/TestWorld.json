@@ -1,7 +1,7 @@
 ﻿{
   "actorsToSpawn" : [
 {
-  "class": "NVStaticMeshActor",
+  "class": "NVPlayerCharacter",
   "location": {
     "x": 1,
     "y": 1,

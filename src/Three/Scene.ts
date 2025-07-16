@@ -23,7 +23,6 @@ export class Scene {
     }
 
     public static AddSceneActor(actor : NVActor){
-        console.log("AddSceneActor", actor);
         Scene.scene.add(actor.MeshRender);
     }
 
@@ -38,11 +37,11 @@ export class Scene {
     public static SpawnActor(Descripter : SpawnDescriptor) : NVActor {
         const ClassRef: unknown = ClassRegistry.get(Descripter.class);
 
-        const CreatedObj : unknown = new ClassRef();
-
+        const CreatedObj : unknown = new ClassRef(Descripter);
         const Actor : NVActor = (CreatedObj as NVActor);
         this.AddSceneActor(Actor);
         this.sceneActors.add(Actor);
+
 
         Actor.SetWorldLocation(Descripter.location)
 
