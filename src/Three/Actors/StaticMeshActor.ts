@@ -2,6 +2,8 @@
 
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
+import {Scene} from "../Scene.ts";
+import {OctreeHelper} from "three/examples/jsm/helpers/OctreeHelper";
 
 
 
@@ -18,10 +20,17 @@ export class NVStaticMeshActor extends NVActor{
         //TODO Fetch model from URL
         //TODO create an asset manager to ensure we only load each model once.
 
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const geometry = new THREE.BoxGeometry(100, 0, 100);
         const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
         this.MeshRender = new THREE.Mesh(geometry, material);
+
        // Scene.AddSceneActor(this);
+
+
+
+        const helper = new OctreeHelper(Scene.worldOctree);
+        helper.visible = true;
+        Scene.scene.add(helper);
     }
 
 

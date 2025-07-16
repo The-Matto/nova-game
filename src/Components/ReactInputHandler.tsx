@@ -6,7 +6,6 @@ export function ReactInputHandler() {
     //TODO I need to ensure that canvas has focus before I capture the input. I should unbind these functions on lose focus
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            console.log(event.code, keyStates)
             if (event.code in keyActions) {
                 keyStates[event.code] = false;
                 keyActions[event.code].isActive = true;
@@ -21,6 +20,7 @@ export function ReactInputHandler() {
         };
 
         const handleMouseMove = (event: MouseEvent) => {
+            //TODO Move the usable conversion to NVCamera AddLookInput()
             mousePosition.x = (event.movementX / 500) * InputInfo.mouseSensitivity;
             mousePosition.y = (event.movementY / 500) * InputInfo.mouseSensitivity;
         };

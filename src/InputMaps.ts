@@ -1,5 +1,4 @@
-﻿import {Vector2} from "three";
-
+﻿
 export const keyStates: { [key: string]: boolean } = {};
 
 

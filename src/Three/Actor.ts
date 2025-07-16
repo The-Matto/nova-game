@@ -2,6 +2,8 @@
 import * as THREE from "three";
 import type {SpawnDescriptor} from "./ClassDescripter.ts";
 import type {NVComponent} from "./Components/NVComponent.ts";
+import {Vector3} from "three";
+import {Scene} from "./Scene.ts";
 
 //Base class which every game object inherits from
 export class NVActor {
@@ -10,13 +12,30 @@ export class NVActor {
 
     constructor(_Descripter : SpawnDescriptor) {
 
+        //TODO Construct all components
     }
+
     //Called when object is spawned
     BeginPlay() : void {
-        for (const component in this.components) {
-            component.BeginPlay();
-        }
+       // for (const component in this.components) {
+       //     component.BeginPlay();
+       // }
     };
+
+    public GetForwardVector() : Vector3 {
+        const forward = new Vector3();
+        this.MeshRender.getWorldDirection(forward);
+        return forward;
+    }
+
+    public GetRightVector() : Vector3 {
+        const right = new Vector3();
+        this.MeshRender.getWorldDirection(right);
+        right.y = 0;
+        right.normalize();
+        right.cross(new Vector3(0,1,0));
+        return right;
+    }
 
     //Called when object is destroyed
     BeginDestroy() : void {};
@@ -37,4 +56,8 @@ export class NVActor {
 
     //TODO Add component list!
 
+    public UpdateCollision(){
+        Scene.worldOctree.fromGraphNode(this.MeshRender);
+
+    }
 }

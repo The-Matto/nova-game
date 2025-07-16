@@ -4,6 +4,7 @@ import {NVRenderer} from "./Renderer.ts";
 import {Scene} from "./Scene.ts";
 import {NVPlayerCharacter} from "./Actors/PlayerCharacter.ts";
 
+import "./Includes.ts"
 
 export class Game {
 
@@ -17,6 +18,7 @@ export class Game {
         Game.scene = new Scene();
         this.clock = new THREE.Clock();
         console.log("Construct Game")
+
     }
 
 
