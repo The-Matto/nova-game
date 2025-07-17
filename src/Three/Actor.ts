@@ -24,13 +24,13 @@ export class NVActor {
 
     public GetForwardVector() : Vector3 {
         const forward = new Vector3();
-        this.MeshRender.getWorldDirection(forward);
+        this.scene.getWorldDirection(forward);
         return forward;
     }
 
     public GetRightVector() : Vector3 {
         const right = new Vector3();
-        this.MeshRender.getWorldDirection(right);
+        this.scene.getWorldDirection(right);
         right.y = 0;
         right.normalize();
         right.cross(new Vector3(0,1,0));
@@ -52,16 +52,23 @@ export class NVActor {
         return true;
     }
     public SetWorldLocation(newLocation : THREE.Vector3) : void {
-        this.MeshRender.position.set(newLocation.x, newLocation.y, newLocation.z);
+        this.scene.position.set(newLocation.x, newLocation.y, newLocation.z);
     };
 
     //TODO Make this private
-    public MeshRender : THREE.Object3D = new THREE.Object3D();
+    public scene : THREE.Object3D = new THREE.Object3D();
 
     //TODO Add component list!
 
+    //TODO DEPRECATE This function
     public UpdateCollision(){
-        Scene.worldOctree.fromGraphNode(this.MeshRender);
+        Scene.worldOctree.fromGraphNode(this.scene);
+
+    }
+
+    public async Init(descripter : SpawnDescriptor){
+        this.SetWorldLocation(descripter.location);
+        Scene.worldOctree.fromGraphNode(this.scene);
 
     }
 }

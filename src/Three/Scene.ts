@@ -45,7 +45,7 @@ export class Scene {
     }
 
     public static AddSceneActor(actor : NVActor){
-        Scene.scene.add(actor.MeshRender);
+        Scene.scene.add(actor.scene);
     }
 
     public GetScene(): THREE.Object3D {
@@ -59,15 +59,16 @@ export class Scene {
     public static SpawnActor(descripter : SpawnDescriptor) : NVActor {
         const ClassRef: unknown = ClassRegistry.get(descripter.class);
         const CreatedObj : unknown = new ClassRef(descripter);
-        const Actor : NVActor = (CreatedObj as NVActor);
-        this.AddSceneActor(Actor);
-        this.sceneActors.add(Actor);
+        const actor : NVActor = (CreatedObj as NVActor);
+        this.AddSceneActor(actor);
+        this.sceneActors.add(actor);
 
 
-        Actor.SetWorldLocation(descripter.location)
+        actor.SetWorldLocation(descripter.location)
 
-        Actor.UpdateCollision();
+        actor.Init(descripter);
+        //actor.UpdateCollision();
         console.log("Spawned actor - ", descripter.class);
-        return Actor;
+        return actor;
     }
 }

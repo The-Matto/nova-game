@@ -28,7 +28,7 @@ export class NVPlayerCharacter extends NVActor {
 
         this.components.add(this.playerPhysics)
 
-        this.MeshRender = NVPlayerCharacter.camera.GetCamera();
+        this.scene = NVPlayerCharacter.camera.GetCamera();
     }
 
     Tick(_deltaTime: number) {

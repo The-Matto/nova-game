@@ -21,12 +21,12 @@ export class NVStaticMeshActor extends NVActor{
         //TODO create an asset manager to ensure we only load each model once.
 
         if (descripter.properties?.modelPath) {
-            this.LoadModel(descripter.properties?.modelPath.toString())
+        //    this.LoadModel(descripter.properties?.modelPath.toString())
         }
         else {
             const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
             const material = new THREE.MeshStandardMaterial({color: '#c79b9b'});
-            this.MeshRender = new THREE.Mesh(geometry, material);
+            this.scene = new THREE.Mesh(geometry, material);
         }
        // Scene.AddSceneActor(this);
 
@@ -38,8 +38,16 @@ export class NVStaticMeshActor extends NVActor{
     }
 
     private async LoadModel(modelPath : string)  {
-        this.MeshRender = await AssetManager.RequestModel(modelPath);
-        Scene.scene.add(this.MeshRender);
+        this.scene = await AssetManager.RequestModel(modelPath);
+        Scene.scene.add(this.scene);
+    }
+
+    public async Init(descripter : SpawnDescriptor){
+
+        if (descripter.properties?.modelPath) {
+            await this.LoadModel(descripter.properties?.modelPath.toString())
+        }
+        super.Init(descripter);
     }
 
 }
