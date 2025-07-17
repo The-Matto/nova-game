@@ -4,7 +4,7 @@ import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {Scene} from "../Scene.ts";
 import {OctreeHelper} from "three/examples/jsm/helpers/OctreeHelper";
-
+import {AssetManager} from "../Utility/AssetManager.ts";
 
 
 @RegisterClass("NVStaticMeshActor")
@@ -14,16 +14,20 @@ export class NVStaticMeshActor extends NVActor{
     Tick(_deltaTime: number) {
         super.Tick(_deltaTime);
     }
-    constructor(Descripter : SpawnDescriptor) {
-        super(Descripter);
+    constructor(descripter : SpawnDescriptor) {
+        super(descripter);
 
         //TODO Fetch model from URL
         //TODO create an asset manager to ensure we only load each model once.
 
-        const geometry = new THREE.BoxGeometry(Descripter.scale.x, Descripter.scale.y, Descripter.scale.z);
-        const material = new THREE.MeshStandardMaterial({ color: '#c79b9b' });
-        this.MeshRender = new THREE.Mesh(geometry, material);
-
+        if (descripter.properties?.modelPath) {
+            this.LoadModel(descripter.properties?.modelPath.toString())
+        }
+        else {
+            const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
+            const material = new THREE.MeshStandardMaterial({color: '#c79b9b'});
+            this.MeshRender = new THREE.Mesh(geometry, material);
+        }
        // Scene.AddSceneActor(this);
 
 
@@ -33,5 +37,9 @@ export class NVStaticMeshActor extends NVActor{
         Scene.scene.add(helper);
     }
 
+    private async LoadModel(modelPath : string)  {
+        this.MeshRender = await AssetManager.RequestModel(modelPath);
+        Scene.scene.add(this.MeshRender);
+    }
 
 }

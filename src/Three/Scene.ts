@@ -4,6 +4,7 @@ import type {NVActor} from "./Actor.ts";
 import {ClassRegistry, type SpawnDescriptor} from "./ClassDescripter.ts";
 import {SceneBuilder} from "./SceneBuilder.ts";
 import {Octree} from "three/examples/jsm/math/Octree";
+import {AssetManager} from "./Utility/AssetManager.ts";
 
 export class Scene {
 
@@ -55,19 +56,18 @@ export class Scene {
         return Scene.sceneActors;
     }
 
-    public static SpawnActor(Descripter : SpawnDescriptor) : NVActor {
-        const ClassRef: unknown = ClassRegistry.get(Descripter.class);
-        const CreatedObj : unknown = new ClassRef(Descripter);
+    public static SpawnActor(descripter : SpawnDescriptor) : NVActor {
+        const ClassRef: unknown = ClassRegistry.get(descripter.class);
+        const CreatedObj : unknown = new ClassRef(descripter);
         const Actor : NVActor = (CreatedObj as NVActor);
         this.AddSceneActor(Actor);
         this.sceneActors.add(Actor);
 
 
-
-        Actor.SetWorldLocation(Descripter.location)
+        Actor.SetWorldLocation(descripter.location)
 
         Actor.UpdateCollision();
-        console.log("Spawned actor - ", Descripter.class);
+        console.log("Spawned actor - ", descripter.class);
         return Actor;
     }
 }
