@@ -20,20 +20,35 @@ export class PlayerController {
     private BindInputEvents(){
         console.log(keyActions)
         keyActions["KeyW"] = {
-            func: () => this.MoveForward(.01),
+            startFunc: () => this.MoveForward(.01),
+            endFunc: () => {},
             isActive: false
         };
         keyActions["KeyS"] = {
-            func: () => this.MoveForward(-.01),
+            startFunc: () => this.MoveForward(-.01),
+            endFunc: () => {},
             isActive: false
         };
 
         keyActions["KeyD"] = {
-            func: () => this.MoveRight(.01),
+            startFunc: () => this.MoveRight(.01),
+            endFunc: () => {},
             isActive: false
         };
         keyActions["KeyA"] = {
-            func: () => this.MoveRight(-.01),
+            startFunc: () => this.MoveRight(-.01),
+            endFunc: () => {},
+            isActive: false
+        };
+
+        keyActions["Space"] = {
+            startFunc: () => this.Jump(),
+            endFunc: () => {},
+            isActive: false
+        };
+        keyActions["ShiftLeft"] = {
+            startFunc: () => this.Sprint(true),
+            endFunc: () => this.Sprint(false),
             isActive: false
         };
     }
@@ -49,7 +64,7 @@ export class PlayerController {
         for (const value in keyActions){
             const action = keyActions[value];
              if (action.isActive){
-                action.func();
+                action.startFunc();
              }
         }
         //Handle mouse input
@@ -73,5 +88,18 @@ export class PlayerController {
             this.controlledCharacter.AddMovementInput("Right", axisValue)
         }
     }
+
+    private Jump = ()=>{
+        if (this.controlledCharacter != undefined){
+            this.controlledCharacter.Jump()
+        }
+    }
+
+    private Sprint = (isStart : boolean)=>{
+        if (this.controlledCharacter != undefined){
+            this.controlledCharacter.Sprint(isStart)
+        }
+    }
+
 
 }

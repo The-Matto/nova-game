@@ -20,8 +20,8 @@ export class NVStaticMeshActor extends NVActor{
         //TODO Fetch model from URL
         //TODO create an asset manager to ensure we only load each model once.
 
-        const geometry = new THREE.BoxGeometry(100, 0, 100);
-        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const geometry = new THREE.BoxGeometry(Descripter.scale.x, Descripter.scale.y, Descripter.scale.z);
+        const material = new THREE.MeshStandardMaterial({ color: '#c79b9b' });
         this.MeshRender = new THREE.Mesh(geometry, material);
 
        // Scene.AddSceneActor(this);

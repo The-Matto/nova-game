@@ -3,10 +3,10 @@ import {NVCamera} from "../Camera.ts";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {type MoveDirection, PlayerController} from "./PlayerController.ts";
 
-import * as THREE from "three";
-import {Vector2} from "three";
-import {Scene} from "../Scene.ts";
-import {Capsule} from "three/examples/jsm/math/Capsule";
+
+import {Vector2, type Vector3} from "three";
+
+import {NVPlayerPhysics} from "../Components/NVPlayerPhysics.ts";
 
 @RegisterClass("NVPlayerCharacter")
 export class NVPlayerCharacter extends NVActor {
@@ -14,12 +14,20 @@ export class NVPlayerCharacter extends NVActor {
     private playerController: PlayerController = new PlayerController(this);
     private static camera: NVCamera = new NVCamera();
 
+
+
+    //TODO Maybe use decorator to add components to the component set, rather than using constructor!
+    private playerPhysics : NVPlayerPhysics = new NVPlayerPhysics(this);
+
     static GetCamera(): NVCamera {
         return this.camera;
     }
 
     constructor(_Descripter: SpawnDescriptor) {
         super(_Descripter);
+
+        this.components.add(this.playerPhysics)
+
         this.MeshRender = NVPlayerCharacter.camera.GetCamera();
     }
 
@@ -27,17 +35,20 @@ export class NVPlayerCharacter extends NVActor {
         super.Tick(_deltaTime);
 
         this.playerController.ProcessInput();
-        this.updatePlayer(_deltaTime);
     }
 
     AddMovementInput(MoveType: MoveDirection, axisValue: number) {
         switch (MoveType) {
             case "Forward": {
-                this.playerVelocity.add( this.GetForwardVector().multiplyScalar(axisValue));
+                const forwardVector : Vector3 = this.GetForwardVector().multiplyScalar(axisValue);
+                //Zero out height movement
+                forwardVector.y = 0;
+                this.playerPhysics.AddVelocity(forwardVector);
+
                 break;
             }
             case "Right": {
-                this.playerVelocity.add( this.GetRightVector().multiplyScalar(axisValue));
+                this.playerPhysics.AddVelocity(this.GetRightVector().multiplyScalar(axisValue))
                 break;
             }
         }
@@ -47,61 +58,13 @@ export class NVPlayerCharacter extends NVActor {
         NVPlayerCharacter.camera.AddCameraRotation(lookValue)
     }
 
-    playerCollider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
-    playerOnFloor: boolean = false;
-    playerVelocity = new THREE.Vector3();
-
-    private playerCollisions() {
-
-        const result = Scene.worldOctree.capsuleIntersect(this.playerCollider);
-
-        this.playerOnFloor = false;
-
-
-        if (result) {
-
-            this.playerOnFloor = result.normal.y > 0;
-
-            if (!this.playerOnFloor) {
-
-                this.playerVelocity.addScaledVector(result.normal, -result.normal.dot(this.playerVelocity));
-
-            }
-
-            if (result.depth >= 1e-10) {
-
-                this.playerCollider.translate(result.normal.multiplyScalar(result.depth));
-            }
-
-        }
-
+    Jump(){
+        if (this.playerPhysics.playerOnFloor)
+            this.playerPhysics.playerVelocity.y += 5;
     }
-
-    GRAVITY : number = 1;
-    private updatePlayer( deltaTime ) {
-
-        let damping = Math.exp( - 4 * deltaTime ) - 1;
-
-        if ( ! this.playerOnFloor ) {
-
-            this.playerVelocity.y -= this.GRAVITY * deltaTime;
-
-            // small air resistance
-            damping *= 0.1;
-
-        }
-
-        this.playerVelocity.addScaledVector( this.playerVelocity, damping );
-
-        const deltaPosition = this.playerVelocity.clone().multiplyScalar( deltaTime );
-        this.playerCollider.translate( deltaPosition );
-
-        this.playerCollisions();
-
-        NVPlayerCharacter.camera.GetCamera().position.copy( this.playerCollider.end );
-
+    Sprint(isStart : boolean){
+        this.playerPhysics.isSprinting = isStart;
     }
-
     public UpdateCollision(){
 
     }

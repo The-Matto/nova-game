@@ -13,5 +13,6 @@ export class NVComponent {
 
     EndPlay(): void {};
 
+    TickComponent(delta : number) : void {};
 
 }

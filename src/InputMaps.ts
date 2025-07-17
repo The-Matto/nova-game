@@ -4,7 +4,8 @@ export const keyStates: { [key: string]: boolean } = {};
 
 export const keyActions: { [key: string]:
         {
-            func:() => void,
+            startFunc:() => void,
+            endFunc:() => void,
             isActive: boolean
         } } = {};
 

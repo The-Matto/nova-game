@@ -41,7 +41,11 @@ export class NVActor {
     BeginDestroy() : void {};
 
     //Called every game frame
-    Tick(_deltaTime : number) : void {};
+    Tick(_deltaTime : number) : void {
+        for (const comp of this.components){
+            comp.TickComponent(_deltaTime);
+        }
+    };
 
     CanCallTick() : boolean {
         //TODO Check this actor isnt be destroyed and has tick enabled

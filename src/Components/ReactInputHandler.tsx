@@ -7,6 +7,8 @@ export function ReactInputHandler() {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.code in keyActions) {
+                event.preventDefault();
+
                 keyStates[event.code] = false;
                 keyActions[event.code].isActive = true;
             }
@@ -14,8 +16,12 @@ export function ReactInputHandler() {
 
         const handleKeyUp = (event: KeyboardEvent) => {
             if (event.code in keyActions) {
+                event.preventDefault();
+
                 keyStates[event.code] = false;
                 keyActions[event.code].isActive = false;
+
+                keyActions[event.code].endFunc();
             }
         };
 

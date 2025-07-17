@@ -5,6 +5,7 @@ import * as THREE from "three";
 export type SpawnDescriptor = {
     class: string,
     location: THREE.Vector3,
+    scale: THREE.Vector3,
     properties?: Record<string, unknown>
 };
 
