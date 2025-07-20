@@ -11,15 +11,18 @@ export class NVActor {
     components : Set<NVComponent> = new Set();
 
     constructor(_Descripter : SpawnDescriptor) {
-
-        //TODO Construct all components
     }
+
+
+    //Should this Actor be considered for replication
+    static replicates : boolean = false;
+    //List of properties on this Actor that will be replicated
+    static replicatedProperties : Set<string>
+    static replicateRate : number = 0;
 
     //Called when object is spawned
     BeginPlay() : void {
-       // for (const component in this.components) {
-       //     component.BeginPlay();
-       // }
+
     };
 
     public GetForwardVector() : Vector3 {

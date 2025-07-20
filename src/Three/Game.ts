@@ -5,13 +5,14 @@ import {Scene} from "./Scene.ts";
 import {NVPlayerCharacter} from "./Actors/PlayerCharacter.ts";
 
 import "./Includes.ts"
+import {InputInfo} from "../InputMaps.ts";
 
 export class Game {
 
 
     clock: THREE.Clock;
     renderer: NVRenderer;
-    static scene = new Scene();
+    static scene : Scene;
 
     constructor() {
         this.renderer = new NVRenderer(this.Tick.bind(this));
@@ -19,11 +20,35 @@ export class Game {
         this.clock = new THREE.Clock();
         console.log("Construct Game")
 
+        //TODO Create and load JWT to passthrough here, so that server can auth player
+        const socket = new WebSocket('ws://localhost:8080/game?UID=41');
+        socket.binaryType = 'arraybuffer';
+        socket.onopen = () => {
+            console.log('Connected to server');
+            socket.send('Hello from client!');
+        };
+
+        socket.onmessage = event => {
+            console.log(event.data);
+        };
+
+        socket.onclose = () => {
+            console.log('Disconnected');
+        };
+
+        socket.onerror = error => {
+            console.error('WebSocket error:', error);
+        };
+
     }
 
 
     //Called every game frame
     Tick(){
+
+        //Mostly disable tick when game has no focus - TODO Maybe just reduce FPS to like 3FPS
+        if (InputInfo.gameHasFocus){
+
         const deltaTime : number = Math.min( 0.05, this.clock.getDelta() );
        // console.log(Game.scene.GetSceneActors());
         //Call tick on every registered actor
@@ -38,5 +63,6 @@ export class Game {
 
         //Render the frame
         this.renderer.RenderFrame(Game.scene, NVPlayerCharacter.GetCamera());
+        }
     }
 }

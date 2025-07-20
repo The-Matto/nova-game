@@ -7,13 +7,13 @@ import {type MoveDirection, PlayerController} from "./PlayerController.ts";
 import {Vector2, type Vector3} from "three";
 
 import {NVPlayerPhysics} from "../Components/NVPlayerPhysics.ts";
+import {ReplicatedActor, ReplicatedVariable} from "../Replication.ts";
 
-@RegisterClass("NVPlayerCharacter")
+@RegisterClass("NVPlayerCharacter") @ReplicatedActor(12)
 export class NVPlayerCharacter extends NVActor {
 
     private playerController: PlayerController = new PlayerController(this);
     private static camera: NVCamera = new NVCamera();
-
 
 
     //TODO Maybe use decorator to add components to the component set, rather than using constructor!
@@ -31,10 +31,11 @@ export class NVPlayerCharacter extends NVActor {
         this.scene = NVPlayerCharacter.camera.GetCamera();
     }
 
+
     Tick(_deltaTime: number) {
         super.Tick(_deltaTime);
-
         this.playerController.ProcessInput();
+        console.log(NVPlayerCharacter.replicateRate)
     }
 
     AddMovementInput(MoveType: MoveDirection, axisValue: number) {
@@ -68,4 +69,7 @@ export class NVPlayerCharacter extends NVActor {
     public UpdateCollision(){
 
     }
+
+    @ReplicatedVariable
+    playerRepTest : boolean = false;
 }

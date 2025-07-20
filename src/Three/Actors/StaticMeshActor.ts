@@ -5,14 +5,17 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {Scene} from "../Scene.ts";
 import {OctreeHelper} from "three/examples/jsm/helpers/OctreeHelper";
 import {AssetManager} from "../Utility/AssetManager.ts";
+import {ReplicatedActor, ReplicatedVariable} from "../Replication.ts";
 
 
-@RegisterClass("NVStaticMeshActor")
+@RegisterClass("NVStaticMeshActor") @ReplicatedActor(51)
 export class NVStaticMeshActor extends NVActor{
 
 
     Tick(_deltaTime: number) {
         super.Tick(_deltaTime);
+
+       // console.log(NVStaticMeshActor.replicatedProperties);
     }
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
@@ -49,5 +52,8 @@ export class NVStaticMeshActor extends NVActor{
         }
         super.Init(descripter);
     }
+
+   @ReplicatedVariable
+   repTest : number = 20;
 
 }

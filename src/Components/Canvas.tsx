@@ -42,19 +42,11 @@ export const ThreeCanvas = () => {
 
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement === container) {
-                console.log('Pointer locked!');
                 InputInfo.gameHasFocus = true;
             } else {
-                console.log('Pointer unlocked.');
                 InputInfo.gameHasFocus = false;
             }
         });
-
-
-        //  const cube = new THREE.Mesh(
-      //      new THREE.BoxGeometry(),
-      //      new THREE.MeshBasicMaterial({ color: 0x00ff00 })
-      //  );
 
 
         //TODO Reimplement this!

@@ -59,6 +59,12 @@ export class Scene {
     public static SpawnActor(descripter : SpawnDescriptor) : NVActor {
         const ClassRef: unknown = ClassRegistry.get(descripter.class);
         const CreatedObj : unknown = new ClassRef(descripter);
+
+        const classType : NVActor = (ClassRef as NVActor.prototype);
+        console.log(ClassRef.name)
+        if (ClassRef.replicates){
+            console.log("THIS OBJECT IS REPLICATED", ClassRef);
+        }
         const actor : NVActor = (CreatedObj as NVActor);
         this.AddSceneActor(actor);
         this.sceneActors.add(actor);
