@@ -15,8 +15,8 @@ export class NVPlayerPhysics extends NVComponent {
     playerMoveSpeed : number = 1;
 
     isSprinting : boolean = false;
-    private sprintSpeed : number = 3;
-    private walkSpeed : number = 1;
+    private sprintSpeed : number = 8;
+    private walkSpeed : number = 5;
 
     TickComponent(delta : number){
         this.updatePlayer(delta);

@@ -3,6 +3,7 @@ import * as THREE from "three";
 import type {Callback} from "./Helpers.ts";
 import type { Scene } from "./Scene.ts";
 import type {NVCamera} from "./Camera.ts";
+import {WindowSettings} from "./Utility/PlayerGlobals.ts";
 
 
 export class NVRenderer {
@@ -12,7 +13,7 @@ export class NVRenderer {
 
     constructor(TickFunction: Callback) {
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(WindowSettings.windowWidth, WindowSettings.windowHeight);
         this.renderer.setAnimationLoop(TickFunction);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.VSMShadowMap;

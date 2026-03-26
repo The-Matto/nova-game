@@ -1,5 +1,6 @@
 ﻿import { useEffect } from 'react';
-import {InputInfo, keyActions, keyStates, mousePosition} from "../InputMaps.ts";
+import { keyActions, keyStates, mousePosition} from "../InputMaps.ts";
+import {PlayerSettings} from "../Three/Utility/PlayerGlobals.ts";
 
 export function ReactInputHandler() {
 
@@ -27,8 +28,8 @@ export function ReactInputHandler() {
 
         const handleMouseMove = (event: MouseEvent) => {
             //TODO Move the usable conversion to NVCamera AddLookInput()
-            mousePosition.x = (event.movementX / 500) * InputInfo.mouseSensitivity;
-            mousePosition.y = (event.movementY / 500) * InputInfo.mouseSensitivity;
+            mousePosition.x = (event.movementX / 500) * PlayerSettings.mouseSensitivityX;
+            mousePosition.y = (event.movementY / 500) * PlayerSettings.mouseSensitivityY;
         };
 
 

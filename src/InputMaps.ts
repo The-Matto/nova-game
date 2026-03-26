@@ -10,11 +10,10 @@ export const keyActions: { [key: string]:
         } } = {};
 
 
-//TODO I can probably merge this in to a single object for mouse based properties
 export const mousePosition = {x: 0, y: 0};
 
 
+//TODO Replace this with WindowSettings
 export const InputInfo = {
-    gameHasFocus: false,
-    mouseSensitivity: 3
+    gameHasFocus: true,
 }

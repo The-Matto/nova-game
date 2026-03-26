@@ -14,7 +14,7 @@ export const ReplicatedActor = (replicateRate : number) =>
 
 
 
-export const ReplicatedVariable = (target: Object, propertyKey: string | symbol) => {
+export const ReplicatedVariable = (target: object, propertyKey: string | symbol) => {
 
     const value = target.constructor as typeof NVActor;
     if (!value.replicatedProperties) value.replicatedProperties = new Set<string>();

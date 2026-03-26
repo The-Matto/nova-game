@@ -1,10 +1,12 @@
 ﻿import * as THREE from "three";
+import {CameraSettings, WindowSettings} from "./Utility/PlayerGlobals.ts";
 
 
 export class NVCamera {
 
-    //TODO make this 16:9
-    protected camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    protected camera = new THREE.PerspectiveCamera( CameraSettings.fov,
+        WindowSettings.windowWidth / WindowSettings.windowHeight, CameraSettings.nearClip, CameraSettings.farClip);
 
     constructor() {
         //Fix gimbal lock

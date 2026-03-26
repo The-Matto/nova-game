@@ -23,21 +23,18 @@ export class NVStaticMeshActor extends NVActor{
         //TODO Fetch model from URL
         //TODO create an asset manager to ensure we only load each model once.
 
-        if (descripter.properties?.modelPath) {
-        //    this.LoadModel(descripter.properties?.modelPath.toString())
-        }
-        else {
+        if (!descripter.properties?.modelPath) {
             const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
             const material = new THREE.MeshStandardMaterial({color: '#c79b9b'});
             this.scene = new THREE.Mesh(geometry, material);
+            Scene.worldOctree.fromGraphNode(this.scene);
+            const helper = new OctreeHelper(Scene.worldOctree);
+            helper.visible = true;
+            Scene.scene.add(helper);
         }
        // Scene.AddSceneActor(this);
 
 
-
-        const helper = new OctreeHelper(Scene.worldOctree);
-        helper.visible = true;
-        Scene.scene.add(helper);
     }
 
     private async LoadModel(modelPath : string)  {
@@ -50,7 +47,11 @@ export class NVStaticMeshActor extends NVActor{
         if (descripter.properties?.modelPath) {
             await this.LoadModel(descripter.properties?.modelPath.toString())
         }
-        super.Init(descripter);
+        this.SetWorldLocation(descripter.location);
+
+        //Generate mesh collision - TODO: Would be cool to support a system like UCX from Unreal
+        Scene.worldOctree.fromGraphNode(this.scene);
+
     }
 
    @ReplicatedVariable

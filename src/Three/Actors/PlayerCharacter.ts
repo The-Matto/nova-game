@@ -35,7 +35,7 @@ export class NVPlayerCharacter extends NVActor {
     Tick(_deltaTime: number) {
         super.Tick(_deltaTime);
         this.playerController.ProcessInput();
-        console.log(NVPlayerCharacter.replicateRate)
+        //console.log(NVPlayerCharacter.replicateRate)
     }
 
     AddMovementInput(MoveType: MoveDirection, axisValue: number) {

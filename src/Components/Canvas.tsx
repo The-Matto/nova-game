@@ -6,6 +6,7 @@ import {InputInfo} from "../InputMaps.ts";
 
 
 export const ThreeCanvas = () => {
+
     const canvasRef = useRef<HTMLDivElement>(null);
 
     //Refresh game on page save -- Ensure canvas gets properly reloaded after modifications to ThreeJS Code

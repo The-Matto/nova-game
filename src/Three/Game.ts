@@ -12,12 +12,21 @@ export class Game {
 
     clock: THREE.Clock;
     renderer: NVRenderer;
+
+    static deltaTime : number;
+    static FPS : number;
+
     static scene : Scene;
+
+    fpsDisplay : HTMLElement | null;
 
     constructor() {
         this.renderer = new NVRenderer(this.Tick.bind(this));
         Game.scene = new Scene();
         this.clock = new THREE.Clock();
+
+        this.fpsDisplay = document.getElementById('fps-counter');
+
         console.log("Construct Game")
 
         //TODO Create and load JWT to passthrough here, so that server can auth player
@@ -49,13 +58,21 @@ export class Game {
         //Mostly disable tick when game has no focus - TODO Maybe just reduce FPS to like 3FPS
         if (InputInfo.gameHasFocus){
 
-        const deltaTime : number = Math.min( 0.05, this.clock.getDelta() );
+
+            //TODO Maybe we should have fixed physics step, this Tick() is based on render time
+        Game.deltaTime = Math.min( 0.05, this.clock.getDelta() );
+        Game.FPS = 1 / Game.deltaTime;
+
+            if (this.fpsDisplay) {
+                this.fpsDisplay.innerText = `FPS: ${Math.round(Game.FPS)}`;
+            }
+
        // console.log(Game.scene.GetSceneActors());
         //Call tick on every registered actor
         for(const actor of Game.scene.GetSceneActors()) {
 
             if (actor.CanCallTick()) {
-                actor.Tick(deltaTime);
+                actor.Tick(Game.deltaTime);
             }
         }
 
