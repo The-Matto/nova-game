@@ -3,9 +3,10 @@
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {Scene} from "../Scene.ts";
-import {OctreeHelper} from "three/examples/jsm/helpers/OctreeHelper";
 import {AssetManager} from "../Utility/AssetManager.ts";
 import {ReplicatedActor, ReplicatedVariable} from "../Replication.ts";
+
+//import {OctreeHelper} from "three/examples/jsm/helpers/OctreeHelper";
 
 
 @RegisterClass("NVStaticMeshActor") @ReplicatedActor(51)
@@ -20,17 +21,17 @@ export class NVStaticMeshActor extends NVActor{
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
 
-        //TODO Fetch model from URL
-        //TODO create an asset manager to ensure we only load each model once.
 
         if (!descripter.properties?.modelPath) {
             const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
             const material = new THREE.MeshStandardMaterial({color: '#c79b9b'});
             this.scene = new THREE.Mesh(geometry, material);
             Scene.worldOctree.fromGraphNode(this.scene);
-            const helper = new OctreeHelper(Scene.worldOctree);
-            helper.visible = true;
-            Scene.scene.add(helper);
+
+            //Debug view for the box Collision
+            //const helper = new OctreeHelper(Scene.worldOctree);
+            //helper.visible = true;
+            //Scene.scene.add(helper);
         }
        // Scene.AddSceneActor(this);
 

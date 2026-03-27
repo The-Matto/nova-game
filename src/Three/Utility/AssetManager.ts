@@ -1,6 +1,9 @@
 ﻿
-import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+//import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from "three";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 

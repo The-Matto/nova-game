@@ -3,6 +3,7 @@ import {useRef, useEffect} from 'react';
 
 import {Game} from "../Three/Game.ts";
 import {InputInfo} from "../InputMaps.ts";
+import {GameUIMain} from "./Game/UserInterface/UI-Main.tsx";
 
 
 export const ThreeCanvas = () => {
@@ -61,5 +62,9 @@ export const ThreeCanvas = () => {
     //    };
     }, []);
 
-    return <div ref={canvasRef} />;
-};
+    return <div className={"relative"}>
+        <GameUIMain />
+            <div className="" ref={canvasRef}/>
+        </div>
+        ;
+        };

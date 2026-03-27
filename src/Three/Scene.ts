@@ -3,8 +3,7 @@ import * as THREE from "three"
 import type {NVActor} from "./Actor.ts";
 import {ClassRegistry, type SpawnDescriptor} from "./ClassDescripter.ts";
 import {SceneBuilder} from "./SceneBuilder.ts";
-import {Octree} from "three/examples/jsm/math/Octree";
-import {AssetManager} from "./Utility/AssetManager.ts";
+import {Octree} from "three/examples/jsm/math/Octree.js";
 
 export class Scene {
 

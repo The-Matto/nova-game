@@ -5,7 +5,6 @@ import './App.css'
 import {ThreeCanvas} from "./Components/Canvas.tsx";
 
 import {ReactInputHandler} from "./Components/ReactInputHandler.tsx";
-import {Game} from "./Three/Game.ts";
 
 function App() {
 
