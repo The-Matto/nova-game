@@ -1,9 +1,9 @@
 {
   "name": "gameserver",
   "version": "1.0.0",
-  "main": "server.ts",
+  "main": "src/server.ts",
   "scripts": {
-    "start": "tsx server.ts",
+    "start": "tsx src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,7 +12,8 @@
   "description": "",
   "dependencies": {
     "ts-node": "^10.9.2",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "nova-shared": "*"
   },
   "devDependencies": {
     "tsx": "^4.21.0",

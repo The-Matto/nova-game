@@ -1,0 +1,9 @@
+{
+    "name": "nova-repo",
+    "private": true,
+    "workspaces": [
+        "shared",
+        "nova-game-client",
+        "nove-game-server"
+    ]
+}

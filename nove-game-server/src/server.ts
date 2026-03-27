@@ -1,4 +1,5 @@
 ﻿import {clientsConnections, CreateSocketListener} from "./Sockets";
+import {decodeBufferMessage} from "nova-shared/array-buffer-handler";
 
 
 
@@ -15,6 +16,8 @@ setInterval(() => {
     const now = Date.now();
     //console.log("Tick")
 
+    decodeBufferMessage(412);
+    
     clientsConnections.forEach(async client => {
         //client.send(testIncrement.toString() )
         testIncrement++;

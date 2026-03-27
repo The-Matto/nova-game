@@ -6,6 +6,7 @@ import {NVPlayerCharacter} from "./Actors/PlayerCharacter.ts";
 
 import "./Includes.ts"
 import {InputInfo} from "../InputMaps.ts";
+import {ClientNetDriver} from "../NetDriver/client-net-driver.ts";
 
 export class Game {
 
@@ -29,25 +30,8 @@ export class Game {
 
         console.log("Construct Game")
 
-        //TODO Create and load JWT to passthrough here, so that server can auth player
-        const socket = new WebSocket('ws://localhost:8080/game?UID=41');
-        socket.binaryType = 'arraybuffer';
-        socket.onopen = () => {
-            console.log('Connected to server');
-            socket.send('Hello from client!');
-        };
-
-        socket.onmessage = event => {
-            console.log(event.data);
-        };
-
-        socket.onclose = () => {
-            console.log('Disconnected');
-        };
-
-        socket.onerror = error => {
-            console.error('WebSocket error:', error);
-        };
+        const netDriver = new ClientNetDriver();
+        netDriver.CreateSocket();
 
     }
 
