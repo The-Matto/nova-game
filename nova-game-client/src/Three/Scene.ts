@@ -51,7 +51,7 @@ export class Scene {
         return Scene.scene;
     }
 
-    public GetSceneActors() : Set<NVActor>{
+    public static GetSceneActors() : Set<NVActor>{
         return Scene.sceneActors;
     }
 

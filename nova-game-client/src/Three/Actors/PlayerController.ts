@@ -2,7 +2,6 @@
 import type {NVPlayerCharacter} from "./PlayerCharacter.ts";
 import {Vector2} from "three";
 
-
 export type MoveDirection = "Forward" | "Right";
 
 
@@ -51,6 +50,11 @@ export class PlayerController {
             endFunc: () => this.Sprint(false),
             isActive: false
         };
+        keyActions["KeyC"] = {
+            startFunc: () => this.Crouch(true),
+            endFunc: () => this.Crouch(false),
+            isActive: false
+        };
     }
 
 
@@ -92,6 +96,11 @@ export class PlayerController {
     private Jump = ()=>{
         if (this.controlledCharacter != undefined){
             this.controlledCharacter.Jump()
+        }
+    }
+    private Crouch = (isStart : boolean)=>{
+        if (this.controlledCharacter != undefined){
+            this.controlledCharacter.Crouch(isStart)
         }
     }
 

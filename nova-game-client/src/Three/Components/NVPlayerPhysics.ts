@@ -18,6 +18,8 @@ export class NVPlayerPhysics extends NVComponent {
     private sprintSpeed : number = 8;
     private walkSpeed : number = 5;
 
+    isFreeFlying : boolean = false;
+
     TickComponent(delta : number){
         this.updatePlayer(delta);
     }
@@ -33,7 +35,7 @@ export class NVPlayerPhysics extends NVComponent {
 
         let damping : number = Math.exp( - 4 * deltaTime ) - 1;
 
-        if ( !this.playerOnFloor ) {
+        if ( !this.playerOnFloor && !this.isFreeFlying) {
 
             this.playerVelocity.y -= this.GRAVITY * deltaTime;
 

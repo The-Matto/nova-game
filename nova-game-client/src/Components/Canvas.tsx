@@ -43,11 +43,7 @@ export const ThreeCanvas = () => {
         });
 
         document.addEventListener('pointerlockchange', () => {
-            if (document.pointerLockElement === container) {
-                InputInfo.gameHasFocus = true;
-            } else {
-                InputInfo.gameHasFocus = false;
-            }
+                InputInfo.gameHasFocus = document.pointerLockElement === container;
         });
 
 

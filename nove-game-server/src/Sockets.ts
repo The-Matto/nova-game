@@ -19,8 +19,8 @@ export const CreateSocketListener = () => {
         socket.send(JSON.stringify("Hello client!"));
 
         socket.onmessage = async event => {
-            const msg = await decodeMessage(event.data);
-            console.log(msg);
+            //const msg = await decodeMessage(event.data);
+            console.log(event.data);
 
         };
 

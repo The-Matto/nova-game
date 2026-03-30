@@ -19,6 +19,10 @@ export class NVPlayerCharacter extends NVActor {
     //TODO Maybe use decorator to add components to the component set, rather than using constructor!
     private playerPhysics : NVPlayerPhysics = new NVPlayerPhysics(this);
 
+    GetPhysicsComp(): NVPlayerPhysics {
+        return this.playerPhysics;
+    }
+
     static GetCamera(): NVCamera {
         return this.camera;
     }
@@ -62,6 +66,16 @@ export class NVPlayerCharacter extends NVActor {
     Jump(){
         if (this.playerPhysics.playerOnFloor)
             this.playerPhysics.playerVelocity.y += 5;
+        else if (this.playerPhysics.isFreeFlying)
+            this.playerPhysics.playerVelocity.y += 0.05;
+
+    }
+    Crouch(isStart : boolean){
+        if (!this.playerPhysics.playerOnFloor && isStart)
+        {
+            if (this.playerPhysics.isFreeFlying)
+                this.playerPhysics.playerVelocity.y -= 0.05;
+        }
     }
     Sprint(isStart : boolean){
         this.playerPhysics.isSprinting = isStart;

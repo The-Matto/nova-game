@@ -17,7 +17,7 @@ setInterval(() => {
     //console.log("Tick")
 
     decodeBufferMessage(412);
-    
+
     clientsConnections.forEach(async client => {
         //client.send(testIncrement.toString() )
         testIncrement++;
