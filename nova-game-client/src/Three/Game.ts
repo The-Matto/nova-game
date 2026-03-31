@@ -7,6 +7,8 @@ import {NVPlayerCharacter} from "./Actors/PlayerCharacter.ts";
 import "./Includes.ts"
 import {InputInfo} from "../InputMaps.ts";
 import {ClientNetDriver} from "../NetDriver/client-net-driver.ts";
+import {GameStats} from "./Utility/PlayerGlobals";
+import {UiDOMInterop} from "./UI/ui-DOM-interop";
 
 export class Game {
 
@@ -14,19 +16,15 @@ export class Game {
     clock: THREE.Clock;
     renderer: NVRenderer;
 
-    static deltaTime : number;
-    static FPS : number;
-
     static scene : Scene;
 
-    fpsDisplay : HTMLElement | null;
+    uiDOMInterop : UiDOMInterop;
 
     constructor() {
         this.renderer = new NVRenderer(this.Tick.bind(this));
         Game.scene = new Scene();
         this.clock = new THREE.Clock();
-
-        this.fpsDisplay = document.getElementById('fps-counter');
+        this.uiDOMInterop = new UiDOMInterop();
 
         console.log("Construct Game")
 
@@ -44,26 +42,24 @@ export class Game {
            // console.log(document.elementFromPoint(800, 900));
 
             //TODO Maybe we should have fixed physics step, this Tick() is based on render time
-        Game.deltaTime = Math.min( 0.05, this.clock.getDelta() );
-        Game.FPS = 1 / Game.deltaTime;
-
-            if (this.fpsDisplay) {
-                this.fpsDisplay.innerText = `FPS: ${Math.round(Game.FPS)}`;
-            }
+            //
+             GameStats.deltaTime = Math.min( 0.05, this.clock.getDelta() );
+            GameStats.fps = 1 / GameStats.deltaTime;
 
        // console.log(Game.scene.GetSceneActors());
         //Call tick on every registered actor
         for(const actor of Scene.GetSceneActors()) {
 
             if (actor.CanCallTick()) {
-                actor.Tick(Game.deltaTime);
+                actor.Tick(GameStats.deltaTime);
             }
         }
 
-
-
         //Render the frame
         this.renderer.RenderFrame(Game.scene, NVPlayerCharacter.GetCamera());
+
+        //Update game UI render
+        this.uiDOMInterop.tick()
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿import {InputInfo, keyActions, mousePosition} from "../../InputMaps.ts";
+﻿import {InputInfo, keyActions, mousePosition, virtualCursorPosition} from "../../InputMaps.ts";
 import type {NVPlayerCharacter} from "./PlayerCharacter.ts";
 import {Vector2} from "three";
 
@@ -73,6 +73,12 @@ export class PlayerController {
         }
         //Handle mouse input
         if (mousePosition.x != 0 || mousePosition.y != 0){
+            //Virtual mouse cursor
+            virtualCursorPosition.x += mousePosition.x;
+            virtualCursorPosition.y += mousePosition.y;
+            
+            console.log(document.elementFromPoint(virtualCursorPosition.x, virtualCursorPosition.y));
+
             this.controlledCharacter.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
 
             //Zero out the input after being processed. TODO Find more elegant way to do this

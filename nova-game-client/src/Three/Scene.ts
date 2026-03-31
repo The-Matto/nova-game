@@ -23,6 +23,7 @@ export class Scene {
 
         Scene.worldOctree = new Octree();
 
+
         const fillLight1 = new THREE.HemisphereLight( 0x8dc1de, 0x00668d, 1.5 );
         fillLight1.position.set( 2, 1, 1 );
         Scene.scene.add( fillLight1 );

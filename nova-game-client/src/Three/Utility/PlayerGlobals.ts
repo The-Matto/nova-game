@@ -17,3 +17,8 @@ export const WindowSettings = {
     windowWidth: 1000,
     isPaused: false
 };
+
+export const GameStats = {
+    fps: 60,
+    deltaTime: 1.0
+};

@@ -30,7 +30,9 @@ export function ReactInputHandler() {
             //TODO Move the usable conversion to NVCamera AddLookInput()
             mousePosition.x = (event.movementX / 500) * PlayerSettings.mouseSensitivityX;
             mousePosition.y = (event.movementY / 500) * PlayerSettings.mouseSensitivityY;
+
         };
+
 
 
         document.addEventListener( 'mousemove', handleMouseMove);
