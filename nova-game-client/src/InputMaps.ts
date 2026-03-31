@@ -6,7 +6,8 @@ export const keyActions: { [key: string]:
         {
             startFunc:() => void,
             endFunc:() => void,
-            isActive: boolean
+            isActive: boolean,
+            isEcho?: boolean,
         } } = {};
 
 

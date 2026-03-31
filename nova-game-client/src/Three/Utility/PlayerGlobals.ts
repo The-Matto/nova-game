@@ -1,4 +1,7 @@
 ﻿
+import {PlayerController} from "../Actors/PlayerController";
+import {NVPlayerCharacter} from "../Actors/PlayerCharacter";
+
 
 export const CameraSettings = {
     fov: 90,
@@ -22,3 +25,13 @@ export const GameStats = {
     fps: 60,
     deltaTime: 1.0
 };
+
+
+interface IPlayerStatics {
+    PlayerController?: PlayerController;
+    PlayerCharacter?:  NVPlayerCharacter;
+    //Gamemode
+    //NetDriver
+}
+
+export const PlayerStatics : IPlayerStatics = {};

@@ -8,6 +8,7 @@ import {Vector2, type Vector3} from "three";
 
 import {NVPlayerPhysics} from "../Components/NVPlayerPhysics.ts";
 import {ReplicatedActor, ReplicatedVariable} from "../Replication.ts";
+import {PlayerStatics} from "../Utility/PlayerGlobals";
 
 @RegisterClass("NVPlayerCharacter") @ReplicatedActor(12)
 export class NVPlayerCharacter extends NVActor {
@@ -33,6 +34,8 @@ export class NVPlayerCharacter extends NVActor {
         this.components.add(this.playerPhysics)
 
         this.scene = NVPlayerCharacter.camera.GetCamera();
+
+        PlayerStatics.PlayerCharacter = this;
     }
 
 

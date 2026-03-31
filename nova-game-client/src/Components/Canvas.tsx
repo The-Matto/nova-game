@@ -60,7 +60,7 @@ export const ThreeCanvas = () => {
 
     return <div className={"relative"}>
         <GameUIMain />
-            <div className="" ref={canvasRef}/>
+            <div className="" id={"canvas"} ref={canvasRef}/>
         </div>
         ;
         };

@@ -33,7 +33,7 @@ export class NVPlayerPhysics extends NVComponent {
 
     private updatePlayer( deltaTime : number ) {
 
-        let damping : number = Math.exp( - 4 * deltaTime ) - 1;
+        const damping : number = Math.exp( - 4 * deltaTime ) - 1;
 
         if ( !this.playerOnFloor && !this.isFreeFlying) {
 

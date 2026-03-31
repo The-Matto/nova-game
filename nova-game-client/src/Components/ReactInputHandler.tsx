@@ -1,6 +1,6 @@
 ﻿import { useEffect } from 'react';
 import { keyActions, keyStates, mousePosition} from "../InputMaps.ts";
-import {PlayerSettings} from "../Three/Utility/PlayerGlobals.ts";
+import {PlayerSettings, PlayerStatics} from "../Three/Utility/PlayerGlobals.ts";
 
 export function ReactInputHandler() {
 
@@ -32,15 +32,25 @@ export function ReactInputHandler() {
             mousePosition.y = (event.movementY / 500) * PlayerSettings.mouseSensitivityY;
 
         };
+        const handleMouseClick = (event: MouseEvent) => {
+            // 0 = Left click, 1 = Middle, 2 = Right
+            if (PlayerStatics.PlayerController && event.button === 0) {
+                PlayerStatics.PlayerController.HandleMouseClick(event.button)
+            }
+        }
 
 
 
         document.addEventListener( 'mousemove', handleMouseMove);
         document.addEventListener('keyup', handleKeyUp);
         document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('mousedown', handleMouseClick);
+
         return () => {
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('mousedown', handleMouseMove);
+            document.removeEventListener('mousemove', handleMouseMove);
 
         };
     }, []);
