@@ -4,8 +4,12 @@ import type {NVActor} from "./Actor.ts";
 import {ClassRegistry, type SpawnDescriptor} from "./ClassDescripter.ts";
 import {SceneBuilder} from "./SceneBuilder.ts";
 import {Octree} from "three/examples/jsm/math/Octree.js";
+import {TransformControls} from "three/examples/jsm/controls/TransformControls";
 
-export class Scene {
+import {NVPlayerCharacter} from "./Actors/PlayerCharacter";
+import {Game} from "./Game";
+
+export class NVScene {
 
     public static scene : THREE.Scene;
 
@@ -14,19 +18,19 @@ export class Scene {
     public static worldOctree : Octree
 
     constructor() {
-        Scene.scene = new THREE.Scene();
+        NVScene.scene = new THREE.Scene();
 
-        Scene.scene.background = new THREE.Color( 0x88ccee );
-        Scene.scene.fog = new THREE.Fog( 0x88ccee, 0, 1000 );
+        NVScene.scene.background = new THREE.Color( 0x88ccee );
+        NVScene.scene.fog = new THREE.Fog( 0x88ccee, 0, 1000 );
 
         new SceneBuilder("/TestWorld.json");
 
-        Scene.worldOctree = new Octree();
+        NVScene.worldOctree = new Octree();
 
 
         const fillLight1 = new THREE.HemisphereLight( 0x8dc1de, 0x00668d, 1.5 );
         fillLight1.position.set( 2, 1, 1 );
-        Scene.scene.add( fillLight1 );
+        NVScene.scene.add( fillLight1 );
 
         const directionalLight = new THREE.DirectionalLight( 0xffffff, 2.5 );
         directionalLight.position.set( - 5, 25, - 1 );
@@ -41,19 +45,22 @@ export class Scene {
         directionalLight.shadow.mapSize.height = 1024;
         directionalLight.shadow.radius = 4;
         directionalLight.shadow.bias = - 0.00006;
-        Scene.scene.add( directionalLight );
+        NVScene.scene.add( directionalLight );
+
+
+
     }
 
     public static AddSceneActor(actor : NVActor){
-        Scene.scene.add(actor.scene);
+        NVScene.scene.add(actor.scene);
     }
 
     public GetScene(): THREE.Object3D {
-        return Scene.scene;
+        return NVScene.scene;
     }
 
     public static GetSceneActors() : Set<NVActor>{
-        return Scene.sceneActors;
+        return NVScene.sceneActors;
     }
 
     public static SpawnActor(descripter : SpawnDescriptor) : NVActor {

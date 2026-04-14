@@ -20,6 +20,7 @@ export class NVPlayerCharacter extends NVActor {
     //TODO Maybe use decorator to add components to the component set, rather than using constructor!
     private playerPhysics : NVPlayerPhysics = new NVPlayerPhysics(this);
 
+
     GetPhysicsComp(): NVPlayerPhysics {
         return this.playerPhysics;
     }

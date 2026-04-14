@@ -1,7 +1,7 @@
 ﻿
 import * as THREE from 'three';
 import {NVRenderer} from "./Renderer.ts";
-import {Scene} from "./Scene.ts";
+import {NVScene} from "./NVScene.ts";
 import {NVPlayerCharacter} from "./Actors/PlayerCharacter.ts";
 
 import "./Includes.ts"
@@ -16,13 +16,18 @@ export class Game {
     clock: THREE.Clock;
     renderer: NVRenderer;
 
-    static scene : Scene;
+    //Singleton
+    private static instance : Game;
+
+    static scene : NVScene;
 
     uiDOMInterop : UiDOMInterop;
 
     constructor() {
+        Game.instance = this;
+
         this.renderer = new NVRenderer(this.Tick.bind(this));
-        Game.scene = new Scene();
+        Game.scene = new NVScene();
         this.clock = new THREE.Clock();
         this.uiDOMInterop = new UiDOMInterop();
 
@@ -31,6 +36,10 @@ export class Game {
         const netDriver = new ClientNetDriver();
         netDriver.CreateSocket();
 
+    }
+
+    static GetInstance() : Game {
+        return Game.instance;
     }
 
 
@@ -48,7 +57,7 @@ export class Game {
 
        // console.log(Game.scene.GetSceneActors());
         //Call tick on every registered actor
-        for(const actor of Scene.GetSceneActors()) {
+        for(const actor of NVScene.GetSceneActors()) {
 
             if (actor.CanCallTick()) {
                 actor.Tick(GameStats.deltaTime);

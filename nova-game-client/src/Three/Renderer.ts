@@ -1,7 +1,7 @@
 ﻿
 import * as THREE from "three";
 import type {Callback} from "./Helpers.ts";
-import type { Scene } from "./Scene.ts";
+import type { NVScene } from "./NVScene.ts";
 import type {NVCamera} from "./Camera.ts";
 import {WindowSettings} from "./Utility/PlayerGlobals.ts";
 
@@ -10,6 +10,8 @@ export class NVRenderer {
 
 
     renderer = new THREE.WebGLRenderer({antialias: true});
+
+    canvas: HTMLDivElement = null;
 
     constructor(TickFunction: Callback) {
         this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -22,7 +24,7 @@ export class NVRenderer {
 
     }
 
-    public RenderFrame(scene: Scene, camera: NVCamera){
+    public RenderFrame(scene: NVScene, camera: NVCamera){
         this.renderer.render(scene.GetScene(), camera.GetCamera())
     }
 }

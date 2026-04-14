@@ -37,6 +37,8 @@ export const ThreeCanvas = () => {
 
         //TODO Clean this up a bit!
         container.appendChild(game.renderer.renderer.domElement);
+        game.renderer.canvas = container;
+
 
         container.addEventListener('click', () => {
             container.requestPointerLock();

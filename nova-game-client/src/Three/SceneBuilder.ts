@@ -1,4 +1,4 @@
-﻿import {Scene} from "./Scene.ts";
+﻿import {NVScene} from "./NVScene.ts";
 import type {SpawnDescriptor} from "./ClassDescripter.ts";
 
 export class SceneBuilder{
@@ -9,7 +9,7 @@ export class SceneBuilder{
             .then(data => {
 
                 data.actorsToSpawn.forEach((entry : SpawnDescriptor) => {
-                    Scene.SpawnActor(entry);
+                    NVScene.SpawnActor(entry);
                 });
 
             });

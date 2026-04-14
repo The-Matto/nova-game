@@ -13,6 +13,9 @@ export const CameraSettings = {
 export const PlayerSettings = {
     mouseSensitivityX: 5.0,
     mouseSensitivityY: 5.0,
+
+    mouseSensitivityMenuX: 15.0,
+    mouseSensitivityMenuY: 15.0,
 }
 
 export const WindowSettings = {

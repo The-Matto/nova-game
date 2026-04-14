@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type {SpawnDescriptor} from "./ClassDescripter.ts";
 import type {NVComponent} from "./Components/NVComponent.ts";
 import {Vector3} from "three";
-import {Scene} from "./Scene.ts";
+import {NVScene} from "./NVScene.ts";
 
 //Base class which every game object inherits from
 export class NVActor {
@@ -65,13 +65,13 @@ export class NVActor {
 
     //TODO DEPRECATE This function
     public UpdateCollision(){
-        Scene.worldOctree.fromGraphNode(this.scene);
+        NVScene.worldOctree.fromGraphNode(this.scene);
 
     }
 
     public async Init(descripter : SpawnDescriptor){
         this.SetWorldLocation(descripter.location);
-        Scene.worldOctree.fromGraphNode(this.scene);
+        NVScene.worldOctree.fromGraphNode(this.scene);
 
     }
 }

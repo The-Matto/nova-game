@@ -1,7 +1,7 @@
 ﻿import {NVComponent} from "./NVComponent.ts";
 import {Capsule} from "three/examples/jsm/math/Capsule";
 import * as THREE from "three";
-import {Scene} from "../Scene.ts";
+import {NVScene} from "../NVScene.ts";
 import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
 import type {Vector3} from "three";
 
@@ -57,7 +57,7 @@ export class NVPlayerPhysics extends NVComponent {
 
     private playerCollisions() {
 
-        const result = Scene.worldOctree.capsuleIntersect(this.playerCollider);
+        const result = NVScene.worldOctree.capsuleIntersect(this.playerCollider);
         this.playerOnFloor = false;
 
         if (result) {
