@@ -9,6 +9,7 @@ import {InputInfo} from "../InputMaps.ts";
 import {ClientNetDriver} from "../NetDriver/client-net-driver.ts";
 import {GameStats} from "./Utility/PlayerGlobals";
 import {UiDOMInterop} from "./UI/ui-DOM-interop";
+import {acceleratedRaycast, computeBoundsTree, disposeBoundsTree} from "three-mesh-bvh";
 
 export class Game {
 
@@ -33,11 +34,18 @@ export class Game {
 
         console.log("Construct Game")
 
-        const netDriver = new ClientNetDriver();
-        netDriver.CreateSocket();
+        //TODO When implementing Multiplayer lobbies
+        //const netDriver = new ClientNetDriver();
+        //netDriver.CreateSocket();
+
+        //Use BVH for collision
+        THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+        THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+        THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
     }
 
+    //Singleton
     static GetInstance() : Game {
         return Game.instance;
     }
@@ -47,7 +55,8 @@ export class Game {
     Tick(){
 
         //Mostly disable tick when game has no focus - TODO Maybe just reduce FPS to like 3FPS
-        if (InputInfo.gameHasFocus){
+        if (!InputInfo.gameHasFocus)
+            return;
            // console.log(document.elementFromPoint(800, 900));
 
             //TODO Maybe we should have fixed physics step, this Tick() is based on render time
@@ -69,6 +78,6 @@ export class Game {
 
         //Update game UI render
         this.uiDOMInterop.tick()
-        }
+
     }
 }

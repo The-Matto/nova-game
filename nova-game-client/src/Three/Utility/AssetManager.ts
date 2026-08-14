@@ -26,7 +26,7 @@ export class AssetManager {
             if (mesh)
              return mesh;
         }
-        return await AssetManager.loadModel(assetPath)
+        return await AssetManager.loadModel(assetPath);
     }
 
     public static async RequestAudio(assetPath : string) : Promise<AudioBuffer>{
@@ -42,10 +42,14 @@ export class AssetManager {
 
     private static async loadModel(url: string)  {
          return new Promise<THREE.Scene>((resolve, reject) => {
+
+             //TODO Add local storage support, so we can query local storage before reaching out to the storage bucket
              const fullUrl = ASSETSERVERURL.replace(/\/+$/, '') + '/models/' + url.replace(/^\/+/, '');
              console.log("Requesting model at - ", fullUrl)
              this.gltfLoader.load(fullUrl, (gltf : GLTF) => {
                  AssetManager.gotModelAssets.set(url, gltf.scene);
+
+                 //TODO Load the Three BVH collision
 
                  resolve(gltf.scene);
              }, undefined, reject);

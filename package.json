@@ -5,5 +5,8 @@
         "shared",
         "nova-game-client",
         "nove-game-server"
-    ]
+    ],
+    "dependencies": {
+        "three-mesh-bvh": "^0.9.9"
+    }
 }

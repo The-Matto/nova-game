@@ -57,6 +57,8 @@ export class NVPlayerPhysics extends NVComponent {
 
     private playerCollisions() {
 
+
+        //TODO Implement a spacial grid for collision checking instead of looping every mesh
         const result = NVScene.worldOctree.capsuleIntersect(this.playerCollider);
         this.playerOnFloor = false;
 
