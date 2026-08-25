@@ -1,22 +1,23 @@
-﻿{
-  "actorsToSpawn" : [
 {
-  "class": "NVPlayerCharacter",
-  "location": {
-    "x": 1,
-    "y": 1,
-    "z": 1
-  }
-},
-  {
-    "class": "NVStaticMeshActor",
-    "location": {
-      "x": 0, "y": 0, "z": 0
+  "actorsToSpawn": [
+    {
+      "class": "NVPlayerCharacter",
+      "location": {
+        "x": 1, "y": 1, "z": 1
+      }
     },
-    "scale": {
-      "x": 5, "y": 0.1, "z": 5
-    }
-  },
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 0, "y": 0, "z": 0
+      },
+      "scale": {
+        "x": 5, "y": 0.1, "z": 5
+      },
+      "properties": {
+        "color": "#8a9199"
+      }
+    },
     {
       "class": "NVStaticMeshActor",
       "location": {
@@ -25,8 +26,83 @@
       "scale": {
         "x": 5, "y": 5, "z": 1
       },
-      "properties" : {
-        "modelPath" : "RoundedCube.glb"
+      "properties": {
+        "modelPath": "RoundedCube.glb"
+      }
+    },
+
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": -1.5, "y": 0.5, "z": 1
+      },
+      "scale": {
+        "x": 0.6, "y": 1, "z": 0.6
+      },
+      "properties": {
+        "color": "#e07a3f"
+      }
+    },
+
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 4.2, "y": 0.15, "z": 0
+      },
+      "scale": {
+        "x": 1.8, "y": 0.3, "z": 2
+      },
+      "properties": {
+        "color": "#3fa7a0"
+      }
+    },
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 6.8, "y": 0.4, "z": 0
+      },
+      "scale": {
+        "x": 1.8, "y": 0.3, "z": 2
+      },
+      "properties": {
+        "color": "#3fa7a0"
+      }
+    },
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 9.4, "y": 0.65, "z": 0
+      },
+      "scale": {
+        "x": 1.8, "y": 0.3, "z": 2
+      },
+      "properties": {
+        "color": "#3fa7a0"
+      }
+    },
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 12.4, "y": 0.65, "z": 0
+      },
+      "scale": {
+        "x": 3, "y": 0.3, "z": 3
+      },
+      "properties": {
+        "color": "#e8c547"
+      }
+    },
+
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 12.4, "y": 1.8, "z": 0
+      },
+      "scale": {
+        "x": 0.3, "y": 2, "z": 0.3
+      },
+      "properties": {
+        "color": "#e0473f"
       }
     }
   ]
