@@ -5,4 +5,7 @@
 
 import './Actors/StaticMeshActor.ts';
 import './Actors/GoalVolume.ts';
+import './Actors/PlayerCharacter.ts';
+import './Actors/EditorPawn.ts';
+import './Actors/PlayerSpawn.ts';
 

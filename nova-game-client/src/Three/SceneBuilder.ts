@@ -1,10 +1,13 @@
-﻿import {NVScene} from "./NVScene.ts";
+import {NVScene} from "./NVScene.ts";
 import type {SpawnDescriptor} from "./ClassDescripter.ts";
 
 export class SceneBuilder{
 
+    //Resolves once every actor in the level JSON has been spawned.
+    public readonly ready : Promise<void>;
+
     constructor(worldPath : string) {
-        fetch(worldPath)
+        this.ready = fetch(worldPath)
             .then(res => res.json())
             .then(data => {
 
@@ -15,5 +18,3 @@ export class SceneBuilder{
             });
     }
 }
-
-

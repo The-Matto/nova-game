@@ -2,7 +2,8 @@
 import * as THREE from 'three';
 import {NVRenderer} from "./Renderer.ts";
 import {NVScene} from "./NVScene.ts";
-import {NVPlayerCharacter} from "./Actors/PlayerCharacter.ts";
+import {MainCamera} from "./Camera.ts";
+import {PlayInEditor} from "./Editor/PlayInEditor.ts";
 
 import "./Includes.ts"
 import {InputInfo} from "../InputMaps.ts";
@@ -32,7 +33,10 @@ export class Game {
         this.clock = new THREE.Clock();
         this.uiDOMInterop = new UiDOMInterop();
 
-        console.log("Construct Game")
+        //Spawns and possesses the editor pawn - the game launches straight into editor mode.
+        PlayInEditor.Initialize();
+
+        console.log("Construct Game");
 
         //TODO When implementing Multiplayer lobbies
         //const netDriver = new ClientNetDriver();
@@ -74,7 +78,7 @@ export class Game {
         }
 
         //Render the frame
-        this.renderer.RenderFrame(Game.scene, NVPlayerCharacter.GetCamera());
+        this.renderer.RenderFrame(Game.scene, MainCamera);
 
         //Update game UI render
         this.uiDOMInterop.tick()

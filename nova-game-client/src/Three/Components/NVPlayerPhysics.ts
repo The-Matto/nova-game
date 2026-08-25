@@ -2,7 +2,6 @@ import {NVComponent} from "./NVComponent.ts";
 import {Capsule} from "three/examples/jsm/math/Capsule";
 import * as THREE from "three";
 import {NVScene} from "../NVScene.ts";
-import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
 import type {Vector3} from "three";
 
 
@@ -62,6 +61,15 @@ export class NVPlayerPhysics extends NVComponent {
         this.wishDirection.copy(direction);
     }
 
+    //Moves the collider (and the KILL_Z respawn point) to a world location - see NVPawn.Init,
+    //which calls this once on spawn.
+    public SetSpawnLocation(location : THREE.Vector3){
+        const segment = this.playerCollider.end.clone().sub(this.playerCollider.start);
+        this.playerCollider.end.copy(location);
+        this.playerCollider.start.copy(location).sub(segment);
+        this.spawnPoint.copy(location);
+    }
+
     //Applies a jump impulse, but only once per ground contact - see hasJumpedSinceGrounded.
     //Returns whether it actually jumped, in case callers want to react (sound/animation later).
     public TryJump(impulse : number) : boolean {
@@ -103,7 +111,8 @@ export class NVPlayerPhysics extends NVComponent {
             this.playerOnFloor = false;
         }
 
-        NVPlayerCharacter.GetCamera().GetCamera().position.copy( this.playerCollider.end );
+        //owningActor.scene is the shared camera - see NVPawn.
+        this.owningActor.scene.position.copy( this.playerCollider.end );
 
     }
 

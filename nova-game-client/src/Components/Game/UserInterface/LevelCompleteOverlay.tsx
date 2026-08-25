@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {CursorState} from "../../../Three/Utility/PlayerGlobals";
-import {NVScene} from "../../../Three/NVScene";
+import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
 
 //Shown when the player reaches the goal volume with all objectives complete. Also surfaces a
 //brief hint when they reach it too early, once levels actually have objectives to block on.
@@ -39,7 +39,7 @@ export const LevelCompleteOverlay = () => {
     }, [blockedMessage]);
 
     const playAgain = () => {
-        NVScene.ReloadLevel();
+        PlayInEditor.RestartPlaying();
         setIsComplete(false);
         setBlockedMessage(null);
 

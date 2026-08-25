@@ -1,16 +1,15 @@
-﻿import {InputInfo, keyActions, mousePosition} from "../../InputMaps.ts";
-import type {NVPlayerCharacter} from "./PlayerCharacter.ts";
+import {InputInfo, keyActions, mousePosition} from "../../InputMaps.ts";
+import type {NVPawn} from "../Pawn.ts";
 import {Vector2} from "three";
-import {CursorState, EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {CursorState, EditorState, GameMode, PlayerStatics} from "../Utility/PlayerGlobals";
 import {EditorSelection} from "../Editor/EditorSelection.ts";
-
-export type MoveDirection = "Forward" | "Right" | "Up";
-
-
+import {GameEvents} from "../Utility/GameEvents.ts";
+import {PlayInEditor} from "../Editor/PlayInEditor.ts";
 
 export class PlayerController {
 
-    controlledCharacter : NVPlayerCharacter;
+    //Whichever pawn currently has control - the editor pawn or the player character, never both.
+    private possessedPawn : NVPawn | null = null;
 
     //Unreal-style editor camera controls: the real OS cursor is free to click/drag things
     //(gizmos, UI) except while the right mouse button is held, during which it looks around
@@ -18,15 +17,20 @@ export class PlayerController {
     //here, so other systems can check it directly.
     private isRightMouseDown : boolean = false;
 
-    constructor(controlledCharacter : NVPlayerCharacter) {
+    constructor() {
         this.BindInputEvents();
-        console.log("BIND INPUT")
-        this.controlledCharacter = controlledCharacter;
         PlayerStatics.PlayerController = this;
     }
 
+    public Possess(pawn : NVPawn){
+        this.possessedPawn = pawn;
+    }
+
+    public GetPossessedPawn() : NVPawn | null {
+        return this.possessedPawn;
+    }
+
     private BindInputEvents(){
-        console.log(keyActions)
         //Axis values here are just direction (1 / -1) — actual speed and framerate scaling
         //happen in NVPlayerPhysics, not here.
         keyActions["KeyW"] = {
@@ -97,7 +101,7 @@ export class PlayerController {
     }
 
 
-    //Called on Tick() from owning player
+    //Called on Tick() from the currently-possessed pawn
     public ProcessInput(){
 
         //Check game is focused before processing input
@@ -117,7 +121,7 @@ export class PlayerController {
             //drive the camera while actively looking (RMB held); outside it, it always looks.
             const shouldLook = !EditorState.isInEditor || this.isRightMouseDown;
             if (shouldLook) {
-                this.controlledCharacter.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
+                this.possessedPawn?.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
             }
 
             //Zero out the input after being processed. TODO Find more elegant way to do this
@@ -128,36 +132,24 @@ export class PlayerController {
     };
 
     private MoveForward = (axisValue : number)=>{
-        if (this.controlledCharacter != undefined){
-           this.controlledCharacter.AddMovementInput("Forward", axisValue)
-        }
+        this.possessedPawn?.AddMovementInput("Forward", axisValue)
     }
     private MoveRight = (axisValue : number)=>{
-        if (this.controlledCharacter != undefined){
-            this.controlledCharacter.AddMovementInput("Right", axisValue)
-        }
+        this.possessedPawn?.AddMovementInput("Right", axisValue)
     }
     private MoveUp = (axisValue : number)=>{
-        if (this.controlledCharacter != undefined){
-            this.controlledCharacter.AddMovementInput("Up", axisValue)
-        }
+        this.possessedPawn?.AddMovementInput("Up", axisValue)
     }
 
     private Jump = ()=>{
-        if (this.controlledCharacter != undefined){
-            this.controlledCharacter.Jump()
-        }
+        this.possessedPawn?.Jump()
     }
     private Crouch = (isStart : boolean)=>{
-        if (this.controlledCharacter != undefined){
-            this.controlledCharacter.Crouch(isStart)
-        }
+        this.possessedPawn?.Crouch(isStart)
     }
 
     private Sprint = (isStart : boolean)=>{
-        if (this.controlledCharacter != undefined){
-            this.controlledCharacter.Sprint(isStart)
-        }
+        this.possessedPawn?.Sprint(isStart)
     }
 
     //Editor-mode-only for now: left click picks whatever actor is under the real cursor (see
@@ -180,29 +172,22 @@ export class PlayerController {
     }
 
     private ToggleEditorMode = () => {
+        //PIE is a level-creator tool - no-op in plain "play" mode.
+        if (GameMode.appMode !== "createLevel") return;
+
         EditorState.isInEditor = !EditorState.isInEditor;
         CursorState.isCursorNeeded = EditorState.isInEditor;
 
         if (EditorState.isInEditor) {
-            //Entering: release pointer lock so the real OS cursor is free to click/drag things
-            //precisely (gizmos need real, accurate screen coordinates - see EditorSelection).
-            //Canvas.tsx's pointerlockchange handler keeps gameHasFocus true through this even
-            //though the pointer is no longer locked.
             this.isRightMouseDown = false;
             if (document.pointerLockElement) document.exitPointerLock();
+            PlayInEditor.StopPlaying();
         } else {
-            //Exiting: drop whatever was selected and re-engage pointer lock for the immersive
-            //gameplay feel.
-            EditorSelection.ClearSelection();
             document.getElementById('canvas')?.requestPointerLock();
+            PlayInEditor.StartPlaying();
         }
 
-        //Free-fly is a movement concept physics owns for itself; editor mode just happens to
-        //drive it right now. Kept separate so e.g. a future spectator mode could use free-fly
-        //without being "in the editor".
-        if (this.controlledCharacter != undefined) {
-            this.controlledCharacter.GetPhysicsComp().isFreeFlying = EditorState.isInEditor;
-        }
+        GameEvents.Emit('editorModeChanged', {isInEditor: EditorState.isInEditor});
     }
 
 }

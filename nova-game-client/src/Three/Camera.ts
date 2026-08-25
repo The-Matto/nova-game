@@ -24,3 +24,6 @@ export class NVCamera {
 
     GetCamera = (): THREE.PerspectiveCamera => {return this.camera;}
 }
+
+//Shared across whichever pawn is currently possessed, rather than owned by one actor class.
+export const MainCamera = new NVCamera();

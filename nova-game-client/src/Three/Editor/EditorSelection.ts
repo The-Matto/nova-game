@@ -2,7 +2,7 @@ import * as THREE from "three";
 import {TransformControls} from "three/examples/jsm/controls/TransformControls";
 import {NVScene} from "../NVScene.ts";
 import type {NVActor} from "../Actor.ts";
-import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
+import {MainCamera} from "../Camera.ts";
 import {Game} from "../Game.ts";
 
 //Click-to-select + gizmo, for editor mode. A single TransformControls instance is created
@@ -15,13 +15,14 @@ export class EditorSelection {
 
     private static GetControls() : TransformControls {
         if (!EditorSelection.transformControls) {
-            const camera = NVPlayerCharacter.GetCamera().GetCamera();
+            const camera = MainCamera.GetCamera();
             const canvas = Game.GetInstance().renderer.canvas;
 
             const controls = new TransformControls(camera, canvas);
             //On the persistent scene, not levelRoot - the gizmo is an editor tool, not level
             //content, so it should survive a level reload (which clears the selection anyway).
             NVScene.scene.add(controls.getHelper());
+
             EditorSelection.transformControls = controls;
         }
         return EditorSelection.transformControls;
@@ -71,7 +72,7 @@ export class EditorSelection {
             -((clientY - rect.top) / rect.height) * 2 + 1,
         );
 
-        const camera = NVPlayerCharacter.GetCamera().GetCamera();
+        const camera = MainCamera.GetCamera();
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(ndc, camera);
 

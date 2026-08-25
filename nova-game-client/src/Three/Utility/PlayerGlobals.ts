@@ -29,30 +29,30 @@ export const GameStats = {
     deltaTime: 1.0
 };
 
-//True while the player is in editor mode (free-fly, no-clip, RMB-to-look - see
-//PlayerController.ToggleEditorMode). This is the thing to check for "are we editing the level or
-//playing it" - actors/systems should check this directly to gate editor-only or gameplay-only
-//code (e.g. NVGoalVolume skipping its trigger while in editor), rather than inferring editor
-//state from something like the player's free-fly movement flag, which is a separate concept that
-//just happens to be driven by this right now.
-export const EditorState = {
-    isInEditor: false,
+export type AppMode = "play" | "createLevel";
+
+//Top-level flow the game is in. TODO Wire up to a real menu; hardcoded for now.
+export const GameMode = {
+    appMode: "createLevel" as AppMode,
 };
 
-//True whenever some UI needs the real OS cursor and pointer lock is deliberately being kept
-//released for it - editor mode, or a modal like the level-complete screen. Distinct from
-//EditorState.isInEditor: that also drives gameplay semantics (free-fly, collision, the goal
-//volume's trigger); this is purely "don't auto re-lock the pointer, and don't treat the game as
-//unfocused just because it isn't locked" - see Canvas.tsx's pointerlockchange handling.
+//True while the player is in editor mode (free-fly, no-clip, RMB-to-look). Defaults from
+//GameMode since UI reads this as React initial state before PlayInEditor.Initialize runs.
+export const EditorState = {
+    isInEditor: GameMode.appMode === "createLevel",
+};
+
+//True whenever the real OS cursor is needed and pointer lock is deliberately released -
+//editor mode, or a modal like the level-complete screen. See Canvas.tsx's pointerlockchange
+//handling.
 export const CursorState = {
-    isCursorNeeded: false,
+    isCursorNeeded: GameMode.appMode === "createLevel",
 };
 
 
 interface IPlayerStatics {
     PlayerController?: PlayerController;
     PlayerCharacter?:  NVPlayerCharacter;
-    //Gamemode
     //NetDriver
 }
 

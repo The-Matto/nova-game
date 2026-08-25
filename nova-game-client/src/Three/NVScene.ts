@@ -4,28 +4,30 @@ import type {NVActor} from "./Actor.ts";
 import {ClassRegistry, type SpawnDescriptor} from "./ClassDescripter.ts";
 import {SceneBuilder} from "./SceneBuilder.ts";
 import {Octree} from "three/examples/jsm/math/Octree.js";
-import {TransformControls} from "three/examples/jsm/controls/TransformControls";
 
-import {NVPlayerCharacter} from "./Actors/PlayerCharacter";
-import {Game} from "./Game";
 import {LevelObjectives} from "./Gameplay/LevelObjectives";
 import {EditorSelection} from "./Editor/EditorSelection";
+import {MainCamera} from "./Camera.ts";
 
 export class NVScene {
 
     public static scene : THREE.Scene;
 
-    //Everything a level spawns (actors, loaded models) lives under this group, never added to
-    //`scene` directly. ReloadLevel() swaps it for a fresh one so a full reset is just "drop this
-    //group and rebuild it" without touching lights or anything else set up once at startup.
+    //Everything a level spawns lives under this group, swapped for a fresh one on ReloadLevel().
     public static levelRoot : THREE.Group = new THREE.Group();
 
     private static sceneActors = new Set<NVActor>();
 
+    //Actors that survive ReloadLevel() - currently just the editor pawn.
+    private static persistentActors = new Set<NVActor>();
+
     public static worldOctree : Octree
 
-    //Path of the level currently loaded, so ReloadLevel() knows what to reload.
     private static currentLevelPath : string;
+
+    //Resolves once the initial level JSON has finished spawning - see
+    //PlayInEditor.Initialize's "play" branch, which needs the spawn marker before frame one.
+    public static initialLoadPromise : Promise<void>;
 
     constructor() {
         NVScene.scene = new THREE.Scene();
@@ -33,10 +35,13 @@ export class NVScene {
         NVScene.scene.background = new THREE.Color( 0x88ccee );
         NVScene.scene.fog = new THREE.Fog( 0x88ccee, 0, 1000 );
         NVScene.scene.add(NVScene.levelRoot);
+        //Parented once, up front, regardless of which pawn possesses it later - see
+        //AddSceneActor's "already parented" check.
+        NVScene.scene.add(MainCamera.GetCamera());
 
         NVScene.worldOctree = new Octree();
 
-        NVScene.LoadLevel("/TestWorld.json");
+        NVScene.initialLoadPromise = NVScene.LoadLevel("/TestWorld.json");
 
 
         const fillLight1 = new THREE.HemisphereLight( 0x8dc1de, 0x00668d, 1.5 );
@@ -62,66 +67,80 @@ export class NVScene {
 
     }
 
-    public static AddSceneActor(actor : NVActor){
-        NVScene.levelRoot.add(actor.scene);
+    public static AddSceneActor(actor : NVActor, persistent : boolean = false){
+        //Pawns share one camera as their `scene` - if it's already parented, leave it alone
+        //rather than reparenting it away from whichever pawn currently owns it.
+        if (actor.scene.parent) return;
+
+        if (persistent) {
+            NVScene.scene.add(actor.scene);
+        } else {
+            NVScene.levelRoot.add(actor.scene);
+        }
     }
 
     public GetScene(): THREE.Object3D {
         return NVScene.scene;
     }
 
-    //Spawns the actors from a level JSON. Also what the constructor calls for the initial level.
-    public static LoadLevel(path : string){
+    //Returns a promise that resolves once every actor in the level JSON has spawned.
+    public static LoadLevel(path : string) : Promise<void> {
         NVScene.currentLevelPath = path;
-        new SceneBuilder(path);
+        return new SceneBuilder(path).ready;
     }
 
-    //Resets the current level back to its initial state: despawns everything the level spawned
-    //(actors, loaded models), clears the collision octree and objective tracking, then respawns
-    //fresh from the same level JSON. Lights, the camera, and anything else set up once outside
-    //the level JSON are untouched.
-    public static ReloadLevel(){
+    //Despawns everything the level spawned and respawns fresh from the same JSON. Persistent
+    //actors (the editor pawn) and anything set up outside the level JSON are untouched.
+    public static async ReloadLevel() : Promise<void> {
         NVScene.scene.remove(NVScene.levelRoot);
         NVScene.levelRoot = new THREE.Group();
         NVScene.scene.add(NVScene.levelRoot);
 
-        NVScene.sceneActors.clear();
+        for (const actor of [...NVScene.sceneActors]) {
+            if (!NVScene.persistentActors.has(actor)) NVScene.sceneActors.delete(actor);
+        }
+
         NVScene.worldOctree = new Octree();
         LevelObjectives.Clear();
-        //Whatever was selected belonged to an actor that just got despawned - the gizmo would
-        //otherwise be left attached to an orphaned, invisible Object3D.
         EditorSelection.ClearSelection();
 
-        NVScene.LoadLevel(NVScene.currentLevelPath);
+        await NVScene.LoadLevel(NVScene.currentLevelPath);
     }
 
     public static GetSceneActors() : Set<NVActor>{
         return NVScene.sceneActors;
     }
 
-    public static SpawnActor(descripter : SpawnDescriptor) : NVActor {
+    //`persistent` actors survive ReloadLevel() and are parented under `scene` rather than
+    //`levelRoot`.
+    public static SpawnActor(descripter : SpawnDescriptor, persistent : boolean = false) : NVActor {
         const ClassRef: unknown = ClassRegistry.get(descripter.class);
         const CreatedObj : unknown = new ClassRef(descripter);
 
-        const classType : NVActor = (ClassRef as NVActor.prototype);
-        console.log(ClassRef.name)
         if (ClassRef.replicates){
             console.log("THIS OBJECT IS REPLICATED", ClassRef);
         }
         const actor : NVActor = (CreatedObj as NVActor);
-        this.AddSceneActor(actor);
+        this.AddSceneActor(actor, persistent);
         this.sceneActors.add(actor);
+        if (persistent) this.persistentActors.add(actor);
 
 
         actor.SetWorldLocation(descripter.location)
-        //Tags the root Object3D so EditorSelection can walk up from a raycast hit to find the
-        //actor that owns it. Re-tagged in NVStaticMeshActor.LoadModel too, since that swaps
-        //`scene` out for a loaded model after this point.
+        //Lets EditorSelection walk up from a raycast hit to the owning actor. Re-tagged in
+        //NVStaticMeshActor.LoadModel too, since that swaps `scene` out for a loaded model.
         actor.scene.userData.nvActor = actor;
 
         actor.Init(descripter);
-        //actor.UpdateCollision();
         console.log("Spawned actor - ", descripter.class);
         return actor;
+    }
+
+    //Despawns an actor spawned via SpawnActor - used for the PIE player character on returning
+    //to editor mode.
+    public static DestroyActor(actor : NVActor){
+        NVScene.sceneActors.delete(actor);
+        NVScene.persistentActors.delete(actor);
+        actor.BeginDestroy();
     }
 }
