@@ -56,12 +56,10 @@ export class NVGoalVolume extends NVActor {
     }
 
     private OnPlayerEnter() {
+        //Objectives incomplete: just let the player walk through, no popup - they'll complete
+        //it once every target's been hit.
         if (LevelObjectives.AllComplete()) {
             GameEvents.Emit('levelComplete', undefined);
-        } else {
-            GameEvents.Emit('goalBlocked', {
-                remaining: LevelObjectives.GetIncomplete().map(o => o.label),
-            });
         }
     }
 }

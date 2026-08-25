@@ -4,8 +4,6 @@
 
 export type GameEventMap = {
     levelComplete : undefined;
-    //Player reached the goal but objectives are still outstanding.
-    goalBlocked : { remaining : string[] };
     //Fired when ToggleEditorMode runs, so UI can react without polling EditorState.
     editorModeChanged : { isInEditor : boolean };
 };
