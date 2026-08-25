@@ -5,7 +5,7 @@ import {PlayerStatics, WindowSettings} from "../Utility/PlayerGlobals";
 import {MattoMath} from "../Utility/MathUtils";
 import type {InteractiveElement} from "../../Components/Game/UserInterface/UI-Main";
 
-export type MoveDirection = "Forward" | "Right";
+export type MoveDirection = "Forward" | "Right" | "Up";
 
 
 
@@ -24,24 +24,26 @@ export class PlayerController {
 
     private BindInputEvents(){
         console.log(keyActions)
+        //Axis values here are just direction (1 / -1) — actual speed and framerate scaling
+        //happen in NVPlayerPhysics, not here.
         keyActions["KeyW"] = {
-            startFunc: () => this.MoveForward(.01),
+            startFunc: () => this.MoveForward(1),
             endFunc: () => {},
             isActive: false
         };
         keyActions["KeyS"] = {
-            startFunc: () => this.MoveForward(-.01),
+            startFunc: () => this.MoveForward(-1),
             endFunc: () => {},
             isActive: false
         };
 
         keyActions["KeyD"] = {
-            startFunc: () => this.MoveRight(.01),
+            startFunc: () => this.MoveRight(1),
             endFunc: () => {},
             isActive: false
         };
         keyActions["KeyA"] = {
-            startFunc: () => this.MoveRight(-.01),
+            startFunc: () => this.MoveRight(-1),
             endFunc: () => {},
             isActive: false
         };
