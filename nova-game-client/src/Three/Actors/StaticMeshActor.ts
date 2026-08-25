@@ -24,7 +24,10 @@ export class NVStaticMeshActor extends NVActor{
 
         if (!descripter.properties?.modelPath) {
             const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
-            const material = new THREE.MeshStandardMaterial({color: '#c79b9b'});
+            //Level JSON can set "properties": { "color": "#rrggbb" } (or any CSS color string)
+            //per-actor; falls back to the old default so existing levels don't need updating.
+            const color = (descripter.properties?.color as string) ?? '#c79b9b';
+            const material = new THREE.MeshStandardMaterial({color});
             this.scene = new THREE.Mesh(geometry, material);
             NVScene.worldOctree.fromGraphNode(this.scene);
 
