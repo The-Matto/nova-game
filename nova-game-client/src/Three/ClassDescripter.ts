@@ -9,6 +9,12 @@ export type SpawnDescriptor = {
     properties?: Record<string, unknown>
 };
 
+//Shape of a level JSON file (see public/*.json) and of NVScene.SerializeLevel()'s in-memory
+//snapshot.
+export type LevelData = {
+    actorsToSpawn: SpawnDescriptor[],
+};
+
 export const ClassRegistry = new Map<string, unknown>();
 
 export function RegisterClass(name: string) {

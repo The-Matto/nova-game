@@ -1,5 +1,5 @@
 import {NVScene} from "./NVScene.ts";
-import type {SpawnDescriptor} from "./ClassDescripter.ts";
+import type {LevelData} from "./ClassDescripter.ts";
 
 export class SceneBuilder{
 
@@ -9,12 +9,8 @@ export class SceneBuilder{
     constructor(worldPath : string) {
         this.ready = fetch(worldPath)
             .then(res => res.json())
-            .then(data => {
-
-                data.actorsToSpawn.forEach((entry : SpawnDescriptor) => {
-                    NVScene.SpawnActor(entry);
-                });
-
+            .then((data : LevelData) => {
+                NVScene.SpawnActorsFromData(data);
             });
     }
 }

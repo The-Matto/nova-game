@@ -10,7 +10,12 @@ export class NVActor {
 
     components : Set<NVComponent> = new Set();
 
-    constructor(_Descripter : SpawnDescriptor) {
+    //Kept so ToSpawnDescriptor() can round-trip scale/properties (nothing edits those yet)
+    //while location is read live from `scene`.
+    public spawnDescriptor : SpawnDescriptor;
+
+    constructor(descripter : SpawnDescriptor) {
+        this.spawnDescriptor = descripter;
     }
 
 
@@ -53,6 +58,17 @@ export class NVActor {
     //shared MainCamera.
     public RemoveFromScene() : void {
         this.scene.parent?.remove(this.scene);
+    }
+
+    //A SpawnDescriptor that would recreate this actor in its current state - see
+    //NVScene.SerializeLevel().
+    public ToSpawnDescriptor() : SpawnDescriptor {
+        return {
+            class: this.spawnDescriptor.class,
+            location: this.scene.position.clone(),
+            scale: this.spawnDescriptor.scale,
+            properties: this.spawnDescriptor.properties,
+        };
     }
 
     //Called every game frame

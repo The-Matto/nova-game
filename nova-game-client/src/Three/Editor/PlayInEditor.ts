@@ -5,6 +5,8 @@ import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
 import {NVPlayerSpawn} from "../Actors/PlayerSpawn.ts";
 import {PlayerController} from "../Actors/PlayerController.ts";
 import {GameMode, PlayerStatics} from "../Utility/PlayerGlobals.ts";
+import type {LevelData} from "../ClassDescripter.ts";
+import {EditorSelection} from "./EditorSelection.ts";
 
 //Orchestrates "Play In Editor" (PIE): switching between the always-present editor pawn and a
 //real player character spawned fresh each time you test-play the level. See
@@ -14,6 +16,11 @@ export class PlayInEditor {
     private static controller : PlayerController;
     private static editorPawn : NVEditorPawn | null = null;
     private static playerPawn : NVPlayerCharacter | null = null;
+
+    //Snapshot of the level taken right before the player is spawned (see StartPlaying) - what
+    //StopPlaying/RestartPlaying respawn from, so PIE never touches the original level file and
+    //editor edits made before pressing 'P' survive the play session.
+    private static levelSnapshot : LevelData | null = null;
 
     public static Initialize(){
         PlayInEditor.controller = new PlayerController();
@@ -35,6 +42,10 @@ export class PlayInEditor {
     }
 
     public static StartPlaying(){
+        PlayInEditor.levelSnapshot = NVScene.SerializeLevel();
+        //The gizmo is an editor tool - don't leave it attached/visible during actual play.
+        EditorSelection.ClearSelection();
+
         const spawnMarker = [...NVScene.GetSceneActors()].find(actor => actor instanceof NVPlayerSpawn);
         const location = spawnMarker ? spawnMarker.scene.position.clone() : new THREE.Vector3();
 
@@ -48,8 +59,9 @@ export class PlayInEditor {
         PlayInEditor.controller.Possess(PlayInEditor.playerPawn);
     }
 
-    //Destroys the player, repossesses the editor pawn, and reloads the level so anything placed
-    //or triggered during play is discarded.
+    //Destroys the player, repossesses the editor pawn, and respawns from the pre-play snapshot
+    //so anything placed or triggered during play is discarded - without touching the original
+    //level file, so edits made before pressing 'P' are kept.
     public static StopPlaying(){
         if (PlayInEditor.playerPawn){
             NVScene.DestroyActor(PlayInEditor.playerPawn);
@@ -58,19 +70,19 @@ export class PlayInEditor {
         }
 
         if (PlayInEditor.editorPawn) PlayInEditor.controller.Possess(PlayInEditor.editorPawn);
-        NVScene.ReloadLevel();
+        NVScene.LoadFromSnapshot(PlayInEditor.levelSnapshot ?? NVScene.SerializeLevel());
     }
 
-    //Used by "Play Again": destroys the current player, reloads the level, and respawns a
-    //fresh one at the spawn marker.
-    public static async RestartPlaying(){
+    //Used by "Play Again": destroys the current player, respawns from the snapshot, and spawns
+    //a fresh one at the spawn marker.
+    public static RestartPlaying(){
         if (PlayInEditor.playerPawn){
             NVScene.DestroyActor(PlayInEditor.playerPawn);
             PlayInEditor.playerPawn = null;
             PlayerStatics.PlayerCharacter = undefined;
         }
 
-        await NVScene.ReloadLevel();
+        NVScene.LoadFromSnapshot(PlayInEditor.levelSnapshot ?? NVScene.SerializeLevel());
         PlayInEditor.StartPlaying();
     }
 }

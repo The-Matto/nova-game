@@ -1,7 +1,7 @@
 ﻿
 import * as THREE from "three"
 import type {NVActor} from "./Actor.ts";
-import {ClassRegistry, type SpawnDescriptor} from "./ClassDescripter.ts";
+import {ClassRegistry, type LevelData, type SpawnDescriptor} from "./ClassDescripter.ts";
 import {SceneBuilder} from "./SceneBuilder.ts";
 import {Octree} from "three/examples/jsm/math/Octree.js";
 
@@ -89,9 +89,17 @@ export class NVScene {
         return new SceneBuilder(path).ready;
     }
 
-    //Despawns everything the level spawned and respawns fresh from the same JSON. Persistent
-    //actors (the editor pawn) and anything set up outside the level JSON are untouched.
-    public static async ReloadLevel() : Promise<void> {
+    //Spawns every actor described by `data` - shared by SceneBuilder (level JSON fetched from
+    //disk) and LoadFromSnapshot (an in-memory snapshot, see NVScene.SerializeLevel()).
+    public static SpawnActorsFromData(data : LevelData){
+        data.actorsToSpawn.forEach((entry : SpawnDescriptor) => {
+            NVScene.SpawnActor(entry);
+        });
+    }
+
+    //Drops everything the level spawned (actors, loaded models, collision, objectives,
+    //selection) except persistent actors - shared by ReloadLevel and LoadFromSnapshot.
+    private static ResetLevelState(){
         NVScene.scene.remove(NVScene.levelRoot);
         NVScene.levelRoot = new THREE.Group();
         NVScene.scene.add(NVScene.levelRoot);
@@ -103,8 +111,30 @@ export class NVScene {
         NVScene.worldOctree = new Octree();
         LevelObjectives.Clear();
         EditorSelection.ClearSelection();
+    }
 
+    //Despawns everything the level spawned and respawns fresh from the same JSON file.
+    public static async ReloadLevel() : Promise<void> {
+        NVScene.ResetLevelState();
         await NVScene.LoadLevel(NVScene.currentLevelPath);
+    }
+
+    //Same as ReloadLevel, but respawns from an in-memory snapshot instead of re-fetching from
+    //disk - see NVScene.SerializeLevel() and PlayInEditor, which uses this so editor edits
+    //survive a Play In Editor session without ever touching the original level file.
+    public static LoadFromSnapshot(data : LevelData){
+        NVScene.ResetLevelState();
+        NVScene.SpawnActorsFromData(data);
+    }
+
+    //Snapshots every non-persistent actor's current state as level JSON data.
+    public static SerializeLevel() : LevelData {
+        const actorsToSpawn : SpawnDescriptor[] = [];
+        for (const actor of NVScene.sceneActors) {
+            if (NVScene.persistentActors.has(actor)) continue;
+            actorsToSpawn.push(actor.ToSpawnDescriptor());
+        }
+        return {actorsToSpawn};
     }
 
     public static GetSceneActors() : Set<NVActor>{
