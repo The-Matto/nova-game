@@ -73,3 +73,6 @@ See [TODO.md](TODO.md) for the current task list.
   Controller style for new gameplay code rather than introducing a different framework or an ECS.
 - Keep an eye on `// TODO` comments scattered in recently touched files — they're the live task
   list until this doc says otherwise.
+- Keep comments light. A short line for a genuinely non-obvious decision (why, not what) is
+  welcome; don't add a comment to every new method/field, and don't restate what the code already
+  says.
