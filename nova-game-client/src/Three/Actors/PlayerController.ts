@@ -34,10 +34,20 @@ export class PlayerController {
     private BindInputEvents(){
         //Axis values here are just direction (1 / -1) — actual speed and framerate scaling
         //happen in NVPlayerPhysics, not here.
+        //W/E double as the gizmo's move/rotate mode while in editor mode without RMB held (see
+        //TrySetTransformMode) - Unreal-style, so they fall back to normal movement whenever
+        //that condition isn't met (gameplay, or actively flying with RMB held).
         keyActions["KeyW"] = {
-            startFunc: () => this.MoveForward(1),
-            endFunc: () => {},
-            isActive: false
+            startFunc: () => {
+                if (EditorState.isInEditor && !this.isRightMouseDown) {
+                    this.TrySetTransformMode('translate', "KeyW");
+                } else {
+                    this.MoveForward(1);
+                }
+            },
+            endFunc: () => { keyActions["KeyW"].isEcho = false; },
+            isActive: false,
+            isEcho: false
         };
         keyActions["KeyS"] = {
             startFunc: () => this.MoveForward(-1),
@@ -59,14 +69,31 @@ export class PlayerController {
         //Flycam up/down - only meaningful while free-flying (NVPlayerPhysics ignores
         //wishDirection.y otherwise), same as Space/Crouch's free-fly ascend/descend.
         keyActions["KeyE"] = {
-            startFunc: () => this.MoveUp(1),
-            endFunc: () => {},
-            isActive: false
+            startFunc: () => {
+                if (EditorState.isInEditor && !this.isRightMouseDown) {
+                    this.TrySetTransformMode('rotate', "KeyE");
+                } else {
+                    this.MoveUp(1);
+                }
+            },
+            endFunc: () => { keyActions["KeyE"].isEcho = false; },
+            isActive: false,
+            isEcho: false
         };
         keyActions["KeyQ"] = {
             startFunc: () => this.MoveUp(-1),
             endFunc: () => {},
             isActive: false
+        };
+        keyActions["KeyR"] = {
+            startFunc: () => {
+                if (EditorState.isInEditor && !this.isRightMouseDown) {
+                    this.TrySetTransformMode('scale', "KeyR");
+                }
+            },
+            endFunc: () => { keyActions["KeyR"].isEcho = false; },
+            isActive: false,
+            isEcho: false
         };
 
         keyActions["Space"] = {
@@ -183,6 +210,13 @@ export class PlayerController {
 
     public SetRightMouseDown = (isDown : boolean) => {
         this.isRightMouseDown = isDown;
+    }
+
+    //isEcho-guarded like KeyP/Delete - switching mode is one-shot, not repeat-while-held.
+    private TrySetTransformMode = (mode : 'translate' | 'rotate' | 'scale', keyCode : string) => {
+        if (keyActions[keyCode].isEcho) return;
+        EditorSelection.SetTransformMode(mode);
+        keyActions[keyCode].isEcho = true;
     }
 
     //Editor-mode-only: deletes whatever actor is currently selected.

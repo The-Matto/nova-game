@@ -44,6 +44,15 @@ export class EditorSelection {
         return EditorSelection.selectedActor;
     }
 
+    //Switches the gizmo between move/rotate/scale handles - see PlayerController's W/E/R binds.
+    public static SetTransformMode(mode : 'translate' | 'rotate' | 'scale') {
+        EditorSelection.GetControls().setMode(mode);
+    }
+
+    public static GetTransformMode() : string {
+        return EditorSelection.GetControls().mode;
+    }
+
     public static SelectActor(actor : NVActor | null) {
         EditorSelection.selectedActor = actor;
         const controls = EditorSelection.GetControls();
