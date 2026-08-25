@@ -193,13 +193,18 @@ export class PlayerController {
         this.possessedPawn?.Sprint(isStart)
     }
 
-    //Editor-mode-only for now: left click picks whatever actor is under the real cursor (see
-    //EditorSelection). Normal gameplay has nothing that needs left-click yet - UI buttons are
-    //real DOM elements with their own onClick now, they don't route through here.
+    //In editor mode, left click picks whatever actor is under the real cursor (see
+    //EditorSelection). Otherwise it's routed to the possessed pawn as a fire input (see
+    //NVPawn.Fire) - UI buttons are real DOM elements with their own onClick, they don't route
+    //through here.
     public HandleMouseClick =  (pressedButton : number, clientX : number, clientY : number) => {
 
         if (pressedButton !== 0) return;
-        if (!EditorState.isInEditor) return;
+
+        if (!EditorState.isInEditor) {
+            this.possessedPawn?.Fire();
+            return;
+        }
 
         //A click that landed on a gizmo handle is TransformControls' to handle (starting a
         //drag), not a new selection attempt - see EditorSelection.IsDragging.

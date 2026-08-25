@@ -26,4 +26,9 @@ export class NVEditorPawn extends NVPawn {
     Sprint(_isStart : boolean) {
         //TODO Could speed up flying while held, matching gameplay sprint. No-op for now.
     }
+
+    //No weapon in editor mode - PlayerController.HandleMouseClick routes LMB to selection
+    //instead and never actually calls this, but NVPawn declares Fire abstract.
+    Fire() {
+    }
 }

@@ -89,4 +89,7 @@ export abstract class NVPawn extends NVActor {
     abstract Jump() : void;
     abstract Crouch(isStart : boolean) : void;
     abstract Sprint(isStart : boolean) : void;
+
+    //LMB while not in editor mode - see PlayerController.HandleMouseClick.
+    abstract Fire() : void;
 }

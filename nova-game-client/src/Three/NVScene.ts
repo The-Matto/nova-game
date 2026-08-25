@@ -170,7 +170,10 @@ export class NVScene {
         //NVStaticMeshActor.LoadModel too, since that swaps `scene` out for a loaded model.
         actor.scene.userData.nvActor = actor;
 
-        actor.Init(descripter);
+        //BeginPlay only once Init (which can be async, e.g. NVStaticMeshActor loading a model)
+        //has actually finished - see NVPlayerCharacter.BeginPlay, which needs its own SpawnActor
+        //call for its weapon to happen after everything about the player itself is set up.
+        actor.Init(descripter).then(() => actor.BeginPlay());
         console.log("Spawned actor - ", descripter.class);
         return actor;
     }
