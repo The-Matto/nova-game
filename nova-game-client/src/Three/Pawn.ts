@@ -40,6 +40,10 @@ export abstract class NVPawn extends NVActor {
         return PlayerStatics.PlayerController?.GetPossessedPawn() === this;
     }
 
+    //No-op: `scene` is the shared MainCamera, which must outlive any one pawn.
+    public RemoveFromScene() : void {
+    }
+
     Tick(_deltaTime : number) {
         //Gather this frame's input first so physics acts on it with zero latency, instead of
         //acting on last frame's input.

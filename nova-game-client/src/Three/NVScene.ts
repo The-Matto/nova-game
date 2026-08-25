@@ -145,11 +145,14 @@ export class NVScene {
         return actor;
     }
 
-    //Despawns an actor spawned via SpawnActor - used for the PIE player character on returning
-    //to editor mode.
+    //Despawns an actor. Leaving the scene graph is up to actor.RemoveFromScene() (a pawn
+    //no-ops it, since its `scene` is the shared camera). Also rebuilds the collision octree,
+    //since a deleted actor's collision would otherwise stick around as a phantom hit.
     public static DestroyActor(actor : NVActor){
         NVScene.sceneActors.delete(actor);
         NVScene.persistentActors.delete(actor);
+        actor.RemoveFromScene();
         actor.BeginDestroy();
+        NVScene.RebuildWorldOctree();
     }
 }

@@ -5,6 +5,7 @@ import {CursorState, EditorState, GameMode, PlayerStatics} from "../Utility/Play
 import {EditorSelection} from "../Editor/EditorSelection.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {PlayInEditor} from "../Editor/PlayInEditor.ts";
+import {NVScene} from "../NVScene.ts";
 
 export class PlayerController {
 
@@ -98,6 +99,19 @@ export class PlayerController {
             isActive: false,
             isEcho: false
         };
+
+        keyActions["Delete"] = {
+            //isEcho-guarded like KeyP - a one-shot action, not a repeat-while-held one.
+            startFunc: () => {
+                if (!keyActions["Delete"].isEcho){
+                    this.DeleteSelectedActor();
+                    keyActions["Delete"].isEcho = true;
+                }
+            },
+            endFunc: () => { keyActions["Delete"].isEcho = false; },
+            isActive: false,
+            isEcho: false
+        };
     }
 
 
@@ -169,6 +183,17 @@ export class PlayerController {
 
     public SetRightMouseDown = (isDown : boolean) => {
         this.isRightMouseDown = isDown;
+    }
+
+    //Editor-mode-only: deletes whatever actor is currently selected.
+    private DeleteSelectedActor = () => {
+        if (!EditorState.isInEditor) return;
+
+        const actor = EditorSelection.GetSelectedActor();
+        if (!actor) return;
+
+        EditorSelection.ClearSelection();
+        NVScene.DestroyActor(actor);
     }
 
     private ToggleEditorMode = () => {

@@ -49,6 +49,12 @@ export class NVActor {
     public RegisterCollision() : void {
     }
 
+    //Detaches `scene` from its parent. NVPawn overrides this to a no-op since its `scene` is the
+    //shared MainCamera.
+    public RemoveFromScene() : void {
+        this.scene.parent?.remove(this.scene);
+    }
+
     //Called every game frame
     Tick(_deltaTime : number) : void {
         for (const comp of this.components){
