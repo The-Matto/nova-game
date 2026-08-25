@@ -49,6 +49,9 @@ export class PlayerController {
         };
 
         keyActions["Space"] = {
+            //Deliberately called every frame held, not just on press - free-fly ascend needs to
+            //rise continuously while held. NVPlayerPhysics.TryJump() is what stops a held Space
+            //from stacking multiple jump impulses into one jump.
             startFunc: () => this.Jump(),
             endFunc: () => {},
             isActive: false

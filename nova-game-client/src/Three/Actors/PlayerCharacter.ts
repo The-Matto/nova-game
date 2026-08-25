@@ -92,9 +92,7 @@ export class NVPlayerCharacter extends NVActor {
             this.AddMovementInput("Up", 1);
             return;
         }
-        if (this.playerPhysics.playerOnFloor)
-            this.playerPhysics.playerVelocity.y += 5;
-
+        this.playerPhysics.TryJump(5);
     }
     Crouch(isStart : boolean){
         if (this.playerPhysics.isFreeFlying && isStart) {

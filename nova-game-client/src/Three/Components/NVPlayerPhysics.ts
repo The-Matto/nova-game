@@ -13,12 +13,29 @@ export class NVPlayerPhysics extends NVComponent {
     playerOnFloor: boolean = false;
     playerVelocity = new THREE.Vector3();
 
+    //Where the player gets sent back to after falling below KILL_Z. Captured from wherever the
+    //capsule actually starts, so this stays correct without depending on level-spawn wiring.
+    private spawnPoint = this.playerCollider.end.clone();
+
+    //UE-style "Kill Z": fall below this world-space height and you're teleported back to spawn
+    //instead of falling forever. TODO Make this level-configurable once world settings exist in
+    //the level JSON, rather than a fixed global.
+    private static readonly KILL_Z : number = -50;
+
     isSprinting : boolean = false;
     private sprintSpeed : number = 15;
     private walkSpeed : number = 10;
 
     isFreeFlying : boolean = false;
     private flySpeed : number = 15;
+
+    //Guards against one jump press applying multiple impulses. Space is held-checked every
+    //frame (not edge-triggered - free-fly ascend needs continuous input), and playerOnFloor can
+    //stay stale/true for a frame or two after the jump impulse is applied, before collision
+    //detection catches up and reports the player as airborne. Without this guard, holding Space
+    //across that window stacks a second (or third, on a frame hitch) +5 into the same jump,
+    //which is exactly what was producing random jump heights.
+    private hasJumpedSinceGrounded : boolean = false;
 
     //Normalized direction the player is trying to move this frame, in world space.
     //Set once per frame by NVPlayerCharacter from accumulated input.
@@ -45,6 +62,16 @@ export class NVPlayerPhysics extends NVComponent {
         this.wishDirection.copy(direction);
     }
 
+    //Applies a jump impulse, but only once per ground contact - see hasJumpedSinceGrounded.
+    //Returns whether it actually jumped, in case callers want to react (sound/animation later).
+    public TryJump(impulse : number) : boolean {
+        if (!this.playerOnFloor || this.hasJumpedSinceGrounded) return false;
+
+        this.playerVelocity.y += impulse;
+        this.hasJumpedSinceGrounded = true;
+        return true;
+    }
+
     private updatePlayer( deltaTime : number ) {
 
         this.applyMovementInput(deltaTime);
@@ -68,8 +95,20 @@ export class NVPlayerPhysics extends NVComponent {
 
         this.playerCollisions();
 
+        //Free-flying is a dev tool for inspecting the level from anywhere, including below
+        //KILL_Z, so it's exempt from the respawn.
+        if (!this.isFreeFlying) this.checkKillZ();
+
         NVPlayerCharacter.GetCamera().GetCamera().position.copy( this.playerCollider.end );
 
+    }
+
+    private checkKillZ() {
+        if (this.playerCollider.end.y >= NVPlayerPhysics.KILL_Z) return;
+
+        const offset = this.spawnPoint.clone().sub(this.playerCollider.end);
+        this.playerCollider.translate(offset);
+        this.playerVelocity.set(0, 0, 0);
     }
 
     private applyMovementInput(deltaTime : number) {
@@ -109,14 +148,22 @@ export class NVPlayerPhysics extends NVComponent {
 
             this.playerOnFloor = result.normal.y > 0;
 
-            if (!this.playerOnFloor)
-                this.playerVelocity.addScaledVector(result.normal, -result.normal.dot(this.playerVelocity));
+            //Cancel the velocity component driving into the surface on any contact, not just
+            //walls/slopes. Landing on the floor used to leave vertical velocity untouched, so a
+            //jump's impulse landed on top of whatever residual fall speed was left over from the
+            //previous landing instead of a clean baseline - that's what was making jump height
+            //inconsistent (TryJump only guards against re-triggering, not this).
+            this.playerVelocity.addScaledVector(result.normal, -result.normal.dot(this.playerVelocity));
 
 
             if (result.depth >= 1e-10)
                 this.playerCollider.translate(result.normal.multiplyScalar(result.depth));
 
         }
+
+        //Once we're confirmed airborne (not just mid-jump with a stale collision result from
+        //before liftoff), allow the next ground contact to jump again.
+        if (!this.playerOnFloor) this.hasJumpedSinceGrounded = false;
 
     }
 }
