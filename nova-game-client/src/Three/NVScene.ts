@@ -111,6 +111,15 @@ export class NVScene {
         return NVScene.sceneActors;
     }
 
+    //Rebuilds the collision octree from every actor's current transform - needed after an actor
+    //moves, since the octree bakes world-space positions at registration and can't update them.
+    public static RebuildWorldOctree(){
+        NVScene.worldOctree = new Octree();
+        for (const actor of NVScene.sceneActors) {
+            actor.RegisterCollision();
+        }
+    }
+
     //`persistent` actors survive ReloadLevel() and are parented under `scene` rather than
     //`levelRoot`.
     public static SpawnActor(descripter : SpawnDescriptor, persistent : boolean = false) : NVActor {

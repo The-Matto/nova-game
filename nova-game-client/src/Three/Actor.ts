@@ -43,6 +43,12 @@ export class NVActor {
     //Called when object is destroyed
     BeginDestroy() : void {};
 
+    //Registers this actor's mesh with the world collision octree. No-op by default - override
+    //for real collision (see NVStaticMeshActor). Also what NVScene.RebuildWorldOctree() calls on
+    //every actor after something moves, since the octree can't be updated in place.
+    public RegisterCollision() : void {
+    }
+
     //Called every game frame
     Tick(_deltaTime : number) : void {
         for (const comp of this.components){
@@ -71,7 +77,7 @@ export class NVActor {
 
     public async Init(descripter : SpawnDescriptor){
         this.SetWorldLocation(descripter.location);
-        NVScene.worldOctree.fromGraphNode(this.scene);
+        this.RegisterCollision();
 
     }
 }

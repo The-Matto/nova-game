@@ -23,6 +23,11 @@ export class EditorSelection {
             //content, so it should survive a level reload (which clears the selection anyway).
             NVScene.scene.add(controls.getHelper());
 
+            //A drag just finished - the actor may have moved, so the octree needs rebuilding.
+            controls.addEventListener('dragging-changed', (event : {value : boolean}) => {
+                if (!event.value) NVScene.RebuildWorldOctree();
+            });
+
             EditorSelection.transformControls = controls;
         }
         return EditorSelection.transformControls;

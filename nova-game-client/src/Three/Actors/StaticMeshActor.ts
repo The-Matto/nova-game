@@ -32,7 +32,8 @@ export class NVStaticMeshActor extends NVActor{
             const color = (descripter.properties?.color as string) ?? '#c79b9b';
             const material = new THREE.MeshStandardMaterial({color});
             this.scene = new THREE.Mesh(geometry, material);
-            NVScene.worldOctree.fromGraphNode(this.scene);
+            //Not registered with worldOctree here - the mesh is still at the origin until
+            //Init() below runs SetWorldLocation.
 
             //Debug view for the box Collision
             //const helper = new OctreeHelper(Scene.worldOctree);
@@ -61,10 +62,13 @@ export class NVStaticMeshActor extends NVActor{
             await this.LoadModel(descripter.properties?.modelPath.toString())
         }
         this.SetWorldLocation(descripter.location);
+        this.RegisterCollision();
 
-        //Generate mesh collision - TODO: Would be cool to support a system like UCX from Unreal
+    }
+
+    //TODO: Would be cool to support a system like UCX from Unreal for custom collision shapes.
+    public RegisterCollision() {
         NVScene.worldOctree.fromGraphNode(this.scene);
-
     }
 
    @ReplicatedVariable
