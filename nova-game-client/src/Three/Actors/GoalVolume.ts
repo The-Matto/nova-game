@@ -1,0 +1,67 @@
+import {NVActor} from "../Actor.ts";
+import * as THREE from "three";
+import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
+import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {LevelObjectives} from "../Gameplay/LevelObjectives";
+import {GameEvents} from "../Utility/GameEvents";
+
+//The level's end goal. Placed in the level JSON like any other actor (location + scale), but
+//it's a trigger volume, not solid geometry - the player walks straight through it. Entering it
+//checks LevelObjectives and fires a GameEvent for the UI layer to react to.
+@RegisterClass("NVGoalVolume")
+export class NVGoalVolume extends NVActor {
+
+    private bounds = new THREE.Box3();
+    private playerWasInside : boolean = false;
+
+    constructor(descripter : SpawnDescriptor) {
+        super(descripter);
+
+        const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
+        const material = new THREE.MeshStandardMaterial({
+            color: (descripter.properties?.color as string) ?? '#39d353',
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: false,
+        });
+        this.scene = new THREE.Mesh(geometry, material);
+
+        //Deliberately NOT added to NVScene.worldOctree - this is a trigger, not solid geometry.
+    }
+
+    public async Init(descripter : SpawnDescriptor) {
+        this.SetWorldLocation(descripter.location);
+        this.bounds.setFromObject(this.scene);
+    }
+
+    Tick(deltaTime : number) {
+        super.Tick(deltaTime);
+
+        //Trigger volumes are gameplay-only - editor mode is for inspecting/moving around the
+        //level, not playing it.
+        if (EditorState.isInEditor) return;
+
+        const playerCollider = PlayerStatics.PlayerCharacter?.GetPhysicsComp().playerCollider;
+        if (!playerCollider) return;
+
+        //Check both ends of the capsule (roughly feet and head) rather than one point, so the
+        //trigger is forgiving about exactly how the player is standing in it.
+        const playerIsInside = this.bounds.containsPoint(playerCollider.start)
+            || this.bounds.containsPoint(playerCollider.end);
+
+        if (playerIsInside && !this.playerWasInside) {
+            this.OnPlayerEnter();
+        }
+        this.playerWasInside = playerIsInside;
+    }
+
+    private OnPlayerEnter() {
+        if (LevelObjectives.AllComplete()) {
+            GameEvents.Emit('levelComplete', undefined);
+        } else {
+            GameEvents.Emit('goalBlocked', {
+                remaining: LevelObjectives.GetIncomplete().map(o => o.label),
+            });
+        }
+    }
+}

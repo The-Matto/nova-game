@@ -4,4 +4,5 @@
 //to properly register them
 
 import './Actors/StaticMeshActor.ts';
+import './Actors/GoalVolume.ts';
 

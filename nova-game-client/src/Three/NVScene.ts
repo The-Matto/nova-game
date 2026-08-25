@@ -8,24 +8,35 @@ import {TransformControls} from "three/examples/jsm/controls/TransformControls";
 
 import {NVPlayerCharacter} from "./Actors/PlayerCharacter";
 import {Game} from "./Game";
+import {LevelObjectives} from "./Gameplay/LevelObjectives";
+import {EditorSelection} from "./Editor/EditorSelection";
 
 export class NVScene {
 
     public static scene : THREE.Scene;
 
+    //Everything a level spawns (actors, loaded models) lives under this group, never added to
+    //`scene` directly. ReloadLevel() swaps it for a fresh one so a full reset is just "drop this
+    //group and rebuild it" without touching lights or anything else set up once at startup.
+    public static levelRoot : THREE.Group = new THREE.Group();
+
     private static sceneActors = new Set<NVActor>();
 
     public static worldOctree : Octree
+
+    //Path of the level currently loaded, so ReloadLevel() knows what to reload.
+    private static currentLevelPath : string;
 
     constructor() {
         NVScene.scene = new THREE.Scene();
 
         NVScene.scene.background = new THREE.Color( 0x88ccee );
         NVScene.scene.fog = new THREE.Fog( 0x88ccee, 0, 1000 );
-
-        new SceneBuilder("/TestWorld.json");
+        NVScene.scene.add(NVScene.levelRoot);
 
         NVScene.worldOctree = new Octree();
+
+        NVScene.LoadLevel("/TestWorld.json");
 
 
         const fillLight1 = new THREE.HemisphereLight( 0x8dc1de, 0x00668d, 1.5 );
@@ -52,11 +63,36 @@ export class NVScene {
     }
 
     public static AddSceneActor(actor : NVActor){
-        NVScene.scene.add(actor.scene);
+        NVScene.levelRoot.add(actor.scene);
     }
 
     public GetScene(): THREE.Object3D {
         return NVScene.scene;
+    }
+
+    //Spawns the actors from a level JSON. Also what the constructor calls for the initial level.
+    public static LoadLevel(path : string){
+        NVScene.currentLevelPath = path;
+        new SceneBuilder(path);
+    }
+
+    //Resets the current level back to its initial state: despawns everything the level spawned
+    //(actors, loaded models), clears the collision octree and objective tracking, then respawns
+    //fresh from the same level JSON. Lights, the camera, and anything else set up once outside
+    //the level JSON are untouched.
+    public static ReloadLevel(){
+        NVScene.scene.remove(NVScene.levelRoot);
+        NVScene.levelRoot = new THREE.Group();
+        NVScene.scene.add(NVScene.levelRoot);
+
+        NVScene.sceneActors.clear();
+        NVScene.worldOctree = new Octree();
+        LevelObjectives.Clear();
+        //Whatever was selected belonged to an actor that just got despawned - the gizmo would
+        //otherwise be left attached to an orphaned, invisible Object3D.
+        EditorSelection.ClearSelection();
+
+        NVScene.LoadLevel(NVScene.currentLevelPath);
     }
 
     public static GetSceneActors() : Set<NVActor>{
@@ -78,6 +114,10 @@ export class NVScene {
 
 
         actor.SetWorldLocation(descripter.location)
+        //Tags the root Object3D so EditorSelection can walk up from a raycast hit to find the
+        //actor that owns it. Re-tagged in NVStaticMeshActor.LoadModel too, since that swaps
+        //`scene` out for a loaded model after this point.
+        actor.scene.userData.nvActor = actor;
 
         actor.Init(descripter);
         //actor.UpdateCollision();
