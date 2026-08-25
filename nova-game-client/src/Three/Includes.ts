@@ -9,4 +9,5 @@ import './Actors/PlayerCharacter.ts';
 import './Actors/EditorPawn.ts';
 import './Actors/PlayerSpawn.ts';
 import './Actors/Weapon.ts';
+import './Actors/TargetActor.ts';
 

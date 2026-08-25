@@ -4,6 +4,7 @@ import {RegisterClass} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
+import {NVTargetActor} from "./TargetActor.ts";
 
 //Fires a line trace from the camera on LMB - see NVPlayerCharacter.BeginPlay (spawns and
 //attaches one) and PlayerController.HandleMouseClick (routes LMB to it outside editor mode).
@@ -29,13 +30,32 @@ export class NVWeapon extends NVActor {
         const ray = new THREE.Ray(camera.position.clone(), direction);
         const hit = NVScene.worldOctree.rayIntersect(ray);
 
-        //TODO Register hits against target actors once they exist (see TODO.md) - for now just
-        //report what the trace hit.
         if (hit && hit.distance <= NVWeapon.WEAPON_DISTANCE) {
             console.log("Weapon hit at", hit.position, "distance", hit.distance.toFixed(2));
             NVWeapon.ShowImpactMarker(hit.position);
+            NVWeapon.RegisterTargetHit(hit.position);
         } else {
             console.log("Weapon fired - no hit within range");
+        }
+    }
+
+    //Small margin on the bounds check below, since a trace's impact point sits exactly on the
+    //target's surface and floating-point rounding could otherwise put it a hair outside.
+    private static readonly HIT_BOUNDS_EPSILON : number = 0.01;
+
+    //Finds whichever target's bounds the trace's impact point landed in, if any, and registers
+    //the hit on it. Targets register world collision like any other solid mesh (see
+    //NVTargetActor.RegisterCollision), so a wall between the camera and a target already blocks
+    //the trace before it gets this far - this only needs to figure out WHICH actor was hit.
+    private static RegisterTargetHit(position : THREE.Vector3) {
+        for (const actor of NVScene.GetSceneActors()) {
+            if (!(actor instanceof NVTargetActor)) continue;
+
+            const bounds = actor.bounds.clone().expandByScalar(NVWeapon.HIT_BOUNDS_EPSILON);
+            if (bounds.containsPoint(position)) {
+                actor.RegisterHit();
+                return;
+            }
         }
     }
 

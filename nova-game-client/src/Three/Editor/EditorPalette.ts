@@ -27,6 +27,7 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
         items: [
             {label: "Player Start", class: "NVPlayerSpawn"},
             {label: "Goal", class: "NVGoalVolume"},
+            {label: "Target", class: "NVTargetActor"},
         ],
     },
 ];

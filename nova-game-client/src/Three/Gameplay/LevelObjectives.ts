@@ -17,6 +17,14 @@ export class LevelObjectives {
         LevelObjectives.objectives.push(objective);
     }
 
+    //For an objective destroyed outside a full level reset (e.g. a target deleted with the
+    //editor's Delete key) - without this it'd stay registered forever, permanently incomplete,
+    //and the goal would never be satisfiable again.
+    public static Unregister(objective : ILevelObjective) {
+        const index = LevelObjectives.objectives.indexOf(objective);
+        if (index !== -1) LevelObjectives.objectives.splice(index, 1);
+    }
+
     //TODO Call this on level unload/reload once that exists, so objectives don't leak between
     //levels/runs.
     public static Clear() {
