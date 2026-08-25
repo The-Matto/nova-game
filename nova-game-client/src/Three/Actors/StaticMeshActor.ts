@@ -23,9 +23,12 @@ export class NVStaticMeshActor extends NVActor{
 
 
         if (!descripter.properties?.modelPath) {
-            const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
-            //Level JSON can set "properties": { "color": "#rrggbb" } (or any CSS color string)
-            //per-actor; falls back to the old default so existing levels don't need updating.
+            //"properties": { "shape": "sphere" } picks a primitive other than the default box.
+            const shape = (descripter.properties?.shape as string) ?? 'cube';
+            const geometry = shape === 'sphere'
+                ? new THREE.SphereGeometry(descripter.scale.x / 2, 24, 16)
+                : new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
+            //"properties": { "color": "#rrggbb" } overrides the default per-actor.
             const color = (descripter.properties?.color as string) ?? '#c79b9b';
             const material = new THREE.MeshStandardMaterial({color});
             this.scene = new THREE.Mesh(geometry, material);

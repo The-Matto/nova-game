@@ -6,7 +6,15 @@ export function ReactInputHandler() {
 
     //TODO I need to ensure that canvas has focus before I capture the input. I should unbind these functions on lose focus
     useEffect(() => {
+        //True while a text input has focus - typing there shouldn't also move the player.
+        const isTypingIntoInput = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+            return !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+        };
+
         const handleKeyDown = (event: KeyboardEvent) => {
+            if (isTypingIntoInput(event)) return;
+
             if (event.code in keyActions) {
                 event.preventDefault();
 
@@ -16,6 +24,8 @@ export function ReactInputHandler() {
         };
 
         const handleKeyUp = (event: KeyboardEvent) => {
+            if (isTypingIntoInput(event)) return;
+
             if (event.code in keyActions) {
                 event.preventDefault();
 
