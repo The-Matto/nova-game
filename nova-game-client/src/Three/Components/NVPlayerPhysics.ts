@@ -93,11 +93,15 @@ export class NVPlayerPhysics extends NVComponent {
         const deltaPosition = this.playerVelocity.clone().multiplyScalar( deltaTime );
         this.playerCollider.translate( deltaPosition );
 
-        this.playerCollisions();
-
-        //Free-flying is a dev tool for inspecting the level from anywhere, including below
-        //KILL_Z, so it's exempt from the respawn.
-        if (!this.isFreeFlying) this.checkKillZ();
+        //Free-flying (editor mode) is a dev tool for inspecting/moving around the level from
+        //anywhere - no collision response (so it can pass straight through geometry) and no
+        //KILL_Z respawn.
+        if (!this.isFreeFlying) {
+            this.playerCollisions();
+            this.checkKillZ();
+        } else {
+            this.playerOnFloor = false;
+        }
 
         NVPlayerCharacter.GetCamera().GetCamera().position.copy( this.playerCollider.end );
 

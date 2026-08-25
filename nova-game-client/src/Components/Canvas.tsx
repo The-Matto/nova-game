@@ -3,6 +3,7 @@ import {useRef, useEffect} from 'react';
 
 import {Game} from "../Three/Game.ts";
 import {InputInfo} from "../InputMaps.ts";
+import {CursorState} from "../Three/Utility/PlayerGlobals.ts";
 import {GameUIMain} from "./Game/UserInterface/UI-Main.tsx";
 
 
@@ -41,11 +42,17 @@ export const ThreeCanvas = () => {
 
 
         container.addEventListener('click', () => {
-            container.requestPointerLock();
+            //Editor mode / a modal like the level-complete screen needs the real cursor free -
+            //locking it here on every click would fight whatever deliberately released it.
+            if (!CursorState.isCursorNeeded) container.requestPointerLock();
         });
 
         document.addEventListener('pointerlockchange', () => {
-                InputInfo.gameHasFocus = document.pointerLockElement === container;
+                //Pointer lock is deliberately released sometimes (editor mode, a modal UI) but
+                //the game loop still needs to keep ticking and rendering while that's active -
+                //gameHasFocus isn't purely "is the pointer locked".
+                const isLocked = document.pointerLockElement === container;
+                InputInfo.gameHasFocus = isLocked || CursorState.isCursorNeeded;
         });
 
 

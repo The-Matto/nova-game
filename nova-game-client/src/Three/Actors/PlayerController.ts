@@ -1,9 +1,8 @@
-﻿import {InputInfo, keyActions, mousePosition, virtualCursorPosition} from "../../InputMaps.ts";
+﻿import {InputInfo, keyActions, mousePosition} from "../../InputMaps.ts";
 import type {NVPlayerCharacter} from "./PlayerCharacter.ts";
 import {Vector2} from "three";
-import {PlayerStatics, WindowSettings} from "../Utility/PlayerGlobals";
-import {MattoMath} from "../Utility/MathUtils";
-import type {InteractiveElement} from "../../Components/Game/UserInterface/UI-Main";
+import {CursorState, EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditorSelection} from "../Editor/EditorSelection.ts";
 
 export type MoveDirection = "Forward" | "Right" | "Up";
 
@@ -13,7 +12,11 @@ export class PlayerController {
 
     controlledCharacter : NVPlayerCharacter;
 
-    private showMouseCursor : boolean = false;
+    //Unreal-style editor camera controls: the real OS cursor is free to click/drag things
+    //(gizmos, UI) except while the right mouse button is held, during which it looks around
+    //instead. Toggled with 'P'. Editor-mode-ness itself lives in the global EditorState, not
+    //here, so other systems can check it directly.
+    private isRightMouseDown : boolean = false;
 
     constructor(controlledCharacter : NVPlayerCharacter) {
         this.BindInputEvents();
@@ -48,6 +51,19 @@ export class PlayerController {
             isActive: false
         };
 
+        //Flycam up/down - only meaningful while free-flying (NVPlayerPhysics ignores
+        //wishDirection.y otherwise), same as Space/Crouch's free-fly ascend/descend.
+        keyActions["KeyE"] = {
+            startFunc: () => this.MoveUp(1),
+            endFunc: () => {},
+            isActive: false
+        };
+        keyActions["KeyQ"] = {
+            startFunc: () => this.MoveUp(-1),
+            endFunc: () => {},
+            isActive: false
+        };
+
         keyActions["Space"] = {
             //Deliberately called every frame held, not just on press - free-fly ascend needs to
             //rise continuously while held. NVPlayerPhysics.TryJump() is what stops a held Space
@@ -66,17 +82,15 @@ export class PlayerController {
             endFunc: () => this.Crouch(false),
             isActive: false
         };
-        keyActions["Backquote"] = {
+        keyActions["KeyP"] = {
+            //TODO Temporary keybind - this'll move to a menu option later.
             startFunc: () => {
-                if (!keyActions["Backquote"].isEcho){
-                    this.SetShowMouseCursor(!this.GetShowMouseCursor())
-
-                    //Due to input being processed on tick() we cannot use native
-                    //echo detection so crude impl
-                    keyActions["Backquote"].isEcho = true;
+                if (!keyActions["KeyP"].isEcho){
+                    this.ToggleEditorMode();
+                    keyActions["KeyP"].isEcho = true;
                 }
             },
-            endFunc: () => { keyActions["Backquote"].isEcho = false;},
+            endFunc: () => { keyActions["KeyP"].isEcho = false; },
             isActive: false,
             isEcho: false
         };
@@ -99,19 +113,10 @@ export class PlayerController {
         //Handle mouse input
         if (mousePosition.x != 0 || mousePosition.y != 0){
 
-            //Virtual mouse cursor
-            if (this.showMouseCursor)
-            {
-                //TODO Clamp this to the bounds of the canvas
-                virtualCursorPosition.x += mousePosition.x * 200;
-                virtualCursorPosition.y += mousePosition.y* 200;
-
-                virtualCursorPosition.x = MattoMath.Clamp(virtualCursorPosition.x, 0, WindowSettings.windowWidth);
-                virtualCursorPosition.y = MattoMath.Clamp(virtualCursorPosition.y, 0, WindowSettings.windowHeight);
-
-            }
-            else
-            {
+            //In editor mode the real OS cursor moves itself, so mouse movement should only
+            //drive the camera while actively looking (RMB held); outside it, it always looks.
+            const shouldLook = !EditorState.isInEditor || this.isRightMouseDown;
+            if (shouldLook) {
                 this.controlledCharacter.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
             }
 
@@ -132,6 +137,11 @@ export class PlayerController {
             this.controlledCharacter.AddMovementInput("Right", axisValue)
         }
     }
+    private MoveUp = (axisValue : number)=>{
+        if (this.controlledCharacter != undefined){
+            this.controlledCharacter.AddMovementInput("Up", axisValue)
+        }
+    }
 
     private Jump = ()=>{
         if (this.controlledCharacter != undefined){
@@ -150,41 +160,49 @@ export class PlayerController {
         }
     }
 
-    public HandleMouseClick =  (pressedButton : number) => {
+    //Editor-mode-only for now: left click picks whatever actor is under the real cursor (see
+    //EditorSelection). Normal gameplay has nothing that needs left-click yet - UI buttons are
+    //real DOM elements with their own onClick now, they don't route through here.
+    public HandleMouseClick =  (pressedButton : number, clientX : number, clientY : number) => {
 
-        const element = document.getElementById('canvas') as HTMLElement;
+        if (pressedButton !== 0) return;
+        if (!EditorState.isInEditor) return;
 
-        if (this.showMouseCursor && pressedButton === 0){
-            //We are interacting with UI -- TODO We need to add the canvas offset!
-            const rect = element.getBoundingClientRect();
-
-            // Absolute position from the top-left of the document
-            const canvasTop = rect.top + window.scrollY;
-            const canvasLeft = rect.left + window.scrollX;
-
-            //Get object under the virtual cursor
-            const el = document.elementFromPoint(
-                canvasLeft + virtualCursorPosition.x, canvasTop +virtualCursorPosition.y) as InteractiveElement;
-
-            //Trigger the event on the element
-            if (el && typeof el.remoteTrigger === 'function') {
-                el.remoteTrigger();
-            }
+        //A click that landed on a gizmo handle is TransformControls' to handle (starting a
+        //drag), not a new selection attempt - see EditorSelection.IsDragging.
+        if (!this.isRightMouseDown && !EditorSelection.IsDragging()) {
+            EditorSelection.TryPickAtScreenPoint(clientX, clientY);
         }
     }
 
-    public GetShowMouseCursor = () : boolean =>{ return this.showMouseCursor}
-
-    public SetShowMouseCursor = (show : boolean)=>{
-        this.showMouseCursor = show;
-
-        //Reposition cursor to center screen
-        if (show){
-            virtualCursorPosition.x = WindowSettings.windowWidth / 2
-            virtualCursorPosition.x = WindowSettings.windowHeight / 2
-
-        }
+    public SetRightMouseDown = (isDown : boolean) => {
+        this.isRightMouseDown = isDown;
     }
 
+    private ToggleEditorMode = () => {
+        EditorState.isInEditor = !EditorState.isInEditor;
+        CursorState.isCursorNeeded = EditorState.isInEditor;
+
+        if (EditorState.isInEditor) {
+            //Entering: release pointer lock so the real OS cursor is free to click/drag things
+            //precisely (gizmos need real, accurate screen coordinates - see EditorSelection).
+            //Canvas.tsx's pointerlockchange handler keeps gameHasFocus true through this even
+            //though the pointer is no longer locked.
+            this.isRightMouseDown = false;
+            if (document.pointerLockElement) document.exitPointerLock();
+        } else {
+            //Exiting: drop whatever was selected and re-engage pointer lock for the immersive
+            //gameplay feel.
+            EditorSelection.ClearSelection();
+            document.getElementById('canvas')?.requestPointerLock();
+        }
+
+        //Free-fly is a movement concept physics owns for itself; editor mode just happens to
+        //drive it right now. Kept separate so e.g. a future spectator mode could use free-fly
+        //without being "in the editor".
+        if (this.controlledCharacter != undefined) {
+            this.controlledCharacter.GetPhysicsComp().isFreeFlying = EditorState.isInEditor;
+        }
+    }
 
 }

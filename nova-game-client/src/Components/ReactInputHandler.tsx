@@ -32,11 +32,25 @@ export function ReactInputHandler() {
             mousePosition.y = (event.movementY / 500) * PlayerSettings.mouseSensitivityY;
 
         };
-        const handleMouseClick = (event: MouseEvent) => {
+        const handleMouseDown = (event: MouseEvent) => {
             // 0 = Left click, 1 = Middle, 2 = Right
-            if (PlayerStatics.PlayerController && event.button === 0) {
-                PlayerStatics.PlayerController.HandleMouseClick(event.button)
+            if (!PlayerStatics.PlayerController) return;
+
+            if (event.button === 0) {
+                PlayerStatics.PlayerController.HandleMouseClick(event.button, event.clientX, event.clientY)
+            } else if (event.button === 2) {
+                PlayerStatics.PlayerController.SetRightMouseDown(true);
             }
+        }
+        const handleMouseUp = (event: MouseEvent) => {
+            if (event.button === 2) {
+                PlayerStatics.PlayerController?.SetRightMouseDown(false);
+            }
+        }
+        //Editor mode uses the right mouse button to look around, so stop it opening the
+        //browser's native context menu.
+        const handleContextMenu = (event: MouseEvent) => {
+            event.preventDefault();
         }
 
 
@@ -44,12 +58,16 @@ export function ReactInputHandler() {
         document.addEventListener( 'mousemove', handleMouseMove);
         document.addEventListener('keyup', handleKeyUp);
         document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('mousedown', handleMouseClick);
+        document.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('contextmenu', handleContextMenu);
 
         return () => {
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('mousedown', handleMouseMove);
+            document.removeEventListener('mousedown', handleMouseDown);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('contextmenu', handleContextMenu);
             document.removeEventListener('mousemove', handleMouseMove);
 
         };
