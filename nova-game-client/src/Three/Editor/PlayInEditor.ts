@@ -45,6 +45,9 @@ export class PlayInEditor {
         PlayInEditor.levelSnapshot = NVScene.SerializeLevel();
         //The gizmo is an editor tool - don't leave it attached/visible during actual play.
         EditorSelection.ClearSelection();
+        //Actors already placed had BeginPlay() skipped at spawn time since we were still in
+        //editor mode - see NVScene.SpawnActor. Real play is starting now.
+        NVScene.BeginPlayForLevelActors();
 
         const spawnMarker = [...NVScene.GetSceneActors()].find(actor => actor instanceof NVPlayerSpawn);
         const location = spawnMarker ? spawnMarker.scene.position.clone() : new THREE.Vector3();

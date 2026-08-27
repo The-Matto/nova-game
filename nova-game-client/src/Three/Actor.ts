@@ -25,10 +25,26 @@ export class NVActor {
     static replicatedProperties : Set<string>
     static replicateRate : number = 0;
 
-    //Called when object is spawned
+    //True once TryBeginPlay() has actually called BeginPlay() - see TryBeginPlay.
+    private hasBegunPlay : boolean = false;
+
+    //Called once real gameplay actually starts for this actor - never while merely placed/edited
+    //in editor mode. Override this, but call it through TryBeginPlay(), not directly.
+    //TODO An EditorBeginPlay() counterpart (called instead, while still in editor mode) would be
+    //easy to add here if an actor ever needs editor-specific spawn behavior - nothing does yet.
     BeginPlay() : void {
 
     };
+
+    //The actual call site for BeginPlay() - see NVScene.SpawnActor (actors spawned outside
+    //editor mode) and NVScene.BeginPlayForLevelActors (actors already placed before PIE starts).
+    //Guarded so an actor spawned outside editor mode (e.g. by PlayInEditor.RestartPlaying, which
+    //respawns everything while already in play) doesn't get BeginPlay() called on it twice.
+    public TryBeginPlay() : void {
+        if (this.hasBegunPlay) return;
+        this.hasBegunPlay = true;
+        this.BeginPlay();
+    }
 
     public GetForwardVector() : Vector3 {
         const forward = new Vector3();

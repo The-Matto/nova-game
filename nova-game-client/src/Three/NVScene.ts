@@ -8,6 +8,7 @@ import {Octree} from "three/examples/jsm/math/Octree.js";
 import {LevelObjectives} from "./Gameplay/LevelObjectives";
 import {EditorSelection} from "./Editor/EditorSelection";
 import {MainCamera} from "./Camera.ts";
+import {EditorState} from "./Utility/PlayerGlobals.ts";
 
 export class NVScene {
 
@@ -173,9 +174,26 @@ export class NVScene {
         //BeginPlay only once Init (which can be async, e.g. NVStaticMeshActor loading a model)
         //has actually finished - see NVPlayerCharacter.BeginPlay, which needs its own SpawnActor
         //call for its weapon to happen after everything about the player itself is set up.
-        actor.Init(descripter).then(() => actor.BeginPlay());
+        //Skipped entirely while still in editor mode - an actor merely placed/edited hasn't
+        //started real gameplay yet. See BeginPlayForLevelActors, which gives it BeginPlay() once
+        //Play In Editor actually starts.
+        actor.Init(descripter).then(() => {
+            if (!EditorState.isInEditor) actor.TryBeginPlay();
+        });
         console.log("Spawned actor - ", descripter.class);
         return actor;
+    }
+
+    //Actors already in the level only skipped BeginPlay() because they were spawned while still
+    //in editor mode (see SpawnActor) - now that Play In Editor is actually starting, give them
+    //their real BeginPlay(). TryBeginPlay() guards against double-firing on actors that were
+    //instead spawned fresh while already out of editor mode (e.g. PlayInEditor.RestartPlaying's
+    //LoadFromSnapshot, which respawns everything mid-play). Persistent actors (the editor pawn)
+    //are excluded - they never actually play.
+    public static BeginPlayForLevelActors(){
+        for (const actor of NVScene.sceneActors) {
+            if (!NVScene.persistentActors.has(actor)) actor.TryBeginPlay();
+        }
     }
 
     //Despawns an actor. Leaving the scene graph is up to actor.RemoveFromScene() (a pawn
