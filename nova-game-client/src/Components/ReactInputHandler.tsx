@@ -46,6 +46,10 @@ export function ReactInputHandler() {
             // 0 = Left click, 1 = Middle, 2 = Right
             if (!PlayerStatics.PlayerController) return;
 
+            //Ignore clicks on UI overlaying the canvas (it's a DOM sibling, not a descendant).
+            const canvasEl = document.getElementById('canvas');
+            if (!canvasEl?.contains(event.target as Node)) return;
+
             if (event.button === 0) {
                 PlayerStatics.PlayerController.HandleMouseClick(event.button, event.clientX, event.clientY)
             } else if (event.button === 2) {
