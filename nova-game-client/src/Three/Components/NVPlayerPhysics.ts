@@ -28,12 +28,7 @@ export class NVPlayerPhysics extends NVComponent {
     isFreeFlying : boolean = false;
     private flySpeed : number = 15;
 
-    //Guards against one jump press applying multiple impulses. Space is held-checked every
-    //frame (not edge-triggered - free-fly ascend needs continuous input), and playerOnFloor can
-    //stay stale/true for a frame or two after the jump impulse is applied, before collision
-    //detection catches up and reports the player as airborne. Without this guard, holding Space
-    //across that window stacks a second (or third, on a frame hitch) +5 into the same jump,
-    //which is exactly what was producing random jump heights.
+    //Guards against one jump press applying multiple impulses
     private hasJumpedSinceGrounded : boolean = false;
 
     //Normalized direction the player is trying to move this frame, in world space.
@@ -118,7 +113,12 @@ export class NVPlayerPhysics extends NVComponent {
 
     private checkKillZ() {
         if (this.playerCollider.end.y >= NVPlayerPhysics.KILL_Z) return;
+        this.RespawnAtSpawnPoint();
+    }
 
+    //Teleports back to spawn and zeroes velocity - shared by KILL_Z (falling out of the level)
+    //and any other hazard that should kill the player (e.g. NVSpikeActor).
+    public RespawnAtSpawnPoint() {
         const offset = this.spawnPoint.clone().sub(this.playerCollider.end);
         this.playerCollider.translate(offset);
         this.playerVelocity.set(0, 0, 0);
