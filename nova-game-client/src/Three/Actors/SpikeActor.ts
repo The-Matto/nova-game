@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
 import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditableProperty} from "../Editor/EditableProperty.ts";
 
 const SPIKE_GRID_SIZE = 5;
 
@@ -14,6 +15,9 @@ export class NVSpikeActor extends NVActor {
     private bounds = new THREE.Box3();
     private playerWasInside : boolean = false;
     private spikeMaterial : THREE.MeshStandardMaterial;
+
+    @EditableProperty
+    public spikeColor : string = '#8a8f99';
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
@@ -36,7 +40,7 @@ export class NVSpikeActor extends NVActor {
 
         const spikeHeight = descripter.scale.y * 0.8;
         const spikeRadius = Math.min(stepX, stepZ) * 0.35;
-        this.spikeMaterial = new THREE.MeshStandardMaterial({color: '#8a8f99', metalness: 0.6, roughness: 0.4});
+        this.spikeMaterial = new THREE.MeshStandardMaterial({color: this.spikeColor, metalness: 0.6, roughness: 0.4});
         const spikeY = descripter.scale.y / 2 + spikeHeight / 2;
 
         for (let ix = 0; ix < SPIKE_GRID_SIZE; ix++) {
@@ -53,6 +57,10 @@ export class NVSpikeActor extends NVActor {
         }
 
         //Deliberately not added to NVScene.worldOctree - a trigger, not solid geometry.
+    }
+
+    public OnEditablePropertyChanged(key : string) {
+        if (key === 'spikeColor') this.spikeMaterial.color.set(this.spikeColor);
     }
 
     public async Init(descripter : SpawnDescriptor) {

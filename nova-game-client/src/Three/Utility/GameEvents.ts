@@ -1,3 +1,5 @@
+import type {NVActor} from "../Actor.ts";
+
 //Minimal typed pub-sub for gameplay code (Three-side, not React) to notify the UI layer about
 //things without either side needing a direct reference to the other - e.g. the goal volume
 //telling LevelCompleteOverlay the level finished.
@@ -6,6 +8,8 @@ export type GameEventMap = {
     levelComplete : undefined;
     //Fired when ToggleEditorMode runs, so UI can react without polling EditorState.
     editorModeChanged : { isInEditor : boolean };
+    //Fired whenever EditorSelection.SelectActor runs.
+    actorSelectionChanged : { actor : NVActor | null };
 };
 
 type Listener<T> = (payload : T) => void;

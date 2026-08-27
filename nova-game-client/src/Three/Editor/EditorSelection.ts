@@ -4,6 +4,7 @@ import {NVScene} from "../NVScene.ts";
 import type {NVActor} from "../Actor.ts";
 import {MainCamera} from "../Camera.ts";
 import {Game} from "../Game.ts";
+import {GameEvents} from "../Utility/GameEvents.ts";
 
 //Click-to-select + gizmo, for editor mode. A single TransformControls instance is created
 //lazily and reused/reattached on each new selection, rather than spawning a new one per click
@@ -62,6 +63,8 @@ export class EditorSelection {
         } else {
             controls.detach();
         }
+
+        GameEvents.Emit('actorSelectionChanged', {actor});
     }
 
     //Same as SelectActor(null), but skips lazily creating the gizmo if selection is already

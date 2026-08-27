@@ -25,6 +25,25 @@ export class NVActor {
     static replicatedProperties : Set<string>
     static replicateRate : number = 0;
 
+    //Field names marked @EditableProperty (see Editor/EditableProperty.ts).
+    static editableProperties : Set<string>
+
+    public GetEditableProperties() : { key : string, value : unknown }[] {
+        const ctor = this.constructor as typeof NVActor;
+        if (!ctor.editableProperties) return [];
+
+        return [...ctor.editableProperties].map(key => ({
+            key,
+            value: (this as unknown as Record<string, unknown>)[key],
+        }));
+    }
+
+    //Called after the inspector panel writes a new value - override to react (e.g. update a
+    //material color).
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public OnEditablePropertyChanged(_key : string) : void {
+    }
+
     //True once TryBeginPlay() has actually called BeginPlay() - see TryBeginPlay.
     private hasBegunPlay : boolean = false;
 
