@@ -23,6 +23,12 @@ export class NVCamera {
     }
 
     GetCamera = (): THREE.PerspectiveCamera => {return this.camera;}
+
+    //Resets to a specific yaw, zeroing pitch - used when spawning at an NVPlayerSpawn marker so
+    //the player starts facing the way its arrow points.
+    public SetYaw(yawRadians : number) {
+        this.camera.rotation.set(0, yawRadians, 0);
+    }
 }
 
 //Shared across whichever pawn is currently possessed, rather than owned by one actor class.

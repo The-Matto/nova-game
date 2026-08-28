@@ -7,19 +7,18 @@ import {PlayerController} from "../Actors/PlayerController.ts";
 import {GameMode, PlayerStatics} from "../Utility/PlayerGlobals.ts";
 import type {LevelData} from "../ClassDescripter.ts";
 import {EditorSelection} from "./EditorSelection.ts";
+import {MainCamera} from "../Camera.ts";
 
-//Orchestrates "Play In Editor" (PIE): switching between the always-present editor pawn and a
-//real player character spawned fresh each time you test-play the level. See
-//PlayerController.ToggleEditorMode, which calls into this. Also owns startup, via GameMode.
+//Orchestrates Play In Editor: switches between the always-present editor pawn and a real player
+//character spawned fresh each test-play. See PlayerController.ToggleEditorMode.
 export class PlayInEditor {
 
     private static controller : PlayerController;
     private static editorPawn : NVEditorPawn | null = null;
     private static playerPawn : NVPlayerCharacter | null = null;
 
-    //Snapshot of the level taken right before the player is spawned (see StartPlaying) - what
-    //StopPlaying/RestartPlaying respawn from, so PIE never touches the original level file and
-    //editor edits made before pressing 'P' survive the play session.
+    //Taken right before the player spawns (see StartPlaying) - what StopPlaying/RestartPlaying
+    //respawn from, so PIE never touches the original level file.
     private static levelSnapshot : LevelData | null = null;
 
     public static Initialize(){
@@ -58,13 +57,14 @@ export class PlayInEditor {
             scale: new THREE.Vector3(1, 1, 1),
         }) as NVPlayerCharacter;
 
+        MainCamera.SetYaw(spawnMarker?.scene.rotation.y ?? 0);
+
         PlayerStatics.PlayerCharacter = PlayInEditor.playerPawn;
         PlayInEditor.controller.Possess(PlayInEditor.playerPawn);
     }
 
-    //Destroys the player, repossesses the editor pawn, and respawns from the pre-play snapshot
-    //so anything placed or triggered during play is discarded - without touching the original
-    //level file, so edits made before pressing 'P' are kept.
+    //Destroys the player, repossesses the editor pawn, and respawns from the pre-play snapshot -
+    //discards anything placed/triggered during play, without touching the original level file.
     public static StopPlaying(){
         if (PlayInEditor.playerPawn){
             NVScene.DestroyActor(PlayInEditor.playerPawn);

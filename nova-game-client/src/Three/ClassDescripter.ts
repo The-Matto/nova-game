@@ -5,6 +5,8 @@ import * as THREE from "three";
 export type SpawnDescriptor = {
     class: string,
     location: THREE.Vector3,
+    //Euler angles in radians. Optional - omitted/existing level JSON defaults to no rotation.
+    rotation?: THREE.Vector3,
     scale: THREE.Vector3,
     properties?: Record<string, unknown>
 };

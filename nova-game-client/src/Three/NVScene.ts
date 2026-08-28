@@ -120,9 +120,8 @@ export class NVScene {
         await NVScene.LoadLevel(NVScene.currentLevelPath);
     }
 
-    //Same as ReloadLevel, but respawns from an in-memory snapshot instead of re-fetching from
-    //disk - see NVScene.SerializeLevel() and PlayInEditor, which uses this so editor edits
-    //survive a Play In Editor session without ever touching the original level file.
+    //Same as ReloadLevel, but respawns from an in-memory snapshot (see SerializeLevel) instead
+    //of re-fetching from disk - lets PIE edits survive without touching the level file.
     public static LoadFromSnapshot(data : LevelData){
         NVScene.ResetLevelState();
         NVScene.SpawnActorsFromData(data);
@@ -167,16 +166,13 @@ export class NVScene {
 
 
         actor.SetWorldLocation(descripter.location)
+        if (descripter.rotation) actor.SetWorldRotation(descripter.rotation);
         //Lets EditorSelection walk up from a raycast hit to the owning actor. Re-tagged in
         //NVStaticMeshActor.LoadModel too, since that swaps `scene` out for a loaded model.
         actor.scene.userData.nvActor = actor;
 
-        //BeginPlay only once Init (which can be async, e.g. NVStaticMeshActor loading a model)
-        //has actually finished - see NVPlayerCharacter.BeginPlay, which needs its own SpawnActor
-        //call for its weapon to happen after everything about the player itself is set up.
-        //Skipped entirely while still in editor mode - an actor merely placed/edited hasn't
-        //started real gameplay yet. See BeginPlayForLevelActors, which gives it BeginPlay() once
-        //Play In Editor actually starts.
+        //BeginPlay waits for Init (async, e.g. loading a model) to finish, and is skipped entirely
+        //in editor mode - see BeginPlayForLevelActors, which fires it once PIE actually starts.
         actor.Init(descripter).then(() => {
             if (!EditorState.isInEditor) actor.TryBeginPlay();
         });
@@ -184,21 +180,16 @@ export class NVScene {
         return actor;
     }
 
-    //Actors already in the level only skipped BeginPlay() because they were spawned while still
-    //in editor mode (see SpawnActor) - now that Play In Editor is actually starting, give them
-    //their real BeginPlay(). TryBeginPlay() guards against double-firing on actors that were
-    //instead spawned fresh while already out of editor mode (e.g. PlayInEditor.RestartPlaying's
-    //LoadFromSnapshot, which respawns everything mid-play). Persistent actors (the editor pawn)
-    //are excluded - they never actually play.
+    //Gives BeginPlay() to actors placed while still in editor mode (see SpawnActor).
+    //TryBeginPlay() guards against double-firing on ones spawned fresh mid-play instead.
     public static BeginPlayForLevelActors(){
         for (const actor of NVScene.sceneActors) {
             if (!NVScene.persistentActors.has(actor)) actor.TryBeginPlay();
         }
     }
 
-    //Despawns an actor. Leaving the scene graph is up to actor.RemoveFromScene() (a pawn
-    //no-ops it, since its `scene` is the shared camera). Also rebuilds the collision octree,
-    //since a deleted actor's collision would otherwise stick around as a phantom hit.
+    //Despawns an actor and rebuilds collision so it doesn't linger as a phantom hit. Leaving the
+    //scene graph is up to actor.RemoveFromScene() (a pawn no-ops it, sharing the camera).
     public static DestroyActor(actor : NVActor){
         NVScene.sceneActors.delete(actor);
         NVScene.persistentActors.delete(actor);

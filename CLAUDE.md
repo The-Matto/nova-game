@@ -76,3 +76,7 @@ See [TODO.md](TODO.md) for the current task list.
 - Keep comments light. A short line for a genuinely non-obvious decision (why, not what) is
   welcome; don't add a comment to every new method/field, and don't restate what the code already
   says.
+- Use `DragNumberInput` (`Components/UI/DragNumberInput.tsx`) for every numeric input in the
+  editor UI, instead of a native `<input type="number">` — click to type a value, drag left/right
+  to scrub it, no spinner buttons. `Vector3Input` (`Components/UI/Vector3Input.tsx`) builds an
+  X/Y/Z triple of these on top, with the standard red/green/blue axis colors.

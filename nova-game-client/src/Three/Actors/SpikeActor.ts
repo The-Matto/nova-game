@@ -4,20 +4,47 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
 import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
+import {NVScene} from "../NVScene.ts";
 
 const SPIKE_GRID_SIZE = 5;
 
-//A cube base with a 5x5 grid of cone spikes on top - a trigger, not solid geometry, that
-//respawns the player on touch (same as KILL_Z).
+//A cube base with a 5x5 grid of cone spikes. Always solid (doubles as a platform); a trigger
+//respawns the player on touch whenever extended. isTimed cycles extended/retracted, interpolated.
 @RegisterClass("NVSpikeActor")
 export class NVSpikeActor extends NVActor {
 
     private bounds = new THREE.Box3();
-    private playerWasInside : boolean = false;
+    //True if the player was both inside `bounds` and the spikes were dangerous last frame - not
+    //just "inside", so spikes extending under a player already standing there still kill them.
+    private wasDangerous : boolean = false;
     private spikeMaterial : THREE.MeshStandardMaterial;
+    private spikeComponents : StaticMeshComponent[] = [];
+    private baseMesh : THREE.Mesh;
+    private extendedY : number = 0;
+    private retractedY : number = 0;
 
-    @EditableProperty
+    //0 = fully retracted, 1 = fully extended - see Tick/UpdateExtension.
+    private extension : number = 1;
+    private cycleTime : number = 0;
+
+    @EditableProperty()
     public spikeColor : string = '#8a8f99';
+
+    @EditableProperty()
+    public isTimed : boolean = false;
+
+    //Only meaningful (and only shown) once isTimed is on - see UpdateExtension's own Math.max(0)
+    //clamps, which these mirror.
+    @EditableProperty({min: 0, editCondition: 'isTimed'})
+    public upDuration : number = 5;
+
+    @EditableProperty({min: 0, editCondition: 'isTimed'})
+    public downDuration : number = 5;
+
+    //Floored just above 0 rather than at it - UpdateExtension divides by this, so the UI shouldn't
+    //offer a value it has to silently reinterpret.
+    @EditableProperty({min: 0.01, editCondition: 'isTimed'})
+    public transitionDuration : number = 1;
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
@@ -25,11 +52,11 @@ export class NVSpikeActor extends NVActor {
         this.scene = new THREE.Group();
 
         const baseMaterial = new THREE.MeshStandardMaterial({color: '#2b2b2b'});
-        new StaticMeshComponent(
+        this.baseMesh = new StaticMeshComponent(
             this,
             new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z),
             baseMaterial,
-        );
+        ).mesh;
 
         //Spikes span most of the cube's top face, leaving a small margin at the edges.
         const margin = 0.15;
@@ -41,22 +68,25 @@ export class NVSpikeActor extends NVActor {
         const spikeHeight = descripter.scale.y * 0.8;
         const spikeRadius = Math.min(stepX, stepZ) * 0.35;
         this.spikeMaterial = new THREE.MeshStandardMaterial({color: this.spikeColor, metalness: 0.6, roughness: 0.4});
-        const spikeY = descripter.scale.y / 2 + spikeHeight / 2;
+
+        //Extended: tip pokes up above the cube. Retracted: sunk back down flush with its top.
+        this.extendedY = descripter.scale.y / 2 + spikeHeight / 2;
+        this.retractedY = descripter.scale.y / 2 - spikeHeight / 2;
 
         for (let ix = 0; ix < SPIKE_GRID_SIZE; ix++) {
             for (let iz = 0; iz < SPIKE_GRID_SIZE; iz++) {
                 const x = -usableWidth / 2 + ix * stepX;
                 const z = -usableDepth / 2 + iz * stepZ;
-                new StaticMeshComponent(
+                this.spikeComponents.push(new StaticMeshComponent(
                     this,
                     new THREE.ConeGeometry(spikeRadius, spikeHeight, 8),
                     this.spikeMaterial,
-                    new THREE.Vector3(x, spikeY, z),
-                );
+                    new THREE.Vector3(x, this.extendedY, z),
+                ));
             }
         }
 
-        //Deliberately not added to NVScene.worldOctree - a trigger, not solid geometry.
+        //Not added to the world octree here - RegisterCollision() does that (called from Init()).
     }
 
     public OnEditablePropertyChanged(key : string) {
@@ -68,13 +98,24 @@ export class NVSpikeActor extends NVActor {
         this.RegisterCollision();
     }
 
-    //No real collision - just keeps `bounds` current after an editor move.
+    //The base never moves (only the cones do), so this only needs registering once at spawn.
+    //Always solid, even extended - danger is a separate overlap test against the spike tips.
     public RegisterCollision() {
         this.bounds.setFromObject(this.scene);
+        NVScene.worldOctree.fromGraphNode(this.baseMesh);
     }
 
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
+
+        if (this.isTimed) this.UpdateExtension(deltaTime);
+        else this.extension = 1;
+
+        const y = THREE.MathUtils.lerp(this.retractedY, this.extendedY, this.extension);
+        for (const spike of this.spikeComponents) spike.mesh.position.y = y;
+
+        //Only dangerous once mostly extended - lets the timer make retracted spikes safe.
+        const isExtended = !this.isTimed || this.extension > 0.5;
 
         //Hazards are gameplay-only
         if (EditorState.isInEditor) return;
@@ -85,10 +126,36 @@ export class NVSpikeActor extends NVActor {
         const playerCollider = physics.playerCollider;
         const playerIsInside = this.bounds.containsPoint(playerCollider.start)
             || this.bounds.containsPoint(playerCollider.end);
+        const isDangerous = playerIsInside && isExtended;
 
-        if (playerIsInside && !this.playerWasInside) {
+        if (isDangerous && !this.wasDangerous) {
             physics.RespawnAtSpawnPoint();
         }
-        this.playerWasInside = playerIsInside;
+        this.wasDangerous = isDangerous;
+    }
+
+    //Cycles: extended for upDuration, interpolate down over transitionDuration, retracted for
+    //downDuration, interpolate up over transitionDuration, repeat.
+    private UpdateExtension(deltaTime : number) {
+        const up = Math.max(this.upDuration, 0);
+        const down = Math.max(this.downDuration, 0);
+        //Clamped above 0 so a 0 (or negative) transitionDuration can't divide by zero - it just
+        //makes the interpolation phase effectively instantaneous instead.
+        const transition = Math.max(this.transitionDuration, 0.0001);
+        const cycleLength = up + transition + down + transition;
+
+        this.cycleTime = (this.cycleTime + deltaTime) % cycleLength;
+        let t = this.cycleTime;
+
+        if (t < up) { this.extension = 1; return; }
+        t -= up;
+
+        if (t < transition) { this.extension = 1 - t / transition; return; }
+        t -= transition;
+
+        if (t < down) { this.extension = 0; return; }
+        t -= down;
+
+        this.extension = t / transition;
     }
 }

@@ -4,6 +4,7 @@ import type {SpawnDescriptor} from "./ClassDescripter.ts";
 import type {NVComponent} from "./Components/NVComponent.ts";
 import {Vector3} from "three";
 import {NVScene} from "./NVScene.ts";
+import type {EditablePropertyOptions} from "./Editor/EditableProperty.ts";
 
 //Base class which every game object inherits from
 export class NVActor {
@@ -25,17 +26,19 @@ export class NVActor {
     static replicatedProperties : Set<string>
     static replicateRate : number = 0;
 
-    //Field names marked @EditableProperty (see Editor/EditableProperty.ts).
-    static editableProperties : Set<string>
+    //Fields marked @EditableProperty (see Editor/EditableProperty.ts), keyed by field name.
+    static editableProperties : Map<string, EditablePropertyOptions>
 
-    public GetEditableProperties() : { key : string, value : unknown }[] {
+    //Excludes fields whose editCondition currently reads falsy - the inspector panel never gets
+    //a chance to render what this leaves out, per EditConditionHides semantics.
+    public GetEditableProperties() : { key : string, value : unknown, options : EditablePropertyOptions }[] {
         const ctor = this.constructor as typeof NVActor;
         if (!ctor.editableProperties) return [];
 
-        return [...ctor.editableProperties].map(key => ({
-            key,
-            value: (this as unknown as Record<string, unknown>)[key],
-        }));
+        const self = this as unknown as Record<string, unknown>;
+        return [...ctor.editableProperties]
+            .map(([key, options]) => ({key, value: self[key], options}))
+            .filter(({options}) => !options.editCondition || Boolean(self[options.editCondition]));
     }
 
     //Called after the inspector panel writes a new value - override to react (e.g. update a
@@ -44,21 +47,22 @@ export class NVActor {
     public OnEditablePropertyChanged(_key : string) : void {
     }
 
+    //Called on every actor when the player respawns - override to reset state that shouldn't
+    //survive a death (e.g. NVFallingPlatform putting itself back together).
+    public OnPlayerRespawned() : void {
+    }
+
     //True once TryBeginPlay() has actually called BeginPlay() - see TryBeginPlay.
     private hasBegunPlay : boolean = false;
 
-    //Called once real gameplay actually starts for this actor - never while merely placed/edited
-    //in editor mode. Override this, but call it through TryBeginPlay(), not directly.
-    //TODO An EditorBeginPlay() counterpart (called instead, while still in editor mode) would be
-    //easy to add here if an actor ever needs editor-specific spawn behavior - nothing does yet.
+    //Real gameplay only, not while merely placed in editor mode - call via TryBeginPlay(), not directly.
+    //TODO Add an EditorBeginPlay() counterpart if an actor ever needs editor-specific spawn setup.
     BeginPlay() : void {
 
     };
 
-    //The actual call site for BeginPlay() - see NVScene.SpawnActor (actors spawned outside
-    //editor mode) and NVScene.BeginPlayForLevelActors (actors already placed before PIE starts).
-    //Guarded so an actor spawned outside editor mode (e.g. by PlayInEditor.RestartPlaying, which
-    //respawns everything while already in play) doesn't get BeginPlay() called on it twice.
+    //Call site for BeginPlay() - see NVScene.SpawnActor/BeginPlayForLevelActors. Guarded against
+    //double-firing (e.g. PlayInEditor.RestartPlaying respawning mid-play).
     public TryBeginPlay() : void {
         if (this.hasBegunPlay) return;
         this.hasBegunPlay = true;
@@ -83,9 +87,8 @@ export class NVActor {
     //Called when object is destroyed
     BeginDestroy() : void {};
 
-    //Registers this actor's mesh with the world collision octree. No-op by default - override
-    //for real collision (see NVStaticMeshActor). Also what NVScene.RebuildWorldOctree() calls on
-    //every actor after something moves, since the octree can't be updated in place.
+    //Registers this actor with the world collision octree - no-op by default, override for real
+    //collision (see NVStaticMeshActor).
     public RegisterCollision() : void {
     }
 
@@ -101,7 +104,14 @@ export class NVActor {
         return {
             class: this.spawnDescriptor.class,
             location: this.scene.position.clone(),
-            scale: this.spawnDescriptor.scale,
+            rotation: new THREE.Vector3(this.scene.rotation.x, this.scene.rotation.y, this.scene.rotation.z),
+            //Multiplies the baked spawn scale with the live gizmo multiplier so a respawn matches
+            //size. Reads x/y/z only, never Vector3 methods - a JSON-loaded descriptor isn't one.
+            scale: new THREE.Vector3(
+                (this.spawnDescriptor.scale?.x ?? 1) * this.scene.scale.x,
+                (this.spawnDescriptor.scale?.y ?? 1) * this.scene.scale.y,
+                (this.spawnDescriptor.scale?.z ?? 1) * this.scene.scale.z,
+            ),
             properties: this.spawnDescriptor.properties,
         };
     }
@@ -119,6 +129,10 @@ export class NVActor {
     }
     public SetWorldLocation(newLocation : THREE.Vector3) : void {
         this.scene.position.set(newLocation.x, newLocation.y, newLocation.z);
+    };
+
+    public SetWorldRotation(rotation : THREE.Vector3) : void {
+        this.scene.rotation.set(rotation.x, rotation.y, rotation.z);
     };
 
     //TODO Make this private
