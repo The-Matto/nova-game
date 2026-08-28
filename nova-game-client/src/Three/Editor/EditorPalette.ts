@@ -5,6 +5,9 @@ export interface SpawnableItem {
     //Matches a class name registered via @RegisterClass (see ClassDescripter.ts).
     class : string;
     properties? : Record<string, unknown>;
+    //Defaults to (1,1,1) - see EditorSpawning.SpawnFromPalette. Override for an actor whose
+    //useful default shape isn't a unit cube (e.g. a platform, which wants to start flat and wide).
+    scale? : { x : number, y : number, z : number };
 }
 
 export interface SpawnableCategory {
@@ -29,6 +32,8 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             {label: "Goal", class: "NVGoalVolume"},
             {label: "Target", class: "NVTargetActor"},
             {label: "Spikes", class: "NVSpikeActor"},
+            //Matches the scale of TestWorld.json's jump platforms.
+            {label: "Falling Platform", class: "FallingPlatform", scale: {x: 1.8, y: 0.3, z: 2}},
         ],
     },
 ];

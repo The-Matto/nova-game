@@ -22,7 +22,9 @@ export class EditorSpawning {
         const actor = NVScene.SpawnActor({
             class: item.class,
             location,
-            scale: new THREE.Vector3(1, 1, 1),
+            scale: item.scale
+                ? new THREE.Vector3(item.scale.x, item.scale.y, item.scale.z)
+                : new THREE.Vector3(1, 1, 1),
             properties: item.properties,
         });
 

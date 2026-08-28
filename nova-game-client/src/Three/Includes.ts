@@ -1,7 +1,6 @@
 ﻿
-//All includes that are not referenced anywhere.
-//This is required so that these classes get evaluated properly and have their decorators ran
-//to properly register them
+//Side-effect-only imports: nothing else references these files, but their @RegisterClass
+//decorators need to run to register the classes.
 
 import './Actors/StaticMeshActor.ts';
 import './Actors/GoalVolume.ts';
@@ -11,4 +10,5 @@ import './Actors/PlayerSpawn.ts';
 import './Actors/Weapon.ts';
 import './Actors/TargetActor.ts';
 import './Actors/SpikeActor.ts';
+import './Actors/FallingPlatform.ts';
 
