@@ -5,9 +5,8 @@ import {NVScene} from "../NVScene.ts";
 import {NVWeapon} from "./Weapon.ts";
 import * as THREE from "three";
 
-//The real gameplay pawn: gravity, collision, jumping, sprinting. Spawned fresh each time the
-//player starts Playing In Editor (see PlayInEditor.StartPlaying), at wherever the level's
-//NVPlayerSpawn marker is - never placed directly in level JSON.
+//The real gameplay pawn: gravity, collision, jumping, sprinting. Spawned fresh each PIE start
+//at the level's NVPlayerSpawn marker - never placed directly in level JSON.
 @RegisterClass("NVPlayerCharacter") @ReplicatedActor(12)
 export class NVPlayerCharacter extends NVPawn {
 

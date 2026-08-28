@@ -50,9 +50,8 @@ export abstract class NVPawn extends NVActor {
         this.wishDirection.set(0, 0, 0);
         PlayerStatics.PlayerController?.ProcessInput();
 
-        //Clamp (rather than always normalize) so a single held direction keeps its full speed
-        //and only combined directions (e.g. W+D) get scaled down to stop diagonal movement
-        //being faster than cardinal movement.
+        //Clamp, not normalize, so a single held direction keeps full speed and only combined
+        //ones (e.g. W+D) get scaled down.
         if (this.wishDirection.lengthSq() > 1) this.wishDirection.normalize();
         this.playerPhysics.SetWishDirection(this.wishDirection);
 

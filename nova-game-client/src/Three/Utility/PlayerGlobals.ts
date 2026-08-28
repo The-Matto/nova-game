@@ -42,9 +42,8 @@ export const EditorState = {
     isInEditor: GameMode.appMode === "createLevel",
 };
 
-//True whenever the real OS cursor is needed and pointer lock is deliberately released -
-//editor mode, or a modal like the level-complete screen. See Canvas.tsx's pointerlockchange
-//handling.
+//True whenever the OS cursor is needed and pointer lock is deliberately released - editor mode
+//or a modal like the level-complete screen (see Canvas.tsx's pointerlockchange handling).
 export const CursorState = {
     isCursorNeeded: GameMode.appMode === "createLevel",
 };

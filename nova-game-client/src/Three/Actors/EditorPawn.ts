@@ -1,9 +1,8 @@
 import {NVPawn} from "../Pawn.ts";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 
-//What you fly around and build the level with in editor mode: permanently free-flying, no-clip.
-//Spawned once at startup (see PlayInEditor.Initialize) and never destroyed - it's repossessed
-//each time the player stops Playing In Editor, rather than being respawned.
+//What you fly around and build the level with: permanently free-flying, no-clip. Spawned once
+//at startup and repossessed (not respawned) each time PIE stops.
 @RegisterClass("NVEditorPawn")
 export class NVEditorPawn extends NVPawn {
 

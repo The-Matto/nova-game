@@ -6,10 +6,8 @@ import {EditorSpawning} from "../../../Three/Editor/EditorSpawning";
 import {NVScene} from "../../../Three/NVScene";
 import type {LevelData} from "../../../Three/ClassDescripter";
 
-//The list of spawnable actors, shown only while in editor mode. Clicking an item spawns it in
-//front of the camera and selects it - see EditorSpawning. Also has Export/Import for the level
-//snapshot (see NVScene.SerializeLevel/LoadFromSnapshot) - clipboard-based for now, ahead of a
-//real upload/download flow.
+//Spawnable-actor list, shown in editor mode - clicking an item spawns and selects it (see
+//EditorSpawning). Also Export/Import for the level snapshot, clipboard-based for now.
 export const EditorPalettePanel = () => {
 
     //Reflects EditorState.isInEditor's current value (rather than always starting false) since

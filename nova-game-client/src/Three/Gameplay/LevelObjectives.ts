@@ -1,6 +1,5 @@
-//Tracks the objectives a level requires before its goal volume will let the player finish.
-//Nothing implements ILevelObjective yet (e.g. "shoot all targets") - once something does, it
-//registers itself here (typically from its own BeginPlay) and this needs no changes.
+//Tracks the objectives a level requires before its goal volume lets the player finish. An
+//implementer registers itself here, typically from its own BeginPlay.
 
 export interface ILevelObjective {
     //Shown to the player when listing what's still incomplete.
@@ -17,9 +16,8 @@ export class LevelObjectives {
         LevelObjectives.objectives.push(objective);
     }
 
-    //For an objective destroyed outside a full level reset (e.g. a target deleted with the
-    //editor's Delete key) - without this it'd stay registered forever, permanently incomplete,
-    //and the goal would never be satisfiable again.
+    //For an objective destroyed outside a full level reset (e.g. Delete key) - without this it'd
+    //stay registered forever, permanently incomplete.
     public static Unregister(objective : ILevelObjective) {
         const index = LevelObjectives.objectives.indexOf(objective);
         if (index !== -1) LevelObjectives.objectives.splice(index, 1);

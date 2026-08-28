@@ -1,8 +1,7 @@
 import type {NVActor} from "../Actor.ts";
 
-//Minimal typed pub-sub for gameplay code (Three-side, not React) to notify the UI layer about
-//things without either side needing a direct reference to the other - e.g. the goal volume
-//telling LevelCompleteOverlay the level finished.
+//Minimal typed pub-sub so Three-side gameplay code can notify the React UI layer without either
+//side holding a direct reference to the other.
 
 export type GameEventMap = {
     levelComplete : undefined;

@@ -47,9 +47,8 @@ export class NVStaticMeshActor extends NVActor{
 
     private async LoadModel(modelPath : string)  {
         this.scene = await AssetManager.RequestModel(modelPath);
-        //Re-tag: NVScene.SpawnActor tagged the old placeholder Object3D before this swapped
-        //`scene` out for the loaded model, so EditorSelection would otherwise walk up from a
-        //click on this model to nothing.
+        //Re-tag: SpawnActor tagged the old placeholder before this swapped `scene` out for the
+        //loaded model, so EditorSelection couldn't otherwise walk up from a click on it.
         this.scene.userData.nvActor = this;
         //levelRoot, not scene directly, so this gets torn down along with everything else on
         //NVScene.ReloadLevel().

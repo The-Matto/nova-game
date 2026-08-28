@@ -73,9 +73,11 @@ See [TODO.md](TODO.md) for the current task list.
   Controller style for new gameplay code rather than introducing a different framework or an ECS.
 - Keep an eye on `// TODO` comments scattered in recently touched files — they're the live task
   list until this doc says otherwise.
-- Keep comments light. A short line for a genuinely non-obvious decision (why, not what) is
-  welcome; don't add a comment to every new method/field, and don't restate what the code already
-  says.
+- Keep comments light — this has been flagged repeatedly, so treat it as a hard cap, not a
+  suggestion: 1 line is the norm, 2 is the absolute max, and most methods/fields need zero. A
+  comment earns its place only for a genuinely non-obvious *why*; don't add one to every new
+  method/field, and don't restate what the code already says. If it doesn't fit in 1–2 lines,
+  that's a sign to cut it down, not to keep writing.
 - Use `DragNumberInput` (`Components/UI/DragNumberInput.tsx`) for every numeric input in the
   editor UI, instead of a native `<input type="number">` — click to type a value, drag left/right
   to scrub it, no spinner buttons. `Vector3Input` (`Components/UI/Vector3Input.tsx`) builds an

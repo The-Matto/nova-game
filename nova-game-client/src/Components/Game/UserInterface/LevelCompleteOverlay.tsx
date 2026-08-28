@@ -12,9 +12,8 @@ export const LevelCompleteOverlay = () => {
         return GameEvents.On('levelComplete', () => {
             setIsComplete(true);
 
-            //Release pointer lock so the real OS cursor is free to click "Play Again" - same
-            //approach as editor mode. Canvas.tsx's pointerlockchange handler keeps the game loop
-            //running through this via CursorState, rather than freezing on "unfocused".
+            //Release pointer lock so the OS cursor can click "Play Again" - same as editor mode.
+            //Canvas.tsx's pointerlockchange handler keeps the game loop running via CursorState.
             CursorState.isCursorNeeded = true;
             if (document.pointerLockElement) document.exitPointerLock();
         });

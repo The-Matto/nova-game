@@ -5,9 +5,8 @@ import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {LevelObjectives} from "../Gameplay/LevelObjectives";
 import {GameEvents} from "../Utility/GameEvents";
 
-//The level's end goal. Placed in the level JSON like any other actor (location + scale), but
-//it's a trigger volume, not solid geometry - the player walks straight through it. Entering it
-//checks LevelObjectives and fires a GameEvent for the UI layer to react to.
+//The level's end goal - a trigger volume, not solid geometry. Entering it checks LevelObjectives
+//and fires a GameEvent for the UI layer to react to.
 @RegisterClass("NVGoalVolume")
 export class NVGoalVolume extends NVActor {
 

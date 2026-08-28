@@ -12,10 +12,8 @@ export class PlayerController {
     //Whichever pawn currently has control - the editor pawn or the player character, never both.
     private possessedPawn : NVPawn | null = null;
 
-    //Unreal-style editor camera controls: the real OS cursor is free to click/drag things
-    //(gizmos, UI) except while the right mouse button is held, during which it looks around
-    //instead. Toggled with 'P'. Editor-mode-ness itself lives in the global EditorState, not
-    //here, so other systems can check it directly.
+    //Unreal-style editor camera: OS cursor is free to click/drag things except while RMB is
+    //held, which looks around instead. Toggled with 'P'.
     private isRightMouseDown : boolean = false;
 
     constructor() {
@@ -32,11 +30,8 @@ export class PlayerController {
     }
 
     private BindInputEvents(){
-        //Axis values here are just direction (1 / -1) — actual speed and framerate scaling
-        //happen in NVPlayerPhysics, not here.
-        //W/E double as the gizmo's move/rotate mode while in editor mode without RMB held (see
-        //TrySetTransformMode) - Unreal-style, so they fall back to normal movement whenever
-        //that condition isn't met (gameplay, or actively flying with RMB held).
+        //Axis values here are just direction (±1) - speed/framerate scaling is NVPlayerPhysics's
+        //job. W/E also double as the gizmo's move/rotate mode in editor mode without RMB held.
         keyActions["KeyW"] = {
             startFunc: () => {
                 if (EditorState.isInEditor && !this.isRightMouseDown) {
@@ -97,9 +92,8 @@ export class PlayerController {
         };
 
         keyActions["Space"] = {
-            //Deliberately called every frame held, not just on press - free-fly ascend needs to
-            //rise continuously while held. NVPlayerPhysics.TryJump() is what stops a held Space
-            //from stacking multiple jump impulses into one jump.
+            //Called every frame held, not just on press - free-fly ascend needs continuous rise.
+            //TryJump() itself stops a held Space from stacking multiple impulses.
             startFunc: () => this.Jump(),
             endFunc: () => {},
             isActive: false
@@ -193,10 +187,8 @@ export class PlayerController {
         this.possessedPawn?.Sprint(isStart)
     }
 
-    //In editor mode, left click picks whatever actor is under the real cursor (see
-    //EditorSelection). Otherwise it's routed to the possessed pawn as a fire input (see
-    //NVPawn.Fire) - UI buttons are real DOM elements with their own onClick, they don't route
-    //through here.
+    //In editor mode, left click picks the actor under the cursor (EditorSelection). Otherwise
+    //it's routed to the possessed pawn as fire input - UI buttons have their own onClick, not this.
     public HandleMouseClick =  (pressedButton : number, clientX : number, clientY : number) => {
 
         if (pressedButton !== 0) return;

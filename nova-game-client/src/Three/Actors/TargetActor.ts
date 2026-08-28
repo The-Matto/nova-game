@@ -4,10 +4,8 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {LevelObjectives, type ILevelObjective} from "../Gameplay/LevelObjectives.ts";
 
-//A shootable cube - starts red, turns pink when hit by NVWeapon's line trace (see NVWeapon.Fire,
-//which finds the hit target by bounds-checking the trace's impact point against `bounds`).
-//Registers itself as a level objective so NVGoalVolume won't let the player finish until every
-//target in the level has been hit.
+//A shootable cube - starts red, turns pink when hit (see NVWeapon.Fire). Registers itself as a
+//level objective so NVGoalVolume won't let the player finish until every target's been hit.
 @RegisterClass("NVTargetActor")
 export class NVTargetActor extends NVActor implements ILevelObjective {
 

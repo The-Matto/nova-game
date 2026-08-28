@@ -48,9 +48,8 @@ export const ThreeCanvas = () => {
         });
 
         document.addEventListener('pointerlockchange', () => {
-                //Pointer lock is deliberately released sometimes (editor mode, a modal UI) but
-                //the game loop still needs to keep ticking and rendering while that's active -
-                //gameHasFocus isn't purely "is the pointer locked".
+                //Pointer lock is deliberately released sometimes (editor mode, a modal UI), but
+                //the game loop still needs to tick/render then - gameHasFocus isn't purely this.
                 const isLocked = document.pointerLockElement === container;
                 InputInfo.gameHasFocus = isLocked || CursorState.isCursorNeeded;
         });

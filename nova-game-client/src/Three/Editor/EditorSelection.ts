@@ -6,9 +6,8 @@ import {MainCamera} from "../Camera.ts";
 import {Game} from "../Game.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 
-//Click-to-select + gizmo, for editor mode. A single TransformControls instance is created
-//lazily and reused/reattached on each new selection, rather than spawning a new one per click
-//(the old debug "Editor" button did that, leaking one into the scene every time).
+//Click-to-select + gizmo for editor mode. One TransformControls instance is created lazily and
+//reused per selection, instead of leaking a new one into the scene every click.
 export class EditorSelection {
 
     private static transformControls : TransformControls | null = null;
@@ -34,9 +33,8 @@ export class EditorSelection {
         return EditorSelection.transformControls;
     }
 
-    //True while a gizmo handle is actively being dragged. PlayerController checks this before
-    //treating a click as a new selection attempt, so starting a drag on a handle doesn't also
-    //re-run picking for that same click.
+    //True while a gizmo handle is being dragged - PlayerController checks this so starting a
+    //drag doesn't also re-run click-to-select picking.
     public static IsDragging() : boolean {
         return EditorSelection.transformControls?.dragging ?? false;
     }
@@ -67,18 +65,15 @@ export class EditorSelection {
         GameEvents.Emit('actorSelectionChanged', {actor});
     }
 
-    //Same as SelectActor(null), but skips lazily creating the gizmo if selection is already
-    //empty and nothing has been selected yet this session - so e.g. reloading a level that was
-    //never edited doesn't spawn a TransformControls instance for no reason.
+    //Same as SelectActor(null), but skips lazily creating the gizmo if nothing's selected yet -
+    //so reloading an unedited level doesn't spawn a TransformControls for no reason.
     public static ClearSelection() {
         if (!EditorSelection.transformControls && !EditorSelection.selectedActor) return;
         EditorSelection.SelectActor(null);
     }
 
-    //Raycasts from the camera through a real screen point (page coordinates, e.g. a MouseEvent's
-    //clientX/clientY) and selects whichever actor's mesh is hit, if any; deselects on a miss.
-    //Only level content is tested (NVScene.levelRoot), so the gizmo itself is never a pick
-    //target.
+    //Raycasts a screen point and selects whichever actor's mesh is hit (deselecting on a miss).
+    //Only NVScene.levelRoot is tested, so the gizmo itself is never a pick target.
     public static TryPickAtScreenPoint(clientX : number, clientY : number) {
         const canvasEl = document.getElementById('canvas');
         if (!canvasEl) return;
