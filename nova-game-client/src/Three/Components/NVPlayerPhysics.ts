@@ -12,13 +12,11 @@ export class NVPlayerPhysics extends NVComponent {
     playerOnFloor: boolean = false;
     playerVelocity = new THREE.Vector3();
 
-    //Where the player gets sent back to after falling below KILL_Z. Captured from wherever the
-    //capsule actually starts, so this stays correct without depending on level-spawn wiring.
+    //Where the player respawns after KILL_Z - taken from the collider's actual start position.
     private spawnPoint = this.playerCollider.end.clone();
 
-    //UE-style "Kill Z": fall below this world-space height and you're teleported back to spawn
-    //instead of falling forever. TODO Make this level-configurable once world settings exist in
-    //the level JSON, rather than a fixed global.
+    //UE-style "Kill Z" - fall below this and respawn instead of falling forever.
+    //TODO Make level-configurable once world settings exist in the level JSON.
     private static readonly KILL_Z : number = -50;
 
     isSprinting : boolean = false;
@@ -28,36 +26,33 @@ export class NVPlayerPhysics extends NVComponent {
     isFreeFlying : boolean = false;
     private flySpeed : number = 15;
 
-    //Guards against one jump press applying multiple impulses
+    //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
 
-    //Normalized direction the player is trying to move this frame, in world space.
-    //Set once per frame by NVPlayerCharacter from accumulated input.
+    //Coyote time - TryJump allows a jump within COYOTE_TIME of leaving the ground.
+    private timeSinceGrounded : number = 0;
+    private static readonly COYOTE_TIME : number = 0.3;
+
+    //Normalized per-frame movement input, set by NVPlayerCharacter.
     private wishDirection = new THREE.Vector3();
 
-    //Friction/drag applied to velocity every frame, expressed as a decay rate (units: 1/second).
+    //Drag applied every frame, as a decay rate (units: 1/second).
     private readonly FRICTION : number = 4;
 
-    //Acceleration is tuned to equal FRICTION, which makes walkSpeed/sprintSpeed/flySpeed the
-    //actual top speed the player settles at when holding a direction (accel == friction decay
-    //rate => steady state speed == moveSpeed). Keep them equal unless you want top speed to
-    //drift away from the tuned values.
+    //Equals FRICTION, so walkSpeed/sprintSpeed/flySpeed are the actual top speed reached.
     private readonly GROUND_ACCELERATION : number = 4;
-    //Reduced air control: turning/starting to move mid-air is sluggish compared to the ground,
-    //which is standard FPS feel and stops strafing in the air from being "free" extra speed.
+    //Reduced air control - standard FPS feel.
     private readonly AIR_ACCELERATION : number = 1.5;
 
     TickComponent(delta : number){
         this.updatePlayer(delta);
     }
 
-    //Called once per frame with the accumulated, normalized movement input for that frame.
     public SetWishDirection(direction : Vector3){
         this.wishDirection.copy(direction);
     }
 
-    //Moves the collider (and the KILL_Z respawn point) to a world location - see NVPawn.Init,
-    //which calls this once on spawn.
+    //Moves the collider and the KILL_Z respawn point - NVPawn.Init calls this once on spawn.
     public SetSpawnLocation(location : THREE.Vector3){
         const segment = this.playerCollider.end.clone().sub(this.playerCollider.start);
         this.playerCollider.end.copy(location);
@@ -65,27 +60,28 @@ export class NVPlayerPhysics extends NVComponent {
         this.spawnPoint.copy(location);
     }
 
-    //Applies a jump impulse, but only once per ground contact - see hasJumpedSinceGrounded.
-    //Returns whether it actually jumped, in case callers want to react (sound/animation later).
+    //Applies a jump impulse once per ground contact - see hasJumpedSinceGrounded.
     public TryJump(impulse : number) : boolean {
-        if (!this.playerOnFloor || this.hasJumpedSinceGrounded) return false;
+        if (this.timeSinceGrounded > NVPlayerPhysics.COYOTE_TIME || this.hasJumpedSinceGrounded) return false;
 
-        this.playerVelocity.y += impulse;
+        //Set, not added - clears residual fall velocity from the coyote window instead of just
+        //partly cancelling it.
+        this.playerVelocity.y = impulse;
         this.hasJumpedSinceGrounded = true;
         return true;
     }
 
     private updatePlayer( deltaTime : number ) {
 
+        this.timeSinceGrounded += deltaTime;
         this.applyMovementInput(deltaTime);
 
         if ( !this.playerOnFloor && !this.isFreeFlying) {
             this.playerVelocity.y -= this.GRAVITY * deltaTime;
         }
 
-        //Friction only touches the horizontal plane so falling/jumping stays crisp and isn't
-        //quietly bled off by the same drag that slows down walking. Free-flying has no gravity
-        //to arrest vertical drift, so it gets damped on all three axes instead.
+        //Friction only touches the horizontal plane so jumps/falls stay crisp; free-flying also
+        //damps vertical since it has no gravity to arrest drift.
         const damping : number = Math.exp( -this.FRICTION * deltaTime ) - 1;
         this.playerVelocity.x += this.playerVelocity.x * damping;
         this.playerVelocity.z += this.playerVelocity.z * damping;
@@ -96,9 +92,7 @@ export class NVPlayerPhysics extends NVComponent {
         const deltaPosition = this.playerVelocity.clone().multiplyScalar( deltaTime );
         this.playerCollider.translate( deltaPosition );
 
-        //Free-flying (editor mode) is a dev tool for inspecting/moving around the level from
-        //anywhere - no collision response (so it can pass straight through geometry) and no
-        //KILL_Z respawn.
+        //Free-flying (editor mode) skips collision and KILL_Z entirely.
         if (!this.isFreeFlying) {
             this.playerCollisions();
             this.checkKillZ();
@@ -116,12 +110,14 @@ export class NVPlayerPhysics extends NVComponent {
         this.RespawnAtSpawnPoint();
     }
 
-    //Teleports back to spawn and zeroes velocity - shared by KILL_Z (falling out of the level)
-    //and any other hazard that should kill the player (e.g. NVSpikeActor).
+    //Teleports to spawn and zeroes velocity - shared by KILL_Z and hazards. Also lets every actor
+    //react via NVActor.OnPlayerRespawned.
     public RespawnAtSpawnPoint() {
         const offset = this.spawnPoint.clone().sub(this.playerCollider.end);
         this.playerCollider.translate(offset);
         this.playerVelocity.set(0, 0, 0);
+
+        for (const actor of NVScene.GetSceneActors()) actor.OnPlayerRespawned();
     }
 
     private applyMovementInput(deltaTime : number) {
@@ -136,22 +132,18 @@ export class NVPlayerPhysics extends NVComponent {
             ? this.GROUND_ACCELERATION
             : this.AIR_ACCELERATION;
 
-        //deltaTime-scaled so acceleration feels the same regardless of framerate.
         const speedDelta : number = moveSpeed * accel * deltaTime;
 
         if (this.isFreeFlying) {
-            //Free-fly can move on all three axes (including straight up/down).
             this.playerVelocity.addScaledVector(this.wishDirection, speedDelta);
         } else {
-            //Grounded/airborne movement never touches vertical velocity directly — that's
-            //owned by gravity, jump impulses, and collision response.
+            //Vertical velocity is never touched here - owned by gravity, jumps, and collision.
             this.playerVelocity.x += this.wishDirection.x * speedDelta;
             this.playerVelocity.z += this.wishDirection.z * speedDelta;
         }
     }
 
     private playerCollisions() {
-
 
         //TODO Implement a spacial grid for collision checking instead of looping every mesh
         const result = NVScene.worldOctree.capsuleIntersect(this.playerCollider);
@@ -160,23 +152,18 @@ export class NVPlayerPhysics extends NVComponent {
         if (result) {
 
             this.playerOnFloor = result.normal.y > 0;
+            if (this.playerOnFloor) {
+                this.timeSinceGrounded = 0;
+                this.hasJumpedSinceGrounded = false;
+            }
 
-            //Cancel the velocity component driving into the surface on any contact, not just
-            //walls/slopes. Landing on the floor used to leave vertical velocity untouched, so a
-            //jump's impulse landed on top of whatever residual fall speed was left over from the
-            //previous landing instead of a clean baseline - that's what was making jump height
-            //inconsistent (TryJump only guards against re-triggering, not this).
+            //Cancels velocity into the surface on any contact - fixes inconsistent jump height
+            //from stale fall speed carrying over into the next landing.
             this.playerVelocity.addScaledVector(result.normal, -result.normal.dot(this.playerVelocity));
-
 
             if (result.depth >= 1e-10)
                 this.playerCollider.translate(result.normal.multiplyScalar(result.depth));
 
         }
-
-        //Once we're confirmed airborne (not just mid-jump with a stale collision result from
-        //before liftoff), allow the next ground contact to jump again.
-        if (!this.playerOnFloor) this.hasJumpedSinceGrounded = false;
-
     }
 }
