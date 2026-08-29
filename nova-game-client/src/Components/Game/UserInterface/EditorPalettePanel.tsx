@@ -39,8 +39,13 @@ export const EditorPalettePanel = () => {
         }))
         .filter(category => category.items.length > 0);
 
+    //JSON.stringify replacer - rounds every number to 3 decimal places, so a gizmo-dragged value
+    //like 5.32523346241 gets stored as 5.325 instead of full floating-point noise.
+    const roundNumbers = (_key : string, value : unknown) =>
+        typeof value === 'number' ? Math.round(value * 1000) / 1000 : value;
+
     const exportLevel = async () => {
-        const json = JSON.stringify(NVScene.SerializeLevel(), null, 2);
+        const json = JSON.stringify(NVScene.SerializeLevel(), roundNumbers, 2);
         try {
             await navigator.clipboard.writeText(json);
             setCopied(true);
