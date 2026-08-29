@@ -1,7 +1,6 @@
 import {useEffect, useState} from "react";
 import * as THREE from "three";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
-import {EditorState} from "../../../Three/Utility/PlayerGlobals";
 import {NVScene} from "../../../Three/NVScene";
 import type {NVActor} from "../../../Three/Actor";
 import {DragNumberInput} from "../../UI/DragNumberInput";
@@ -16,41 +15,39 @@ const Vector3Row = ({label, vector, onChange, sensitivity} : {
     onChange : (axis : Axis, value : number) => void,
     sensitivity? : number,
 }) => (
-    <div className="flex items-center gap-1 text-sm">
-        <span className="w-14 shrink-0">{label}</span>
+    <div className="flex items-center gap-1 text-xs">
+        <span className="w-11 shrink-0">{label}</span>
         <Vector3Input
             vector={vector}
             onChange={onChange}
             sensitivity={sensitivity}
-            className="w-full min-w-0 bg-slate-800 rounded-lg px-1 py-0.5 text-orange-100 outline-none text-xs"
+            className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none text-xs"
         />
     </div>
 );
 
-//Shown while in editor mode with an actor selected - Location/Rotation/Scale plus one input per
-//@EditableProperty field, writing straight back to the live actor instance on change.
+//Sits left of the spawn-actor menu (see EditorMenu) while an actor's selected - Location/
+//Rotation/Scale plus one input per @EditableProperty field, writing straight back to the live
+//actor instance on change.
 export const EditorInspectorPanel = () => {
 
-    const [isVisible, setIsVisible] = useState(EditorState.isInEditor);
     const [selectedActor, setSelectedActor] = useState<NVActor | null>(null);
     //Bumped to force a re-render, since edits mutate the actor directly rather than going through
     //React state.
     const [, forceRerender] = useState(0);
 
     useEffect(() => {
-        const offMode = GameEvents.On('editorModeChanged', ({isInEditor}) => setIsVisible(isInEditor));
         const offSelection = GameEvents.On('actorSelectionChanged', ({actor}) => setSelectedActor(actor));
         //Keeps Location/Rotation/Scale live while the gizmo is being dragged in the 3D view -
         //that mutates the actor directly, same as forceRerender's own doc comment above.
         const offTransform = GameEvents.On('actorTransformChanged', () => forceRerender(n => n + 1));
         return () => {
-            offMode();
             offSelection();
             offTransform();
         };
     }, []);
 
-    if (!isVisible || !selectedActor) return null;
+    if (!selectedActor) return null;
 
     const setValue = (key : string, value : unknown) => {
         (selectedActor as unknown as Record<string, unknown>)[key] = value;
@@ -74,25 +71,25 @@ export const EditorInspectorPanel = () => {
         THREE.MathUtils.radToDeg(rotation.z),
     );
 
-    return <div className="absolute top-4 right-4 z-30 w-56 bg-slate-900 rounded-xl p-4 text-orange-500">
-        <div className="text-xl font-bold mb-2">{selectedActor.constructor.name}</div>
+    return <div className="pointer-events-auto w-56 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-3 text-orange-500">
+        <div className="text-base font-bold mb-1.5">{selectedActor.constructor.name}</div>
 
-        <div className="flex flex-col gap-1 mb-2">
+        <div className="flex flex-col gap-1.5 mb-2">
             <Vector3Row label="Location" vector={position} onChange={setTransform(position)} sensitivity={0.05} />
             <Vector3Row label="Rotation" vector={rotationDegrees} onChange={setTransform(rotation)} sensitivity={1} />
             <Vector3Row label="Scale" vector={scale} onChange={setTransform(scale)} sensitivity={0.02} />
         </div>
 
         {properties.length > 0 && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
                 {properties.map(({key, value, options}) => (
-                    <label key={key} className="flex items-center gap-2 text-sm">
-                        <span className="w-20 shrink-0 capitalize">{key}</span>
+                    <label key={key} className="flex items-center gap-2 text-xs">
+                        <span className="w-16 shrink-0 capitalize">{key}</span>
                         {options.choices ? (
                             <select
                                 value={String(value)}
                                 onChange={e => setValue(key, e.target.value)}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-2 py-0.5 text-orange-100 outline-none cursor-pointer"
+                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none cursor-pointer"
                             >
                                 {options.choices.map(choice => (
                                     <option key={choice} value={choice}>{choice}</option>
@@ -110,21 +107,21 @@ export const EditorInspectorPanel = () => {
                                 onChange={v => setValue(key, v)}
                                 min={options.min}
                                 max={options.max}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-2 py-0.5 text-orange-100 outline-none"
+                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
                             />
                         ) : isHexColor(value) ? (
                             <input
                                 type="color"
                                 value={value}
                                 onChange={e => setValue(key, e.target.value)}
-                                className="flex-1 h-6 bg-slate-800 rounded-lg outline-none cursor-pointer"
+                                className="flex-1 h-5 bg-slate-800 rounded-lg outline-none cursor-pointer"
                             />
                         ) : (
                             <input
                                 type="text"
                                 value={String(value)}
                                 onChange={e => setValue(key, e.target.value)}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-2 py-0.5 text-orange-100 outline-none"
+                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
                             />
                         )}
                     </label>

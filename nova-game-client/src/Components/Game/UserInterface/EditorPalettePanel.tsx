@@ -1,33 +1,21 @@
-import {useEffect, useState} from "react";
-import {GameEvents} from "../../../Three/Utility/GameEvents";
-import {EditorState, PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
+import {useState} from "react";
+import {PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
 import {EDITOR_PALETTE} from "../../../Three/Editor/EditorPalette";
 import {EditorSpawning} from "../../../Three/Editor/EditorSpawning";
 import {NVScene} from "../../../Three/NVScene";
 import type {LevelData} from "../../../Three/ClassDescripter";
 
-//Spawnable-actor list, shown in editor mode - clicking an item spawns and selects it (see
-//EditorSpawning). Also Export/Import for the level snapshot, clipboard-based for now.
+//Sits at the far right (see EditorMenu) - clicking an item spawns and selects it (see
+//EditorSpawning). Also Export/Import for the level snapshot, clipboard-based for now. Unmounted
+//along with the rest of EditorMenu on leaving editor mode, so search/import state doesn't need
+//resetting by hand - it just starts fresh next mount.
 export const EditorPalettePanel = () => {
 
-    //Reflects EditorState.isInEditor's current value (rather than always starting false) since
-    //the game now launches straight into editor mode - see PlayInEditor.Initialize.
-    const [isVisible, setIsVisible] = useState(EditorState.isInEditor);
     const [search, setSearch] = useState("");
     const [copied, setCopied] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [importText, setImportText] = useState("");
     const [importError, setImportError] = useState<string | null>(null);
-
-    useEffect(() => {
-        return GameEvents.On('editorModeChanged', ({isInEditor}) => {
-            setIsVisible(isInEditor);
-            //Don't carry a stale search across editor sessions.
-            if (!isInEditor) setSearch("");
-        });
-    }, []);
-
-    if (!isVisible) return null;
 
     const query = search.trim().toLowerCase();
     //Categories with nothing matching the search drop out entirely, rather than showing an
@@ -75,25 +63,25 @@ export const EditorPalettePanel = () => {
         setImportError(null);
     };
 
-    return <div className="absolute top-4 left-4 z-30 w-56 max-h-[80vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
-        <div className="text-xl font-bold mb-3">Editor</div>
+    return <div className="pointer-events-auto w-36 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
+        <div className="text-x2 font-bold mb-3">Editor</div>
 
         <button
-            className="w-full mb-3 bg-emerald-700 hover:bg-emerald-600 rounded-lg px-3 py-2 text-sm font-bold cursor-pointer"
+            className="w-full mb-3 bg-emerald-700 hover:bg-emerald-600 rounded-lg px-1.5 py-1 text-xs font-bold cursor-pointer"
             onClick={() => PlayerStatics.PlayerController?.EnterPlayMode()}
         >
             ▶ Play
         </button>
 
-        <div className="flex gap-2 mb-3">
+        <div className="flex flex-col gap-2 mb-3">
             <button
-                className="flex-1 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm cursor-pointer"
+                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
                 onClick={exportLevel}
             >
                 {copied ? "Copied!" : "Export"}
             </button>
             <button
-                className="flex-1 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm cursor-pointer"
+                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
                 onClick={() => {
                     setShowImport(v => !v);
                     setImportError(null);
@@ -114,7 +102,7 @@ export const EditorPalettePanel = () => {
                 />
                 {importError && <div className="text-sm text-red-400">{importError}</div>}
                 <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm cursor-pointer"
+                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
                     onClick={importLevel}
                 >
                     Load
@@ -141,7 +129,7 @@ export const EditorPalettePanel = () => {
                     {category.items.map(item => (
                         <button
                             key={item.label}
-                            className="flex items-center gap-2 text-left bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 cursor-pointer"
+                            className="flex items-center gap-2 text-left bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
                             onClick={() => EditorSpawning.SpawnFromPalette(item)}
                         >
                             <img

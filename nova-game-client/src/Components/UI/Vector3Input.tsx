@@ -16,7 +16,7 @@ export const Vector3Input = ({vector, onChange, sensitivity, className} : {
     sensitivity? : number,
     className? : string,
 }) => (
-    <div className="flex gap-1">
+    <div className="flex flex-1 min-w-0 gap-1">
         {(['x', 'y', 'z'] as const).map(axis => (
             <div key={axis} className="flex items-center gap-0.5 flex-1 min-w-0">
                 <span className={`text-xs font-bold ${AXIS_COLORS[axis]}`}>{axis.toUpperCase()}</span>
