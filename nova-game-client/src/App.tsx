@@ -4,6 +4,7 @@ import './App.css'
 import {ThreeCanvas} from "./Components/Canvas.tsx";
 import {ReactInputHandler} from "./Components/ReactInputHandler.tsx";
 import {MainMenu} from "./Components/Game/UserInterface/MainMenu.tsx";
+import {HomeLink} from "./Components/HomeLink.tsx";
 
 function App() {
 
@@ -12,12 +13,16 @@ function App() {
     const [gameStarted, setGameStarted] = useState(false);
 
     if (!gameStarted) {
-        return <MainMenu onStart={() => setGameStarted(true)} />;
+        return <>
+            <HomeLink/>
+            <MainMenu onStart={() => setGameStarted(true)} />
+        </>;
     }
 
     return (
         <>
-          <p id="fps-counter" className="fixed top-2 left-2 z-20 text-white text-xs">FPS: 0</p>
+          <HomeLink/>
+          <p id="fps-counter" className="fixed top-9 left-2 z-20 text-white text-xs">FPS: 0</p>
           <ReactInputHandler/>
           <ThreeCanvas/>
         </>
