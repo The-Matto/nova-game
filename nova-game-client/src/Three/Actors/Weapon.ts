@@ -1,10 +1,11 @@
 import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
-import {RegisterClass} from "../ClassDescripter.ts";
+import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {NVTargetActor} from "./TargetActor.ts";
+import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
 
 //Fires a line trace from the camera on LMB - see NVPlayerCharacter.BeginPlay (spawns it) and
 //PlayerController.HandleMouseClick (routes LMB outside editor mode). Never placed in level JSON.
@@ -13,6 +14,16 @@ export class NVWeapon extends NVActor {
 
     //TODO Make this a per-weapon property once there's more than one weapon type.
     private static readonly WEAPON_DISTANCE : number = 100;
+
+    //Viewmodel offset from the camera - right, down, and slightly forward, standard FPS placement.
+    private static readonly VIEWMODEL_OFFSET = new THREE.Vector3(0.25, -0.25, -0.5);
+
+    constructor(descripter : SpawnDescriptor) {
+        super(descripter);
+
+        const material = new THREE.MeshStandardMaterial({color: '#2b2b2b'});
+        new StaticMeshComponent(this, new THREE.BoxGeometry(0.1, 0.12, 0.4), material, NVWeapon.VIEWMODEL_OFFSET);
+    }
 
     //TODO Debug-only - drop this once there's a real hit-reaction (e.g. a target actor flashing).
     private static readonly IMPACT_MARKER_LIFETIME_MS : number = 5000;
