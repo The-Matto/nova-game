@@ -15,10 +15,10 @@ export const TargetsRemaining = () => {
         return () => cancelAnimationFrame(frame);
     }, []);
 
-    //One square per remaining target - just a placeholder icon for now.
+    //One icon per remaining target - served straight from public/, no import needed.
     return <div className="absolute top-6 left-6 flex gap-2">
         {LevelObjectives.GetIncomplete().map((objective, i) => (
-            <div key={i} className="w-10 h-10 bg-white" title={objective.label} />
+            <img key={i} src="/T_NV_Target.png" alt="" className="w-10 h-10" title={objective.label} />
         ))}
     </div>;
 };
