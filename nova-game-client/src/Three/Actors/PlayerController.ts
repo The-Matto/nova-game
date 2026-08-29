@@ -231,11 +231,11 @@ export class PlayerController {
     }
 
     //'P' - starts a fresh PIE session from editor mode; during gameplay it opens/closes the
-    //pause menu instead of exiting straight to the editor (see ReturnToEditor for that).
+    //pause menu instead of exiting straight to the editor (see ReturnToEditor for that). Pausing
+    //itself isn't editor-only - only entering the editor is (see the appMode check below).
     public ToggleEditorMode = () => {
-        if (GameMode.appMode !== "createLevel") return;
-
         if (EditorState.isInEditor) {
+            if (GameMode.appMode !== "createLevel") return;
             this.EnterPlayMode();
             return;
         }

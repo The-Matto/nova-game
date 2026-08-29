@@ -37,8 +37,8 @@ export const LevelCompleteOverlay = () => {
         UIState.isModalOpen = false;
     };
 
-    //TODO Point this at a real menu screen once one exists - reload is the closest stand-in for
-    //"start over" available today.
+    //A full reload rather than an in-app transition, but MainMenu is what App.tsx renders first
+    //either way, so this does land back on the real menu now.
     const returnToMenu = () => {
         window.location.reload();
     };
