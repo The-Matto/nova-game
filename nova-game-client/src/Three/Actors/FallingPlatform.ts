@@ -23,12 +23,12 @@ export class NVFallingPlatform extends NVActor {
     //Matches NVPlayerPhysics.GRAVITY.
     private static readonly GRAVITY = 12;
     private static readonly DEACTIVATE_AFTER_FALLING = 5;
-    private static readonly WARNING_DURATION = 0.5;
+    private static readonly WARNING_DURATION = 0.15;
     private static readonly IDLE_COLOR = '#8a6d3b';
     private static readonly WARNING_COLOR = '#c0392b';
 
     @EditableProperty({min: 0})
-    public fallDelay : number = 3;
+    public fallDelay : number = .5;
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);

@@ -3,19 +3,37 @@
     {
       "class": "NVPlayerSpawn",
       "location": {
-        "x": 1, "y": 1, "z": 1
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 1, "y": 1, "z": 1
+        "x": 1,
+        "y": 1,
+        "z": 1
       }
     },
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": 0, "y": 0, "z": 0
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 5, "y": 0.1, "z": 5
+        "x": 5,
+        "y": 0.1,
+        "z": 5
       },
       "properties": {
         "color": "#8a9199"
@@ -24,36 +42,61 @@
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": 0, "y": 0, "z": -5
+        "x": 0,
+        "y": 0,
+        "z": -5
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 5, "y": 5, "z": 1
+        "x": 5,
+        "y": 5,
+        "z": 1
       },
       "properties": {
         "modelPath": "RoundedCube.glb"
       }
     },
-
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": -1.5, "y": 0.5, "z": 1
+        "x": -1.5,
+        "y": 0.5,
+        "z": 1
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 0.6, "y": 1, "z": 0.6
+        "x": 0.6,
+        "y": 1,
+        "z": 0.6
       },
       "properties": {
         "color": "#e07a3f"
       }
     },
-
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": 4.2, "y": 0.15, "z": 0
+        "x": 4.2,
+        "y": 0.15,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 1.8, "y": 0.3, "z": 2
+        "x": 1.8,
+        "y": 0.3,
+        "z": 2
       },
       "properties": {
         "color": "#3fa7a0"
@@ -62,10 +105,19 @@
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": 6.8, "y": 0.4, "z": 0
+        "x": 6.8,
+        "y": 0.4,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 1.8, "y": 0.3, "z": 2
+        "x": 1.8,
+        "y": 0.3,
+        "z": 2
       },
       "properties": {
         "color": "#3fa7a0"
@@ -74,48 +126,185 @@
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": 9.4, "y": 0.65, "z": 0
+        "x": 26.35745925100975,
+        "y": 0.65,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 1.8, "y": 0.3, "z": 2
-      },
-      "properties": {
-        "color": "#3fa7a0"
-      }
-    },
-    {
-      "class": "NVStaticMeshActor",
-      "location": {
-        "x": 12.4, "y": 0.65, "z": 0
-      },
-      "scale": {
-        "x": 3, "y": 0.3, "z": 3
+        "x": 3,
+        "y": 0.3,
+        "z": 3
       },
       "properties": {
         "color": "#e8c547"
       }
     },
-
     {
       "class": "NVStaticMeshActor",
       "location": {
-        "x": 12.4, "y": 1.8, "z": 0
+        "x": 25.879112172117384,
+        "y": 1.8,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 0.3, "y": 2, "z": 0.3
+        "x": 0.3,
+        "y": 2,
+        "z": 0.3
       },
       "properties": {
         "color": "#e0473f"
       }
     },
-
     {
       "class": "NVGoalVolume",
       "location": {
-        "x": 12.4, "y": 1.6, "z": 0
+        "x": 26.241971402076995,
+        "y": 1.6,
+        "z": 0.09445618613251172
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
-        "x": 2.5, "y": 2, "z": 2.5
+        "x": 2.5,
+        "y": 2,
+        "z": 2.5
+      }
+    },
+    {
+      "class": "NVCannon",
+      "location": {
+        "x": 6.736020605973596,
+        "y": 0.8445401856158055,
+        "z": -3.569467133491821
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "properties": {
+        "fireInterval": 2
+      }
+    },
+    {
+      "class": "FallingPlatform",
+      "location": {
+        "x": 9.613202781274204,
+        "y": 0.3952652603422573,
+        "z": -0.5046616149619767
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.8,
+        "y": 0.3,
+        "z": 2
+      },
+      "properties": {
+        "fallDelay": 0.5
+      }
+    },
+    {
+      "class": "FallingPlatform",
+      "location": {
+        "x": 12.73044206274728,
+        "y": 0.8743061767693674,
+        "z": -0.5320615539216565
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.8,
+        "y": 0.3,
+        "z": 2
+      },
+      "properties": {
+        "fallDelay": 0.5
+      }
+    },
+    {
+      "class": "NVSpikeActor",
+      "location": {
+        "x": 21.443446730926986,
+        "y": 0.6038244417186713,
+        "z": 0.18700850010520664
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "properties": {
+        "spikeColor": "#8a8f99",
+        "isTimed": true,
+        "upDuration": 2,
+        "downDuration": 2,
+        "transitionDuration": 0.2
+      }
+    },
+    {
+      "class": "NVStaticMeshActor",
+      "location": {
+        "x": 17.01488741291247,
+        "y": 0.4586063502605702,
+        "z": 0.27150163862584153
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4.9768420280647465,
+        "y": 1,
+        "z": 2.317625150386894
+      }
+    },
+    {
+      "class": "NVTargetActor",
+      "location": {
+        "x": 17.115036627455332,
+        "y": 2.9092042101382356,
+        "z": -3.2269267446644707
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
       }
     }
   ]
