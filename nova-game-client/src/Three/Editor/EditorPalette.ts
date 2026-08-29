@@ -15,19 +15,12 @@ export interface SpawnableCategory {
     items : SpawnableItem[];
 }
 
-//TODO Once levels can reference real models from a Cloudflare bucket, generate the Meshes
-//category from its listing instead of hardcoding shapes here.
 export const EDITOR_PALETTE : SpawnableCategory[] = [
-    {
-        label: "Meshes",
-        items: [
-            {label: "Cube", class: "NVStaticMeshActor"},
-            {label: "Sphere", class: "NVStaticMeshActor", properties: {shape: "sphere"}},
-        ],
-    },
     {
         label: "Gameplay",
         items: [
+            //Defaults to a cube - see NVStaticMeshActor's own "shape" dropdown for the rest.
+            {label: "Static Mesh", class: "NVStaticMeshActor"},
             {label: "Player Start", class: "NVPlayerSpawn"},
             {label: "Goal", class: "NVGoalVolume"},
             //z is the disc's thickness now (see NVTargetActor's rotated cylinder) - thin by default.
