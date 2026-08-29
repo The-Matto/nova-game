@@ -4,10 +4,12 @@ import {EditorState, UIState} from "../../../../Three/Utility/PlayerGlobals";
 import {Crosshair} from "./Crosshair";
 import {TimerDisplay} from "./TimerDisplay";
 import {TargetsRemaining} from "./TargetsRemaining";
+import {CountdownDisplay} from "./CountdownDisplay";
 
-//In-game HUD - crosshair, timer, targets remaining, and a home for future elements like ammo/
-//health. Hidden in editor mode and behind any menu (UIState.isModalOpen isn't event-driven, so
-//poll it each frame - the same live-read pattern the HUD's own children already use).
+//In-game HUD - crosshair, timer, targets remaining, the pre-run countdown, and a home for future
+//elements like ammo/health. Hidden in editor mode and behind any menu (UIState.isModalOpen isn't
+//event-driven, so poll it each frame - the same live-read pattern the HUD's own children already
+//use).
 export const HUD = () => {
 
     const [isInEditor, setIsInEditor] = useState(EditorState.isInEditor);
@@ -33,5 +35,6 @@ export const HUD = () => {
         <Crosshair />
         <TimerDisplay />
         <TargetsRemaining />
+        <CountdownDisplay />
     </div>;
 };

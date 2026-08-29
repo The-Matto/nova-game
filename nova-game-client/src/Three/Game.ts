@@ -10,6 +10,7 @@ import {InputInfo} from "../InputMaps.ts";
 import {ClientNetDriver} from "../NetDriver/client-net-driver.ts";
 import {GameStats} from "./Utility/PlayerGlobals";
 import {TickLevelTimer} from "./Utility/LevelTimer";
+import {TickCountdown} from "./Utility/Countdown";
 import {UiDOMInterop} from "./UI/ui-DOM-interop";
 import {acceleratedRaycast, computeBoundsTree, disposeBoundsTree} from "three-mesh-bvh";
 
@@ -69,6 +70,7 @@ export class Game {
              GameStats.deltaTime = Math.min( 0.05, this.clock.getDelta() );
             GameStats.fps = 1 / GameStats.deltaTime;
             TickLevelTimer(GameStats.deltaTime);
+            TickCountdown(GameStats.deltaTime);
 
        // console.log(Game.scene.GetSceneActors());
         //Call tick on every registered actor

@@ -31,7 +31,7 @@ export class NVEditorPawn extends NVPawn {
     Fire() {
     }
 
-    //Free-flying skips checkKillZ and every hazard no-ops in editor mode, so this never fires -
+    //Free-flying skips checkKillY and every hazard no-ops in editor mode, so this never fires -
     //but NVPawn declares it abstract.
     PlayerDeath() {
     }

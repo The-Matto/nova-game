@@ -5,7 +5,8 @@ import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
 import {NVPlayerSpawn} from "../Actors/PlayerSpawn.ts";
 import {PlayerController} from "../Actors/PlayerController.ts";
 import {GameMode, PlayerStatics} from "../Utility/PlayerGlobals.ts";
-import {ResetLevelTimer, StopLevelTimer} from "../Utility/LevelTimer.ts";
+import {StopLevelTimer} from "../Utility/LevelTimer.ts";
+import {Countdown, StartCountdown} from "../Utility/Countdown.ts";
 import type {LevelData} from "../ClassDescripter.ts";
 import {EditorSelection} from "./EditorSelection.ts";
 import {MainCamera} from "../Camera.ts";
@@ -42,7 +43,6 @@ export class PlayInEditor {
     }
 
     public static StartPlaying(){
-        ResetLevelTimer();
         PlayInEditor.levelSnapshot = NVScene.SerializeLevel();
         //The gizmo is an editor tool - don't leave it attached/visible during actual play.
         EditorSelection.ClearSelection();
@@ -52,6 +52,7 @@ export class PlayInEditor {
 
         const spawnMarker = [...NVScene.GetSceneActors()].find(actor => actor instanceof NVPlayerSpawn);
         const location = spawnMarker ? spawnMarker.scene.position.clone() : new THREE.Vector3();
+        const yaw = spawnMarker?.scene.rotation.y ?? 0;
 
         PlayInEditor.playerPawn = NVScene.SpawnActor({
             class: "NVPlayerCharacter",
@@ -59,16 +60,24 @@ export class PlayInEditor {
             scale: new THREE.Vector3(1, 1, 1),
         }) as NVPlayerCharacter;
 
-        MainCamera.SetYaw(spawnMarker?.scene.rotation.y ?? 0);
+        MainCamera.SetYaw(yaw);
+        //Remembered so a later retry faces the player the same way, not wherever they were
+        //looking when they died/paused - see NVPlayerPhysics.RespawnAtSpawnPoint.
+        PlayInEditor.playerPawn.GetPhysicsComp().SetSpawnYaw(yaw);
 
         PlayerStatics.PlayerCharacter = PlayInEditor.playerPawn;
         PlayInEditor.controller.Possess(PlayInEditor.playerPawn);
+
+        //Needs PlayerStatics.PlayerCharacter set above - it freezes the just-spawned player's
+        //own physics component for the count-in.
+        StartCountdown();
     }
 
     //Destroys the player, repossesses the editor pawn, and respawns from the pre-play snapshot -
     //discards anything placed/triggered during play, without touching the original level file.
     public static StopPlaying(){
         StopLevelTimer();
+        Countdown.isActive = false;
         if (PlayInEditor.playerPawn){
             NVScene.DestroyActor(PlayInEditor.playerPawn);
             PlayInEditor.playerPawn = null;

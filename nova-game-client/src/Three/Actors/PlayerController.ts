@@ -6,6 +6,7 @@ import {EditorSelection} from "../Editor/EditorSelection.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {PlayInEditor} from "../Editor/PlayInEditor.ts";
 import {NVScene} from "../NVScene.ts";
+import {Countdown} from "../Utility/Countdown.ts";
 
 export class PlayerController {
 
@@ -154,8 +155,9 @@ export class PlayerController {
 
             //In editor mode the real OS cursor moves itself, so mouse movement should only
             //drive the camera while actively looking (RMB held); outside it, it always looks -
-            //except while a blocking modal (Level Complete, Player Death) is open.
-            const shouldLook = !UIState.isModalOpen && (!EditorState.isInEditor || this.isRightMouseDown);
+            //except while a blocking modal (Level Complete, Player Death) is open, or during the
+            //pre-run countdown.
+            const shouldLook = !UIState.isModalOpen && !Countdown.isActive && (!EditorState.isInEditor || this.isRightMouseDown);
             if (shouldLook) {
                 this.possessedPawn?.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
             }
@@ -195,7 +197,7 @@ export class PlayerController {
         if (pressedButton !== 0) return;
 
         if (!EditorState.isInEditor) {
-            this.possessedPawn?.Fire();
+            if (!Countdown.isActive) this.possessedPawn?.Fire();
             return;
         }
 

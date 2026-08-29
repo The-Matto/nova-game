@@ -5,7 +5,7 @@ import {NVScene} from "../NVScene.ts";
 import {NVWeapon} from "./Weapon.ts";
 import * as THREE from "three";
 import {GameEvents} from "../Utility/GameEvents.ts";
-import {ResetLevelTimer} from "../Utility/LevelTimer.ts";
+import {StartCountdown} from "../Utility/Countdown.ts";
 
 //The real gameplay pawn: gravity, collision, jumping, sprinting. Spawned fresh each PIE start
 //at the level's NVPlayerSpawn marker - never placed directly in level JSON.
@@ -68,7 +68,7 @@ export class NVPlayerCharacter extends NVPawn {
         this.playerPhysics.isDead = false;
         this.playerPhysics.isPaused = false;
         this.playerPhysics.RespawnAtSpawnPoint();
-        ResetLevelTimer();
+        StartCountdown();
     }
 
     //'P' during gameplay (see PlayerController.ToggleEditorMode) - opens the same menu as

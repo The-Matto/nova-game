@@ -4,6 +4,7 @@ import * as THREE from "three";
 import {NVScene} from "../NVScene.ts";
 import type {Vector3} from "three";
 import type {NVPawn} from "../Pawn.ts";
+import {MainCamera} from "../Camera.ts";
 
 
 export class NVPlayerPhysics extends NVComponent {
@@ -13,12 +14,15 @@ export class NVPlayerPhysics extends NVComponent {
     playerOnFloor: boolean = false;
     playerVelocity = new THREE.Vector3();
 
-    //Where the player respawns after KILL_Z - taken from the collider's actual start position.
+    //Where/which way the player respawns after KILL_Y or a retry - set via SetSpawnYaw, since
+    //the marker's rotation isn't part of the pawn's own SpawnDescriptor (see PlayInEditor).
     private spawnPoint = this.playerCollider.end.clone();
+    private spawnYaw : number = 0;
 
-    //UE-style "Kill Z" - fall below this and respawn instead of falling forever.
+    //UE-style "Kill Z" naming, but Y is vertical here - fall below this and respawn instead of
+    //falling forever.
     //TODO Make level-configurable once world settings exist in the level JSON.
-    private static readonly KILL_Z : number = -50;
+    private static readonly KILL_Y : number = -50;
 
     isSprinting : boolean = false;
     private sprintSpeed : number = 15;
@@ -33,6 +37,9 @@ export class NVPlayerPhysics extends NVComponent {
     //True while the pause menu (opened via 'P' - see PlayerController.ToggleEditorMode) is
     //showing - also freezes physics, cleared by Resume() rather than a full respawn.
     isPaused : boolean = false;
+    //True during the pre-run countdown (see Utility/Countdown.ts) - also freezes physics, so
+    //the player can't drift/fall before the run actually starts.
+    isCountingDown : boolean = false;
 
     //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
@@ -53,7 +60,7 @@ export class NVPlayerPhysics extends NVComponent {
     private readonly AIR_ACCELERATION : number = 1.5;
 
     TickComponent(delta : number){
-        if (this.isDead || this.isPaused) return;
+        if (this.isDead || this.isPaused || this.isCountingDown) return;
         this.updatePlayer(delta);
     }
 
@@ -61,7 +68,7 @@ export class NVPlayerPhysics extends NVComponent {
         this.wishDirection.copy(direction);
     }
 
-    //Moves the collider and the KILL_Z respawn point - NVPawn.Init calls this once on spawn.
+    //Moves the collider and the KILL_Y respawn point - NVPawn.Init calls this once on spawn.
     public SetSpawnLocation(location : THREE.Vector3){
         const segment = this.playerCollider.end.clone().sub(this.playerCollider.start);
         this.playerCollider.end.copy(location);
@@ -69,8 +76,18 @@ export class NVPlayerPhysics extends NVComponent {
         this.spawnPoint.copy(location);
     }
 
-    //Applies a jump impulse once per ground contact - see hasJumpedSinceGrounded.
+    //Called alongside MainCamera.SetYaw() on the initial spawn (see PlayInEditor.StartPlaying) -
+    //remembered so RespawnAtSpawnPoint can face the player the same way on every retry too.
+    public SetSpawnYaw(yawRadians : number){
+        this.spawnYaw = yawRadians;
+    }
+
+    //Applies a jump impulse once per ground contact - see hasJumpedSinceGrounded. Unlike most
+    //input this isn't gated by TickComponent's freeze (it's called directly from NVPawn.Jump),
+    //so it needs its own guard - otherwise a held Space would queue an impulse that launches the
+    //player the instant isDead/isPaused/isCountingDown clears.
     public TryJump(impulse : number) : boolean {
+        if (this.isDead || this.isPaused || this.isCountingDown) return false;
         if (this.timeSinceGrounded > NVPlayerPhysics.COYOTE_TIME || this.hasJumpedSinceGrounded) return false;
 
         //Set, not added - clears residual fall velocity from the coyote window instead of just
@@ -101,10 +118,10 @@ export class NVPlayerPhysics extends NVComponent {
         const deltaPosition = this.playerVelocity.clone().multiplyScalar( deltaTime );
         this.playerCollider.translate( deltaPosition );
 
-        //Free-flying (editor mode) skips collision and KILL_Z entirely.
+        //Free-flying (editor mode) skips collision and KILL_Y entirely.
         if (!this.isFreeFlying) {
             this.playerCollisions();
-            this.checkKillZ();
+            this.checkKillY();
         } else {
             this.playerOnFloor = false;
         }
@@ -114,8 +131,8 @@ export class NVPlayerPhysics extends NVComponent {
 
     }
 
-    private checkKillZ() {
-        if (this.playerCollider.end.y >= NVPlayerPhysics.KILL_Z) return;
+    private checkKillY() {
+        if (this.playerCollider.end.y >= NVPlayerPhysics.KILL_Y) return;
         (this.owningActor as NVPawn).PlayerDeath();
     }
 
@@ -125,6 +142,13 @@ export class NVPlayerPhysics extends NVComponent {
         const offset = this.spawnPoint.clone().sub(this.playerCollider.end);
         this.playerCollider.translate(offset);
         this.playerVelocity.set(0, 0, 0);
+
+        //Normally synced from the collider at the end of updatePlayer() - but that's skipped
+        //entirely while frozen (see TickComponent), which StartCountdown() does right after this
+        //call, so without this the camera would keep showing the old (pre-respawn) position for
+        //the whole countdown.
+        this.owningActor.scene.position.copy(this.playerCollider.end);
+        MainCamera.SetYaw(this.spawnYaw);
 
         for (const actor of NVScene.GetSceneActors()) actor.OnPlayerRespawned();
     }

@@ -92,7 +92,7 @@ export abstract class NVPawn extends NVActor {
     //LMB while not in editor mode - see PlayerController.HandleMouseClick.
     abstract Fire() : void;
 
-    //The single entry point for any player death (KILL_Z, a hazard, ...) - see
-    //NVPlayerPhysics.checkKillZ and NVPlayerCharacter.PlayerDeath.
+    //The single entry point for any player death (KILL_Y, a hazard, ...) - see
+    //NVPlayerPhysics.checkKillY and NVPlayerCharacter.PlayerDeath.
     abstract PlayerDeath() : void;
 }
