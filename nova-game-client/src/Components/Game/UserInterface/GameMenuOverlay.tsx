@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {CursorState, GameMode, PlayerStatics, UIState} from "../../../Three/Utility/PlayerGlobals";
+import {OptionsMenu} from "./OptionsMenu";
 
 //Shown on player death or a voluntary pause ('P' during gameplay) - see
 //NVPlayerCharacter.PlayerDeath/Pause, the single entry points for each. The world is left
@@ -9,10 +10,12 @@ import {CursorState, GameMode, PlayerStatics, UIState} from "../../../Three/Util
 export const GameMenuOverlay = () => {
 
     const [reason, setReason] = useState<'died' | 'paused' | null>(null);
+    const [showOptions, setShowOptions] = useState(false);
 
     useEffect(() => {
         const offOpen = GameEvents.On('gameMenuOpened', ({reason}) => {
             setReason(reason);
+            setShowOptions(false);
 
             //Same reasoning as LevelCompleteOverlay: free the OS cursor to click these buttons.
             CursorState.isCursorNeeded = true;
@@ -59,28 +62,37 @@ export const GameMenuOverlay = () => {
     };
 
     if (!reason) return null;
+    if (showOptions) return <OptionsMenu onBack={() => setShowOptions(false)} />;
 
-    return <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-slate-950/95">
-        <div className="text-5xl font-bold text-orange-500">{reason === 'died' ? "You Died" : "Paused"}</div>
-        <button
-            className="border border-orange-500/40 bg-slate-900 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-            onClick={retry}
-        >
-            Retry
-        </button>
-        {GameMode.appMode === "createLevel" && (
+    return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
+        <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
+            <div className="text-5xl font-bold text-orange-500">{reason === 'died' ? "You Died" : "Paused"}</div>
             <button
-                className="border border-orange-500/40 bg-slate-900 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={returnToEditor}
+                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
+                onClick={retry}
             >
-                Return to Editor
+                Retry
             </button>
-        )}
-        <button
-            className="mt-4 border border-orange-500/40 bg-slate-900 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
-            onClick={returnToMenu}
-        >
-            Return to Menu
-        </button>
+            <button
+                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
+                onClick={() => setShowOptions(true)}
+            >
+                Options
+            </button>
+            {GameMode.appMode === "createLevel" && (
+                <button
+                    className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
+                    onClick={returnToEditor}
+                >
+                    Return to Editor
+                </button>
+            )}
+            <button
+                className="mt-4 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
+                onClick={returnToMenu}
+            >
+                Return to Menu
+            </button>
+        </div>
     </div>;
 };

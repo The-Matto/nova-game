@@ -18,6 +18,28 @@ export const PlayerSettings = {
     mouseSensitivityMenuY: 15.0,
 }
 
+const PLAYER_SETTINGS_STORAGE_KEY = 'nova-game:player-settings';
+
+//Restores every PlayerSettings field saved by SavePlayerSettings() - a new setting round-trips
+//for free, no extra wiring needed.
+try {
+    const saved : Record<string, unknown> = JSON.parse(localStorage.getItem(PLAYER_SETTINGS_STORAGE_KEY) ?? '{}');
+    for (const key of Object.keys(PlayerSettings) as (keyof typeof PlayerSettings)[]) {
+        if (typeof saved[key] === typeof PlayerSettings[key]) PlayerSettings[key] = saved[key] as number;
+    }
+} catch {
+    //Ignore - just keep the defaults.
+}
+
+//Persists every current PlayerSettings value - call after changing one (see OptionsMenu).
+export function SavePlayerSettings() {
+    try {
+        localStorage.setItem(PLAYER_SETTINGS_STORAGE_KEY, JSON.stringify(PlayerSettings));
+    } catch {
+        //Ignore - not critical if this fails.
+    }
+}
+
 export const WindowSettings = {
     windowHeight: 750,
     windowWidth: 1000,
