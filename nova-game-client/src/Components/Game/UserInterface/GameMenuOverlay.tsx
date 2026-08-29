@@ -65,6 +65,19 @@ export const GameMenuOverlay = () => {
     if (showOptions) return <OptionsMenu onBack={() => setShowOptions(false)} />;
 
     return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
+        {reason === 'died' && (
+            <div className="absolute inset-0 pointer-events-none" style={{
+                background: "radial-gradient(circle, transparent 30%, rgba(185,28,28,0.85) 100%)",
+                animation: "death-vignette-grow 1.2s ease-out forwards",
+            }}>
+                <style>{`
+                    @keyframes death-vignette-grow {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                `}</style>
+            </div>
+        )}
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
             <div className="text-5xl font-bold text-orange-500">{reason === 'died' ? "You Died" : "Paused"}</div>
             <button
