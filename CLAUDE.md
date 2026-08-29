@@ -82,3 +82,10 @@ See [TODO.md](TODO.md) for the current task list.
   editor UI, instead of a native `<input type="number">` — click to type a value, drag left/right
   to scrub it, no spinner buttons. `Vector3Input` (`Components/UI/Vector3Input.tsx`) builds an
   X/Y/Z triple of these on top, with the standard red/green/blue axis colors.
+- Every `@EditableProperty` field must round-trip through the level JSON: saved into
+  `properties` on export/serialize and applied back on load/respawn. This is automatic —
+  `NVActor.ToSpawnDescriptor()` and `ApplyEditableProperties()` (called from
+  `NVScene.SpawnActor()`) handle any field decorated with `@EditableProperty`, so a new property
+  needs no extra wiring — but always verify a new one actually survives a save → load cycle
+  (Export then Import, or a PIE restart), especially if the actor's own constructor also reads
+  `descripter.properties` directly for something else.

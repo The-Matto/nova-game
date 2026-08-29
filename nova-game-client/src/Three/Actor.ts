@@ -11,8 +11,8 @@ export class NVActor {
 
     components : Set<NVComponent> = new Set();
 
-    //Kept so ToSpawnDescriptor() can round-trip scale/properties (nothing edits those yet)
-    //while location is read live from `scene`.
+    //Kept so ToSpawnDescriptor() can round-trip non-editable properties and baked scale, while
+    //location/rotation/@EditableProperty fields are read live instead.
     public spawnDescriptor : SpawnDescriptor;
 
     constructor(descripter : SpawnDescriptor) {
@@ -45,6 +45,22 @@ export class NVActor {
     //material color).
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public OnEditablePropertyChanged(_key : string) : void {
+    }
+
+    //Applies saved values from a SpawnDescriptor's `properties` onto this actor's
+    //@EditableProperty fields - see NVScene.SpawnActor, called right after construction so it
+    //overwrites the class's own field defaults.
+    public ApplyEditableProperties(properties : Record<string, unknown> | undefined) : void {
+        const ctor = this.constructor as typeof NVActor;
+        if (!properties || !ctor.editableProperties) return;
+
+        const self = this as unknown as Record<string, unknown>;
+        for (const key of ctor.editableProperties.keys()) {
+            if (key in properties) {
+                self[key] = properties[key];
+                this.OnEditablePropertyChanged(key);
+            }
+        }
     }
 
     //Called on every actor when the player respawns - override to reset state that shouldn't
@@ -99,8 +115,17 @@ export class NVActor {
     }
 
     //A SpawnDescriptor that would recreate this actor in its current state - see
-    //NVScene.SerializeLevel().
+    //NVScene.SerializeLevel(). properties starts from the original spawn-time properties (e.g.
+    //NVStaticMeshActor's modelPath/shape, never edited live) and overlays every current
+    //@EditableProperty value on top, so live edits actually get saved.
     public ToSpawnDescriptor() : SpawnDescriptor {
+        const ctor = this.constructor as typeof NVActor;
+        const properties : Record<string, unknown> = {...this.spawnDescriptor.properties};
+        if (ctor.editableProperties) {
+            const self = this as unknown as Record<string, unknown>;
+            for (const key of ctor.editableProperties.keys()) properties[key] = self[key];
+        }
+
         return {
             class: this.spawnDescriptor.class,
             location: this.scene.position.clone(),
@@ -112,7 +137,7 @@ export class NVActor {
                 (this.spawnDescriptor.scale?.y ?? 1) * this.scene.scale.y,
                 (this.spawnDescriptor.scale?.z ?? 1) * this.scene.scale.z,
             ),
-            properties: this.spawnDescriptor.properties,
+            properties: Object.keys(properties).length > 0 ? properties : undefined,
         };
     }
 

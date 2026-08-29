@@ -160,6 +160,7 @@ export class NVScene {
             console.log("THIS OBJECT IS REPLICATED", ClassRef);
         }
         const actor : NVActor = (CreatedObj as NVActor);
+        actor.ApplyEditableProperties(descripter.properties);
         this.AddSceneActor(actor, persistent);
         this.sceneActors.add(actor);
         if (persistent) this.persistentActors.add(actor);
