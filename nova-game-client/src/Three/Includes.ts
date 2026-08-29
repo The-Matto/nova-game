@@ -13,4 +13,5 @@ import './Actors/SpikeActor.ts';
 import './Actors/FallingPlatform.ts';
 import './Actors/LaserProjectile.ts';
 import './Actors/CannonActor.ts';
+import './Actors/DoorActor.ts';
 

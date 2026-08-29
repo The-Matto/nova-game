@@ -23,6 +23,10 @@ export class NVTargetActor extends NVActor implements ILevelObjective {
     //Just for a readable per-target name in the goal's "still to do" hint.
     private static nextIndex : number = 1;
 
+    //Every target currently in play - lets things like NVDoorActor ask "how many have been hit"
+    //without needing a reference to specific targets.
+    private static allTargets : NVTargetActor[] = [];
+
     public readonly label : string;
     private material : THREE.MeshStandardMaterial;
     private hasBeenHit : boolean = false;
@@ -63,11 +67,20 @@ export class NVTargetActor extends NVActor implements ILevelObjective {
     BeginPlay() {
         super.BeginPlay();
         LevelObjectives.Register(this);
+        NVTargetActor.allTargets.push(this);
     }
 
     BeginDestroy() {
         super.BeginDestroy();
         LevelObjectives.Unregister(this);
+        const index = NVTargetActor.allTargets.indexOf(this);
+        if (index !== -1) NVTargetActor.allTargets.splice(index, 1);
+    }
+
+    //Live count, not a separately-tracked tally - can't drift out of sync with individual
+    //targets' own hasBeenHit/respawn state. See NVDoorActor.targetsBeforeOpen.
+    public static GetHitCount() : number {
+        return NVTargetActor.allTargets.filter(t => t.hasBeenHit).length;
     }
 
     public RegisterCollision() {
