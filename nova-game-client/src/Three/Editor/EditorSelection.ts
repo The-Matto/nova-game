@@ -28,6 +28,12 @@ export class EditorSelection {
                 if (!event.value) NVScene.RebuildWorldOctree();
             });
 
+            //Fires continuously while dragging - lets the inspector panel's Location/Rotation/
+            //Scale rows track the gizmo live instead of only updating on the next selection change.
+            controls.addEventListener('objectChange', () => {
+                GameEvents.Emit('actorTransformChanged', undefined);
+            });
+
             EditorSelection.transformControls = controls;
         }
         return EditorSelection.transformControls;

@@ -40,9 +40,13 @@ export const EditorInspectorPanel = () => {
     useEffect(() => {
         const offMode = GameEvents.On('editorModeChanged', ({isInEditor}) => setIsVisible(isInEditor));
         const offSelection = GameEvents.On('actorSelectionChanged', ({actor}) => setSelectedActor(actor));
+        //Keeps Location/Rotation/Scale live while the gizmo is being dragged in the 3D view -
+        //that mutates the actor directly, same as forceRerender's own doc comment above.
+        const offTransform = GameEvents.On('actorTransformChanged', () => forceRerender(n => n + 1));
         return () => {
             offMode();
             offSelection();
+            offTransform();
         };
     }, []);
 

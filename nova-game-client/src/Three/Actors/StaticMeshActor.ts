@@ -57,8 +57,13 @@ export class NVStaticMeshActor extends NVActor{
     public OnEditablePropertyChanged(key : string) {
         if (key !== 'shape' || !this.mesh) return;
 
+        //spawnDescriptor.scale, not scene.scale - the latter is a live gizmo multiplier layered
+        //on top of the baked geometry (see NVActor.ToSpawnDescriptor), not the baked size itself.
+        //Using it here would double-apply any existing gizmo scaling on every shape swap, and -
+        //since it's always (1,1,1) right after a fresh spawn/reload - silently collapse the
+        //actor's saved size back to a unit shape.
         this.mesh.geometry.dispose();
-        this.mesh.geometry = NVStaticMeshActor.CreateGeometry(this.shape, this.scene.scale);
+        this.mesh.geometry = NVStaticMeshActor.CreateGeometry(this.shape, this.spawnDescriptor.scale);
         NVScene.RebuildWorldOctree();
     }
 

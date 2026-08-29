@@ -54,9 +54,12 @@ export class NVActor {
         const ctor = this.constructor as typeof NVActor;
         if (!properties || !ctor.editableProperties) return;
 
+        //Only fires OnEditablePropertyChanged for values actually changing from the field's own
+        //default - a saved level always round-trips every @EditableProperty, so without this a
+        //value matching the default would still trigger a spurious "changed" side effect.
         const self = this as unknown as Record<string, unknown>;
         for (const key of ctor.editableProperties.keys()) {
-            if (key in properties) {
+            if (key in properties && properties[key] !== self[key]) {
                 self[key] = properties[key];
                 this.OnEditablePropertyChanged(key);
             }

@@ -9,6 +9,9 @@ export type GameEventMap = {
     editorModeChanged : { isInEditor : boolean };
     //Fired whenever EditorSelection.SelectActor runs.
     actorSelectionChanged : { actor : NVActor | null };
+    //Fired continuously while the gizmo is dragging the selected actor - see
+    //EditorSelection.GetControls's 'objectChange' listener.
+    actorTransformChanged : undefined;
     //Opens the game menu (see GameMenuOverlay) - death (NVPlayerCharacter.PlayerDeath) or a
     //voluntary pause (NVPlayerCharacter.Pause, 'P' during gameplay) share the same menu.
     gameMenuOpened : { reason : 'died' | 'paused' };

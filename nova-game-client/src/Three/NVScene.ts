@@ -105,8 +105,14 @@ export class NVScene {
         NVScene.levelRoot = new THREE.Group();
         NVScene.scene.add(NVScene.levelRoot);
 
+        //BeginDestroy(), not just dropping the reference - actors that register themselves with a
+        //static/module-level list on BeginPlay (e.g. NVTargetActor.allTargets) rely on it to
+        //unregister, or that state leaks into the next level/session (see LevelObjectives.Clear()
+        //below, needed for the same reason before that pattern existed).
         for (const actor of [...NVScene.sceneActors]) {
-            if (!NVScene.persistentActors.has(actor)) NVScene.sceneActors.delete(actor);
+            if (NVScene.persistentActors.has(actor)) continue;
+            NVScene.sceneActors.delete(actor);
+            actor.BeginDestroy();
         }
 
         NVScene.worldOctree = new Octree();
