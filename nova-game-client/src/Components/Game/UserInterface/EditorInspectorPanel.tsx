@@ -84,7 +84,17 @@ export const EditorInspectorPanel = () => {
                 {properties.map(({key, value, options}) => (
                     <label key={key} className="flex items-center gap-2 text-sm">
                         <span className="w-20 shrink-0 capitalize">{key}</span>
-                        {typeof value === 'boolean' ? (
+                        {options.choices ? (
+                            <select
+                                value={String(value)}
+                                onChange={e => setValue(key, e.target.value)}
+                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-2 py-0.5 text-orange-100 outline-none cursor-pointer"
+                            >
+                                {options.choices.map(choice => (
+                                    <option key={choice} value={choice}>{choice}</option>
+                                ))}
+                            </select>
+                        ) : typeof value === 'boolean' ? (
                             <input
                                 type="checkbox"
                                 checked={value}

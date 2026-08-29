@@ -1,11 +1,13 @@
 import type {NVActor} from "../Actor.ts";
 
 //Per-field options for @EditableProperty: min/max clamp a numeric value (UE ClampMin/ClampMax);
-//editCondition names another field that gates visibility when falsy (UE EditConditionHides).
+//editCondition names another field that gates visibility when falsy (UE EditConditionHides);
+//choices renders a dropdown of fixed string values instead of a free-text input.
 export interface EditablePropertyOptions {
     min? : number;
     max? : number;
     editCondition? : string;
+    choices? : string[];
 }
 
 //Marks a field as editable in the inspector panel while selected - same pattern as

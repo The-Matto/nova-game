@@ -1,17 +1,30 @@
-﻿import {NVActor} from "../Actor.ts";
+import {NVActor} from "../Actor.ts";
 
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {AssetManager} from "../Utility/AssetManager.ts";
 import {ReplicatedActor, ReplicatedVariable} from "../Replication.ts";
+import {EditableProperty} from "../Editor/EditableProperty.ts";
 
 //import {OctreeHelper} from "three/examples/jsm/helpers/OctreeHelper";
 
+//Three.js's built-in primitive geometries - shown as a dropdown in the inspector (like Unreal's
+//Static Mesh picker), ignored if a modelPath was given instead (see the constructor).
+const SHAPE_CHOICES = [
+    'cube', 'sphere', 'cylinder', 'cone', 'torus', 'plane', 'circle', 'ring',
+    'dodecahedron', 'icosahedron', 'octahedron', 'tetrahedron', 'capsule',
+];
 
 @RegisterClass("NVStaticMeshActor") @ReplicatedActor(51)
 export class NVStaticMeshActor extends NVActor{
 
+    @EditableProperty({choices: SHAPE_CHOICES})
+    public shape : string = 'cube';
+
+    //Only set for the primitive-mesh path below (null for a loaded model) - lets
+    //OnEditablePropertyChanged swap the geometry when `shape` changes.
+    private mesh : THREE.Mesh | null = null;
 
     Tick(_deltaTime: number) {
         super.Tick(_deltaTime);
@@ -23,15 +36,11 @@ export class NVStaticMeshActor extends NVActor{
 
 
         if (!descripter.properties?.modelPath) {
-            //"properties": { "shape": "sphere" } picks a primitive other than the default box.
-            const shape = (descripter.properties?.shape as string) ?? 'cube';
-            const geometry = shape === 'sphere'
-                ? new THREE.SphereGeometry(descripter.scale.x / 2, 24, 16)
-                : new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
             //"properties": { "color": "#rrggbb" } overrides the default per-actor.
             const color = (descripter.properties?.color as string) ?? '#c79b9b';
             const material = new THREE.MeshStandardMaterial({color});
-            this.scene = new THREE.Mesh(geometry, material);
+            this.mesh = new THREE.Mesh(NVStaticMeshActor.CreateGeometry(this.shape, descripter.scale), material);
+            this.scene = this.mesh;
             //Not registered with worldOctree here - the mesh is still at the origin until
             //Init() below runs SetWorldLocation.
 
@@ -43,6 +52,32 @@ export class NVStaticMeshActor extends NVActor{
        // Scene.AddSceneActor(this);
 
 
+    }
+
+    public OnEditablePropertyChanged(key : string) {
+        if (key !== 'shape' || !this.mesh) return;
+
+        this.mesh.geometry.dispose();
+        this.mesh.geometry = NVStaticMeshActor.CreateGeometry(this.shape, this.scene.scale);
+        NVScene.RebuildWorldOctree();
+    }
+
+    private static CreateGeometry(shape : string, scale : THREE.Vector3) : THREE.BufferGeometry {
+        switch (shape) {
+            case 'sphere': return new THREE.SphereGeometry(scale.x / 2, 24, 16);
+            case 'cylinder': return new THREE.CylinderGeometry(scale.x / 2, scale.x / 2, scale.y, 24);
+            case 'cone': return new THREE.ConeGeometry(scale.x / 2, scale.y, 24);
+            case 'torus': return new THREE.TorusGeometry(scale.x / 2, scale.y / 4, 16, 32);
+            case 'plane': return new THREE.PlaneGeometry(scale.x, scale.y);
+            case 'circle': return new THREE.CircleGeometry(scale.x / 2, 32);
+            case 'ring': return new THREE.RingGeometry(scale.x / 4, scale.x / 2, 32);
+            case 'dodecahedron': return new THREE.DodecahedronGeometry(scale.x / 2);
+            case 'icosahedron': return new THREE.IcosahedronGeometry(scale.x / 2);
+            case 'octahedron': return new THREE.OctahedronGeometry(scale.x / 2);
+            case 'tetrahedron': return new THREE.TetrahedronGeometry(scale.x / 2);
+            case 'capsule': return new THREE.CapsuleGeometry(scale.x / 2, scale.y, 4, 16);
+            default: return new THREE.BoxGeometry(scale.x, scale.y, scale.z);
+        }
     }
 
     private async LoadModel(modelPath : string)  {
