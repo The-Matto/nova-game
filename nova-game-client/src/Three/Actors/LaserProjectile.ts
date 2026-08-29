@@ -33,6 +33,12 @@ export class NVLaserProjectile extends NVActor {
         return this.isActive;
     }
 
+    //A bolt still flying when the player respawns shouldn't be able to kill them again the
+    //instant they reappear - same reasoning as NVCannonActor resetting its own fire timer.
+    public OnPlayerRespawned() : void {
+        if (this.isActive) this.Deactivate();
+    }
+
     //(Re)activates this projectile from `origin`, travelling along `direction`.
     public FireFrom(origin : THREE.Vector3, direction : THREE.Vector3) {
         this.scene.position.copy(origin);

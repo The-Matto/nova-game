@@ -89,3 +89,10 @@ See [TODO.md](TODO.md) for the current task list.
   needs no extra wiring — but always verify a new one actually survives a save → load cycle
   (Export then Import, or a PIE restart), especially if the actor's own constructor also reads
   `descripter.properties` directly for something else.
+- Any actor with a timer/counter/cycle that drives its own gameplay behavior (a cooldown before
+  firing, a hazard's on/off cycle, a projectile's flight) must reset that state on
+  `OnPlayerRespawned()`. Retrying (death, voluntary pause, or falling to KILL_Y) calls this on
+  every actor via `NVPlayerPhysics.RespawnAtSpawnPoint()`, and a run should be deterministic: the
+  same hazard state at the same point every attempt, not whatever it drifted to before the last
+  death. See `NVCannonActor`, `NVSpikeActor`, `NVLaserProjectile` for the pattern — purely
+  cosmetic state (e.g. a weapon's view-model recoil) doesn't need this.

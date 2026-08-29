@@ -27,11 +27,21 @@ export class NVSpikeActor extends NVActor {
     private extension : number = 1;
     private cycleTime : number = 0;
 
+    //Counts up from BeginPlay - compared against startDelay each Tick (not snapshotted once,
+    //since startDelay's real value only lands after construction - see ApplyEditableProperties).
+    private timeSinceBeginPlay : number = 0;
+
     @EditableProperty()
     public spikeColor : string = '#8a8f99';
 
     @EditableProperty()
     public isTimed : boolean = false;
+
+    //A one-time delay before the cycle's very first movement, timed from BeginPlay - lets
+    //otherwise-identical spikes be staggered against each other. Only ever applies once (see
+    //OnPlayerRespawned) - a retry resets the cycle itself, not this initial wait.
+    @EditableProperty({min: 0, editCondition: 'isTimed'})
+    public startDelay : number = 0;
 
     //Only meaningful (and only shown) once isTimed is on - see UpdateExtension's own Math.max(0)
     //clamps, which these mirror.
@@ -105,11 +115,25 @@ export class NVSpikeActor extends NVActor {
         NVScene.worldOctree.fromGraphNode(this.baseMesh);
     }
 
+    //Restarts the cycle from its beginning (extended) on every retry, so the spikes are always
+    //in the same state at the same point in a run - not startDelay's job, see its own comment.
+    public OnPlayerRespawned() : void {
+        this.cycleTime = 0;
+        this.extension = 1;
+    }
+
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
-        if (this.isTimed) this.UpdateExtension(deltaTime);
-        else this.extension = 1;
+        this.timeSinceBeginPlay += deltaTime;
+
+        if (this.isTimed) {
+            //Delay just holds the spikes at their default extended state - the cycle itself
+            //(and cycleTime) doesn't start accumulating until it's elapsed.
+            if (this.timeSinceBeginPlay >= this.startDelay) this.UpdateExtension(deltaTime);
+        } else {
+            this.extension = 1;
+        }
 
         const y = THREE.MathUtils.lerp(this.retractedY, this.extendedY, this.extension);
         for (const spike of this.spikeComponents) spike.mesh.position.y = y;

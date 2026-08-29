@@ -46,6 +46,12 @@ export class NVCannonActor extends NVActor {
         NVScene.worldOctree.fromGraphNode(this.scene);
     }
 
+    //So the cannon always fires on the same beat after a respawn, instead of carrying over
+    //however far it happened to be into its cycle at the moment the player died/retried.
+    public OnPlayerRespawned() : void {
+        this.timeSinceLastFire = 0;
+    }
+
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
