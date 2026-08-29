@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
-import {EditorState} from "../../../Three/Utility/PlayerGlobals";
+import {EditorState, PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
 import {EDITOR_PALETTE} from "../../../Three/Editor/EditorPalette";
 import {EditorSpawning} from "../../../Three/Editor/EditorSpawning";
 import {NVScene} from "../../../Three/NVScene";
@@ -72,6 +72,13 @@ export const EditorPalettePanel = () => {
 
     return <div className="absolute top-4 left-4 z-30 w-56 max-h-[80vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
         <div className="text-xl font-bold mb-3">Editor</div>
+
+        <button
+            className="w-full mb-3 bg-emerald-700 hover:bg-emerald-600 rounded-lg px-3 py-2 text-sm font-bold cursor-pointer"
+            onClick={() => PlayerStatics.PlayerController?.EnterPlayMode()}
+        >
+            ▶ Play
+        </button>
 
         <div className="flex gap-2 mb-3">
             <button

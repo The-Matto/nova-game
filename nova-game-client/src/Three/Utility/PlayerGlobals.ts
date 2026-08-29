@@ -48,6 +48,12 @@ export const CursorState = {
     isCursorNeeded: GameMode.appMode === "createLevel",
 };
 
+//True while a blocking gameplay modal (Level Complete, Player Death) is open - distinct from
+//CursorState, since editor mode also needs the cursor free but should keep taking camera input.
+export const UIState = {
+    isModalOpen: false,
+};
+
 
 interface IPlayerStatics {
     PlayerController?: PlayerController;

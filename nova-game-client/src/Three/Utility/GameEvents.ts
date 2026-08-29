@@ -9,6 +9,12 @@ export type GameEventMap = {
     editorModeChanged : { isInEditor : boolean };
     //Fired whenever EditorSelection.SelectActor runs.
     actorSelectionChanged : { actor : NVActor | null };
+    //Opens the game menu (see GameMenuOverlay) - death (NVPlayerCharacter.PlayerDeath) or a
+    //voluntary pause (NVPlayerCharacter.Pause, 'P' during gameplay) share the same menu.
+    gameMenuOpened : { reason : 'died' | 'paused' };
+    //Closes the menu without resetting anything - only reachable from a voluntary pause, via
+    //NVPlayerCharacter.Resume ('P' again).
+    gameResumed : undefined;
 };
 
 type Listener<T> = (payload : T) => void;

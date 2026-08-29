@@ -1,7 +1,7 @@
 import {InputInfo, keyActions, mousePosition} from "../../InputMaps.ts";
 import type {NVPawn} from "../Pawn.ts";
 import {Vector2} from "three";
-import {CursorState, EditorState, GameMode, PlayerStatics} from "../Utility/PlayerGlobals";
+import {CursorState, EditorState, GameMode, PlayerStatics, UIState} from "../Utility/PlayerGlobals";
 import {EditorSelection} from "../Editor/EditorSelection.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {PlayInEditor} from "../Editor/PlayInEditor.ts";
@@ -153,8 +153,9 @@ export class PlayerController {
         if (mousePosition.x != 0 || mousePosition.y != 0){
 
             //In editor mode the real OS cursor moves itself, so mouse movement should only
-            //drive the camera while actively looking (RMB held); outside it, it always looks.
-            const shouldLook = !EditorState.isInEditor || this.isRightMouseDown;
+            //drive the camera while actively looking (RMB held); outside it, it always looks -
+            //except while a blocking modal (Level Complete, Player Death) is open.
+            const shouldLook = !UIState.isModalOpen && (!EditorState.isInEditor || this.isRightMouseDown);
             if (shouldLook) {
                 this.possessedPawn?.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
             }
@@ -227,23 +228,44 @@ export class PlayerController {
         NVScene.DestroyActor(actor);
     }
 
-    private ToggleEditorMode = () => {
-        //PIE is a level-creator tool - no-op in plain "play" mode.
+    //'P' - starts a fresh PIE session from editor mode; during gameplay it opens/closes the
+    //pause menu instead of exiting straight to the editor (see ReturnToEditor for that).
+    public ToggleEditorMode = () => {
         if (GameMode.appMode !== "createLevel") return;
 
-        EditorState.isInEditor = !EditorState.isInEditor;
-        CursorState.isCursorNeeded = EditorState.isInEditor;
-
         if (EditorState.isInEditor) {
-            this.isRightMouseDown = false;
-            if (document.pointerLockElement) document.exitPointerLock();
-            PlayInEditor.StopPlaying();
-        } else {
-            document.getElementById('canvas')?.requestPointerLock();
-            PlayInEditor.StartPlaying();
+            this.EnterPlayMode();
+            return;
         }
 
-        GameEvents.Emit('editorModeChanged', {isInEditor: EditorState.isInEditor});
+        const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
+        if (!physics || physics.isDead) return; //Can't pause-toggle out of a real death.
+
+        if (physics.isPaused) PlayerStatics.PlayerCharacter?.Resume();
+        else PlayerStatics.PlayerCharacter?.Pause();
+    }
+
+    //Starts a fresh PIE session - called by 'P' from editor mode, and the palette's Play button.
+    public EnterPlayMode = () => {
+        if (GameMode.appMode !== "createLevel") return;
+
+        EditorState.isInEditor = false;
+        CursorState.isCursorNeeded = false;
+        document.getElementById('canvas')?.requestPointerLock();
+        PlayInEditor.StartPlaying();
+        GameEvents.Emit('editorModeChanged', {isInEditor: false});
+    }
+
+    //Called by the game menu's "Return to Editor" button - the only way back to editor mode now.
+    public ReturnToEditor = () => {
+        if (GameMode.appMode !== "createLevel") return;
+
+        this.isRightMouseDown = false;
+        EditorState.isInEditor = true;
+        CursorState.isCursorNeeded = true;
+        if (document.pointerLockElement) document.exitPointerLock();
+        PlayInEditor.StopPlaying();
+        GameEvents.Emit('editorModeChanged', {isInEditor: true});
     }
 
 }

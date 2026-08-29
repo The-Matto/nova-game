@@ -34,6 +34,7 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             {label: "Spikes", class: "NVSpikeActor"},
             //Matches the scale of TestWorld.json's jump platforms.
             {label: "Falling Platform", class: "FallingPlatform", scale: {x: 1.8, y: 0.3, z: 2}},
+            {label: "Cannon", class: "NVCannon"},
         ],
     },
 ];

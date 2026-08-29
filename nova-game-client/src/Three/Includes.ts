@@ -11,4 +11,6 @@ import './Actors/Weapon.ts';
 import './Actors/TargetActor.ts';
 import './Actors/SpikeActor.ts';
 import './Actors/FallingPlatform.ts';
+import './Actors/LaserProjectile.ts';
+import './Actors/CannonActor.ts';
 

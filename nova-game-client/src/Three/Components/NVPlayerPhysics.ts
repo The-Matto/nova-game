@@ -3,6 +3,7 @@ import {Capsule} from "three/examples/jsm/math/Capsule";
 import * as THREE from "three";
 import {NVScene} from "../NVScene.ts";
 import type {Vector3} from "three";
+import type {NVPawn} from "../Pawn.ts";
 
 
 export class NVPlayerPhysics extends NVComponent {
@@ -26,6 +27,13 @@ export class NVPlayerPhysics extends NVComponent {
     isFreeFlying : boolean = false;
     private flySpeed : number = 15;
 
+    //True between PlayerDeath and PlayerRetry - freezes physics entirely so the world stays
+    //exactly as it was at the moment of death until the player actually chooses to retry.
+    isDead : boolean = false;
+    //True while the pause menu (opened via 'P' - see PlayerController.ToggleEditorMode) is
+    //showing - also freezes physics, cleared by Resume() rather than a full respawn.
+    isPaused : boolean = false;
+
     //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
 
@@ -45,6 +53,7 @@ export class NVPlayerPhysics extends NVComponent {
     private readonly AIR_ACCELERATION : number = 1.5;
 
     TickComponent(delta : number){
+        if (this.isDead || this.isPaused) return;
         this.updatePlayer(delta);
     }
 
@@ -107,11 +116,11 @@ export class NVPlayerPhysics extends NVComponent {
 
     private checkKillZ() {
         if (this.playerCollider.end.y >= NVPlayerPhysics.KILL_Z) return;
-        this.RespawnAtSpawnPoint();
+        (this.owningActor as NVPawn).PlayerDeath();
     }
 
-    //Teleports to spawn and zeroes velocity - shared by KILL_Z and hazards. Also lets every actor
-    //react via NVActor.OnPlayerRespawned.
+    //Teleports to spawn and zeroes velocity, and lets every actor react via
+    //NVActor.OnPlayerRespawned - only called from NVPlayerCharacter.PlayerRetry.
     public RespawnAtSpawnPoint() {
         const offset = this.spawnPoint.clone().sub(this.playerCollider.end);
         this.playerCollider.translate(offset);

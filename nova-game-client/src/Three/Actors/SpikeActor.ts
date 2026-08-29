@@ -129,7 +129,7 @@ export class NVSpikeActor extends NVActor {
         const isDangerous = playerIsInside && isExtended;
 
         if (isDangerous && !this.wasDangerous) {
-            physics.RespawnAtSpawnPoint();
+            PlayerStatics.PlayerCharacter?.PlayerDeath();
         }
         this.wasDangerous = isDangerous;
     }
