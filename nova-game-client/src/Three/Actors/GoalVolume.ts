@@ -30,6 +30,12 @@ export class NVGoalVolume extends NVActor {
 
     public async Init(descripter : SpawnDescriptor) {
         this.SetWorldLocation(descripter.location);
+        this.RegisterCollision();
+    }
+
+    //Keeps `bounds` current after an editor move - not solid, so this never touches worldOctree,
+    //but NVScene.RebuildWorldOctree() still reaches every actor after a gizmo drag.
+    public RegisterCollision() {
         this.bounds.setFromObject(this.scene);
     }
 

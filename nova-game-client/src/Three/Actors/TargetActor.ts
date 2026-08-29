@@ -61,4 +61,10 @@ export class NVTargetActor extends NVActor implements ILevelObjective {
     public IsComplete() : boolean {
         return this.hasBeenHit;
     }
+
+    public OnPlayerRespawned() : void {
+        if (!this.hasBeenHit) return;
+        this.hasBeenHit = false;
+        this.material.color.set(NVTargetActor.DEFAULT_COLOR);
+    }
 }
