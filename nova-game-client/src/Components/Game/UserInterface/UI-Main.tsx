@@ -1,6 +1,7 @@
 import {LevelCompleteOverlay} from "./LevelCompleteOverlay";
 import {GameMenuOverlay} from "./GameMenuOverlay";
 import {EditorMenu} from "./EditorMenu";
+import {ControlsHint} from "./ControlsHint";
 import {HUD} from "./HUD/HUD";
 
 export const GameUIMain = () => {
@@ -9,5 +10,6 @@ export const GameUIMain = () => {
         <LevelCompleteOverlay />
         <GameMenuOverlay />
         <EditorMenu />
+        <ControlsHint />
     </>;
 };
