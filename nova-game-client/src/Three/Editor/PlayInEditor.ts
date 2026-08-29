@@ -5,6 +5,7 @@ import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
 import {NVPlayerSpawn} from "../Actors/PlayerSpawn.ts";
 import {PlayerController} from "../Actors/PlayerController.ts";
 import {GameMode, PlayerStatics} from "../Utility/PlayerGlobals.ts";
+import {ResetLevelTimer, StopLevelTimer} from "../Utility/LevelTimer.ts";
 import type {LevelData} from "../ClassDescripter.ts";
 import {EditorSelection} from "./EditorSelection.ts";
 import {MainCamera} from "../Camera.ts";
@@ -41,6 +42,7 @@ export class PlayInEditor {
     }
 
     public static StartPlaying(){
+        ResetLevelTimer();
         PlayInEditor.levelSnapshot = NVScene.SerializeLevel();
         //The gizmo is an editor tool - don't leave it attached/visible during actual play.
         EditorSelection.ClearSelection();
@@ -66,6 +68,7 @@ export class PlayInEditor {
     //Destroys the player, repossesses the editor pawn, and respawns from the pre-play snapshot -
     //discards anything placed/triggered during play, without touching the original level file.
     public static StopPlaying(){
+        StopLevelTimer();
         if (PlayInEditor.playerPawn){
             NVScene.DestroyActor(PlayInEditor.playerPawn);
             PlayInEditor.playerPawn = null;

@@ -4,6 +4,7 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {LevelObjectives} from "../Gameplay/LevelObjectives";
 import {GameEvents} from "../Utility/GameEvents";
+import {StopLevelTimer} from "../Utility/LevelTimer";
 
 //The level's end goal - a trigger volume, not solid geometry. Entering it checks LevelObjectives
 //and fires a GameEvent for the UI layer to react to.
@@ -64,6 +65,7 @@ export class NVGoalVolume extends NVActor {
         //Objectives incomplete: just let the player walk through, no popup - they'll complete
         //it once every target's been hit.
         if (LevelObjectives.AllComplete()) {
+            StopLevelTimer();
             GameEvents.Emit('levelComplete', undefined);
         }
     }

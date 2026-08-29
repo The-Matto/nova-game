@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {CursorState, GameMode, PlayerStatics, UIState} from "../../../Three/Utility/PlayerGlobals";
 import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
+import {FormatLevelTime, LevelTimer} from "../../../Three/Utility/LevelTimer";
 
 //Shown when the player reaches the goal volume with all objectives complete.
 export const LevelCompleteOverlay = () => {
@@ -44,6 +45,9 @@ export const LevelCompleteOverlay = () => {
 
     if (isComplete) {
         return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
+                {FormatLevelTime(LevelTimer.elapsedTime)}
+            </div>
             <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
                 <div className="text-5xl font-bold text-orange-500">Level Complete!</div>
                 <button
