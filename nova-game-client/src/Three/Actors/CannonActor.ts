@@ -3,7 +3,7 @@ import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
-import {EditorState} from "../Utility/PlayerGlobals";
+import {EditorState, IsGameplayFrozen} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {LaserPool} from "./LaserProjectile.ts";
 
@@ -55,7 +55,7 @@ export class NVCannonActor extends NVActor {
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
-        if (EditorState.isInEditor) return;
+        if (EditorState.isInEditor || IsGameplayFrozen()) return;
 
         this.timeSinceLastFire += deltaTime;
         if (this.timeSinceLastFire < this.fireInterval) return;

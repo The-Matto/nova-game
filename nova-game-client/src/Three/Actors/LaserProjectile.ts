@@ -2,7 +2,7 @@ import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
-import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditorState, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlobals";
 
 const LIFETIME = 5;
 const SPEED = 25;
@@ -52,6 +52,8 @@ export class NVLaserProjectile extends NVActor {
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
         if (!this.isActive) return;
+        //Hangs in place rather than flying/hitting/expiring while the world's frozen.
+        if (!EditorState.isInEditor && IsGameplayFrozen()) return;
 
         this.scene.position.addScaledVector(this.velocity, deltaTime);
 

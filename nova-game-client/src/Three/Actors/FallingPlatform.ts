@@ -2,7 +2,7 @@ import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
-import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditorState, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import type {NVPlayerPhysics} from "../Components/NVPlayerPhysics.ts";
 
@@ -23,7 +23,7 @@ export class NVFallingPlatform extends NVActor {
     //Matches NVPlayerPhysics.GRAVITY.
     private static readonly GRAVITY = 12;
     private static readonly DEACTIVATE_AFTER_FALLING = 5;
-    private static readonly WARNING_DURATION = 0.15;
+    private static readonly WARNING_DURATION = 0.25;
     private static readonly IDLE_COLOR = '#8a6d3b';
     private static readonly WARNING_COLOR = '#c0392b';
 
@@ -53,6 +53,9 @@ export class NVFallingPlatform extends NVActor {
         super.Tick(deltaTime);
 
         if (!this.scene.visible) return;
+        //Covers editor mode and dead/paused/counting-down - warning/falling shouldn't progress,
+        //and standing shouldn't start counting, while the world's otherwise frozen.
+        if (EditorState.isInEditor || IsGameplayFrozen()) return;
 
         if (this.isFalling) {
             this.fallVelocity += NVFallingPlatform.GRAVITY * deltaTime;
@@ -68,8 +71,6 @@ export class NVFallingPlatform extends NVActor {
             if (this.warningTime >= NVFallingPlatform.WARNING_DURATION) this.StartFalling();
             return;
         }
-
-        if (EditorState.isInEditor) return;
 
         const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
         if (!physics) return;

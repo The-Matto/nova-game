@@ -1,5 +1,5 @@
 import {PlayerStatics} from "./PlayerGlobals";
-import {ResetLevelTimer} from "./LevelTimer";
+import {LevelTimer, ResetLevelTimer} from "./LevelTimer";
 
 const COUNTDOWN_SECONDS = 3;
 
@@ -14,6 +14,11 @@ export const Countdown = {
 export function StartCountdown() {
     Countdown.isActive = true;
     Countdown.secondsRemaining = COUNTDOWN_SECONDS;
+
+    //Zeroed immediately (not just when the countdown finishes - see ResetLevelTimer below) so the
+    //HUD doesn't keep showing the previous run's time while counting down.
+    LevelTimer.elapsedTime = 0;
+    LevelTimer.isRunning = false;
 
     const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
     if (physics) physics.isCountingDown = true;

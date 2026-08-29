@@ -2,7 +2,7 @@ import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
-import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditorState, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {NVScene} from "../NVScene.ts";
 
@@ -125,12 +125,17 @@ export class NVSpikeActor extends NVActor {
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
-        this.timeSinceBeginPlay += deltaTime;
+        //Covers editor mode and dead/paused/counting-down - the cycle (and any danger check
+        //below) shouldn't advance while the world's otherwise frozen.
+        const isFrozen = EditorState.isInEditor || IsGameplayFrozen();
 
         if (this.isTimed) {
-            //Delay just holds the spikes at their default extended state - the cycle itself
-            //(and cycleTime) doesn't start accumulating until it's elapsed.
-            if (this.timeSinceBeginPlay >= this.startDelay) this.UpdateExtension(deltaTime);
+            if (!isFrozen) {
+                this.timeSinceBeginPlay += deltaTime;
+                //Delay just holds the spikes at their default extended state - the cycle itself
+                //(and cycleTime) doesn't start accumulating until it's elapsed.
+                if (this.timeSinceBeginPlay >= this.startDelay) this.UpdateExtension(deltaTime);
+            }
         } else {
             this.extension = 1;
         }
@@ -141,8 +146,7 @@ export class NVSpikeActor extends NVActor {
         //Only dangerous once mostly extended - lets the timer make retracted spikes safe.
         const isExtended = !this.isTimed || this.extension > 0.5;
 
-        //Hazards are gameplay-only
-        if (EditorState.isInEditor) return;
+        if (isFrozen) return;
 
         const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
         if (!physics) return;

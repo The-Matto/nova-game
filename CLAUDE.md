@@ -96,3 +96,8 @@ See [TODO.md](TODO.md) for the current task list.
   same hazard state at the same point every attempt, not whatever it drifted to before the last
   death. See `NVCannonActor`, `NVSpikeActor`, `NVLaserProjectile` for the pattern — purely
   cosmetic state (e.g. a weapon's view-model recoil) doesn't need this.
+- The same actors must also check `IsGameplayFrozen()` (`Utility/PlayerGlobals.ts`) in `Tick()`,
+  alongside the existing `EditorState.isInEditor` check, and skip their own timer/cycle/movement
+  entirely while it's true — otherwise a hazard keeps firing/animating/damaging right through the
+  pause or death menu, or during the pre-run countdown. `EditorState.isInEditor` alone only
+  covers the editor; `IsGameplayFrozen()` covers dead/paused/counting-down.

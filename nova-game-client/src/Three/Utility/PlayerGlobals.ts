@@ -84,3 +84,11 @@ interface IPlayerStatics {
 }
 
 export const PlayerStatics : IPlayerStatics = {};
+
+//True whenever the player is dead, paused, or still in the pre-run countdown - gameplay actors
+//with their own Tick-driven behavior (hazards, projectiles) should check this too, not just
+//NVPlayerPhysics itself, so the whole world actually stops while a menu's up.
+export function IsGameplayFrozen() : boolean {
+    const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
+    return !!physics && (physics.isDead || physics.isPaused || physics.isCountingDown);
+}
