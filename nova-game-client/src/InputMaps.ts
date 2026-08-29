@@ -13,6 +13,10 @@ export const keyActions: { [key: string]:
 
 export const mousePosition = {x: 0, y: 0};
 
+//Raw modifier state, tracked independently of keyActions (which only covers pre-registered
+//player-movement binds) - see EditorSelection's Alt-drag-to-duplicate gizmo behavior.
+export const ModifierKeys = {isAltDown: false};
+
 //TODO Replace this with WindowSettings
 export const InputInfo = {
     gameHasFocus: true,

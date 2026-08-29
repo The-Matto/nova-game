@@ -5,6 +5,7 @@ import type {NVActor} from "../Actor.ts";
 import {MainCamera} from "../Camera.ts";
 import {Game} from "../Game.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
+import {ModifierKeys} from "../../InputMaps.ts";
 
 //Click-to-select + gizmo for editor mode. One TransformControls instance is created lazily and
 //reused per selection, instead of leaking a new one into the scene every click.
@@ -23,9 +24,10 @@ export class EditorSelection {
             //content, so it should survive a level reload (which clears the selection anyway).
             NVScene.scene.add(controls.getHelper());
 
-            //A drag just finished - the actor may have moved, so the octree needs rebuilding.
+            //Drag start: maybe duplicate (see TryDuplicateOnDrag). Drag end: rebuild the octree.
             controls.addEventListener('dragging-changed', (event : {value : boolean}) => {
-                if (!event.value) NVScene.RebuildWorldOctree();
+                if (event.value) EditorSelection.TryDuplicateOnDrag();
+                else NVScene.RebuildWorldOctree();
             });
 
             //Fires continuously while dragging - lets the inspector panel's Location/Rotation/
@@ -56,6 +58,16 @@ export class EditorSelection {
 
     public static GetTransformMode() : string {
         return EditorSelection.GetControls().mode;
+    }
+
+    //UE-style Alt-drag: spawns a duplicate at the actor's pre-drag spot, then leaves selection
+    //alone so the gizmo keeps moving the original.
+    private static TryDuplicateOnDrag() {
+        if (!ModifierKeys.isAltDown) return;
+        if (EditorSelection.GetTransformMode() !== 'translate') return;
+        if (!EditorSelection.selectedActor) return;
+
+        NVScene.SpawnActor(EditorSelection.selectedActor.ToSpawnDescriptor());
     }
 
     public static SelectActor(actor : NVActor | null) {

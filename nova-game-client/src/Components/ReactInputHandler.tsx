@@ -1,5 +1,5 @@
 ﻿import { useEffect } from 'react';
-import { keyActions, keyStates, mousePosition} from "../InputMaps.ts";
+import { keyActions, keyStates, ModifierKeys, mousePosition} from "../InputMaps.ts";
 import {PlayerSettings, PlayerStatics} from "../Three/Utility/PlayerGlobals.ts";
 
 export function ReactInputHandler() {
@@ -13,6 +13,8 @@ export function ReactInputHandler() {
         };
 
         const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.code === 'AltLeft' || event.code === 'AltRight') ModifierKeys.isAltDown = true;
+
             if (isTypingIntoInput(event)) return;
 
             if (event.code in keyActions) {
@@ -24,6 +26,8 @@ export function ReactInputHandler() {
         };
 
         const handleKeyUp = (event: KeyboardEvent) => {
+            if (event.code === 'AltLeft' || event.code === 'AltRight') ModifierKeys.isAltDown = false;
+
             if (isTypingIntoInput(event)) return;
 
             if (event.code in keyActions) {
@@ -67,7 +71,9 @@ export function ReactInputHandler() {
             event.preventDefault();
         }
 
-
+        //Alt-Tabbing away is a common way to lose Alt's keyup - without this it'd stay stuck
+        //"down", silently duplicating actors on every gizmo drag until pressed again.
+        const handleBlur = () => { ModifierKeys.isAltDown = false; };
 
         document.addEventListener( 'mousemove', handleMouseMove);
         document.addEventListener('keyup', handleKeyUp);
@@ -75,6 +81,7 @@ export function ReactInputHandler() {
         document.addEventListener('mousedown', handleMouseDown);
         document.addEventListener('mouseup', handleMouseUp);
         document.addEventListener('contextmenu', handleContextMenu);
+        window.addEventListener('blur', handleBlur);
 
         return () => {
             document.removeEventListener('keyup', handleKeyUp);
@@ -83,6 +90,7 @@ export function ReactInputHandler() {
             document.removeEventListener('mouseup', handleMouseUp);
             document.removeEventListener('contextmenu', handleContextMenu);
             document.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('blur', handleBlur);
 
         };
     }, []);
