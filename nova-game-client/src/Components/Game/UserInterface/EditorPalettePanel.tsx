@@ -141,9 +141,17 @@ export const EditorPalettePanel = () => {
                     {category.items.map(item => (
                         <button
                             key={item.label}
-                            className="text-left bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 cursor-pointer"
+                            className="flex items-center gap-2 text-left bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 cursor-pointer"
                             onClick={() => EditorSpawning.SpawnFromPalette(item)}
                         >
+                            <img
+                                src={`/T_NV_${item.label.replace(/\s+/g, '')}.png`}
+                                alt=""
+                                className="w-5 h-5 shrink-0 object-contain"
+                                //No icon file for this actor yet - collapse instead of showing a
+                                //broken-image glyph. Drop a same-named PNG in public/ to add one.
+                                onError={e => { e.currentTarget.style.display = 'none'; }}
+                            />
                             {item.label}
                         </button>
                     ))}
