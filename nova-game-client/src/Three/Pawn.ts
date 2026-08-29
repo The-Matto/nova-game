@@ -86,8 +86,12 @@ export abstract class NVPawn extends NVActor {
     }
 
     abstract Jump() : void;
-    abstract Crouch(isStart : boolean) : void;
-    abstract Sprint(isStart : boolean) : void;
+
+    //Only meaningful for NVEditorPawn (free-fly descend) - a no-op default rather than abstract,
+    //since gameplay has no crouch.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Crouch(_isStart : boolean) : void {
+    }
 
     //LMB while not in editor mode - see PlayerController.HandleMouseClick.
     abstract Fire() : void;

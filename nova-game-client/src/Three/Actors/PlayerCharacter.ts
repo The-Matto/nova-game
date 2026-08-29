@@ -7,8 +7,8 @@ import * as THREE from "three";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {StartCountdown} from "../Utility/Countdown.ts";
 
-//The real gameplay pawn: gravity, collision, jumping, sprinting. Spawned fresh each PIE start
-//at the level's NVPlayerSpawn marker - never placed directly in level JSON.
+//The real gameplay pawn: gravity, collision, jumping. Spawned fresh each PIE start at the
+//level's NVPlayerSpawn marker - never placed directly in level JSON.
 @RegisterClass("NVPlayerCharacter") @ReplicatedActor(12)
 export class NVPlayerCharacter extends NVPawn {
 
@@ -42,15 +42,6 @@ export class NVPlayerCharacter extends NVPawn {
 
     Jump() {
         this.playerPhysics.TryJump(5);
-    }
-
-    //No gameplay crouch yet - free-fly's "descend" meaning of Crouch lives on NVEditorPawn.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    Crouch(_isStart : boolean) {
-    }
-
-    Sprint(isStart : boolean) {
-        this.playerPhysics.isSprinting = isStart;
     }
 
     //Every death routes through here (see NVPawn.PlayerDeath). Freezes physics rather than

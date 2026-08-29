@@ -24,8 +24,6 @@ export class NVPlayerPhysics extends NVComponent {
     //TODO Make level-configurable once world settings exist in the level JSON.
     private static readonly KILL_Y : number = -50;
 
-    isSprinting : boolean = false;
-    private sprintSpeed : number = 15;
     private walkSpeed : number = 10;
 
     isFreeFlying : boolean = false;
@@ -157,9 +155,7 @@ export class NVPlayerPhysics extends NVComponent {
 
         if (this.wishDirection.lengthSq() === 0) return;
 
-        const moveSpeed : number = this.isFreeFlying
-            ? this.flySpeed
-            : (this.isSprinting ? this.sprintSpeed : this.walkSpeed);
+        const moveSpeed : number = this.isFreeFlying ? this.flySpeed : this.walkSpeed;
 
         const accel : number = this.isFreeFlying || this.playerOnFloor
             ? this.GROUND_ACCELERATION

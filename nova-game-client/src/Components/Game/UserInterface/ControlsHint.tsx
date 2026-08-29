@@ -8,7 +8,7 @@ const EDITOR_CONTROLS = [
 ];
 
 const PLAY_CONTROLS = [
-    "WASD Move · Space Jump · Shift Sprint · C Crouch · LMB Fire · P Pause",
+    "WASD Move · Space Jump · LMB Fire · P Pause",
 ];
 
 //A bottom-of-screen reminder of the current mode's controls - text only, so it never blocks

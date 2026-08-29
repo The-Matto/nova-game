@@ -63,7 +63,7 @@ export class PlayerController {
         };
 
         //Flycam up/down - only meaningful while free-flying (NVPlayerPhysics ignores
-        //wishDirection.y otherwise), same as Space/Crouch's free-fly ascend/descend.
+        //wishDirection.y otherwise), same as Space's free-fly ascend.
         keyActions["KeyE"] = {
             startFunc: () => {
                 if (EditorState.isInEditor && !this.isRightMouseDown) {
@@ -99,11 +99,7 @@ export class PlayerController {
             endFunc: () => {},
             isActive: false
         };
-        keyActions["ShiftLeft"] = {
-            startFunc: () => this.Sprint(true),
-            endFunc: () => this.Sprint(false),
-            isActive: false
-        };
+        //Free-fly descend (see NVEditorPawn.Crouch) - a no-op in gameplay.
         keyActions["KeyC"] = {
             startFunc: () => this.Crouch(true),
             endFunc: () => this.Crouch(false),
@@ -184,10 +180,6 @@ export class PlayerController {
     }
     private Crouch = (isStart : boolean)=>{
         this.possessedPawn?.Crouch(isStart)
-    }
-
-    private Sprint = (isStart : boolean)=>{
-        this.possessedPawn?.Sprint(isStart)
     }
 
     //In editor mode, left click picks the actor under the cursor (EditorSelection). Otherwise
