@@ -3,6 +3,7 @@ import * as THREE from "three";
 import type {Callback} from "./Helpers.ts";
 import type { NVScene } from "./NVScene.ts";
 import type {NVCamera} from "./Camera.ts";
+import {MainCamera} from "./Camera.ts";
 import {WindowSettings} from "./Utility/PlayerGlobals.ts";
 
 
@@ -21,7 +22,17 @@ export class NVRenderer {
         this.renderer.shadowMap.type = THREE.VSMShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
+        //Keeps the canvas and camera aspect matching the actual window - WindowSettings only
+        //reads window.innerWidth/Height once at module load otherwise.
+        window.addEventListener('resize', () => {
+            WindowSettings.windowWidth = window.innerWidth;
+            WindowSettings.windowHeight = window.innerHeight;
+            this.renderer.setSize(WindowSettings.windowWidth, WindowSettings.windowHeight);
 
+            const camera = MainCamera.GetCamera();
+            camera.aspect = WindowSettings.windowWidth / WindowSettings.windowHeight;
+            camera.updateProjectionMatrix();
+        });
     }
 
     public RenderFrame(scene: NVScene, camera: NVCamera){

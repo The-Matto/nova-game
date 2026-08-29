@@ -17,7 +17,7 @@ function App() {
 
     return (
         <>
-          <p id="fps-counter">FPS: 0</p>
+          <p id="fps-counter" className="fixed top-2 left-2 z-20 text-white text-xs">FPS: 0</p>
           <ReactInputHandler/>
           <ThreeCanvas/>
         </>

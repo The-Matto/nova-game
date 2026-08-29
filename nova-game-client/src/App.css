@@ -1,11 +1,7 @@
 @import "tailwindcss";
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+/* No max-width/padding/centering left - those fought the canvas being sized to the actual
+   viewport (see NVRenderer). #root's size now just follows its content. */
 
 .logo {
   height: 6em;

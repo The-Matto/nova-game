@@ -41,8 +41,8 @@ export function SavePlayerSettings() {
 }
 
 export const WindowSettings = {
-    windowHeight: 750,
-    windowWidth: 1000,
+    windowHeight: window.innerHeight,
+    windowWidth: window.innerWidth,
     isPaused: false
 };
 
