@@ -28,7 +28,7 @@ export class NVFallingPlatform extends NVActor {
     private static readonly WARNING_COLOR = '#c0392b';
 
     @EditableProperty({min: 0})
-    public fallDelay : number = .5;
+    public fallDelay : number = .05;
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
