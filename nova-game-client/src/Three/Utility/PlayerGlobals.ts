@@ -61,6 +61,12 @@ export const GameMode = {
     appMode: "createLevel" as AppMode,
 };
 
+//Which level NVScene's constructor loads - set by LevelBrowser before Play mounts the game.
+//Editor mode never touches this, so it keeps loading the same TestWorld.json it always has.
+export const LevelSelection = {
+    selectedLevelPath: "/TestWorld.json",
+};
+
 //True while the player is in editor mode (free-fly, no-clip, RMB-to-look). Defaults from
 //GameMode since UI reads this as React initial state before PlayInEditor.Initialize runs.
 export const EditorState = {

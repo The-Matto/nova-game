@@ -1,13 +1,14 @@
 ﻿import { WebSocketServer } from 'ws';
 import {parse} from 'url'
+import type {Server} from 'http';
 
 export const clientsConnections = new Map<string, WebSocket>();
 
-export const CreateSocketListener = () => {
-    const wss = new WebSocketServer({ port: 8080 });
+//Shares httpServer with the REST API (see server.ts) rather than binding its own port.
+export const CreateSocketListener = (httpServer : Server) => {
+    const wss = new WebSocketServer({ server: httpServer });
     wss.binaryType = 'arraybuffer';
 
-    console.log('Start listening on port: ' + wss.address().port);
     wss.on('connection', (socket: WebSocket, req: { url: string; }) => {
         console.log('Client connected');
         const { query } = parse(req.url!, true);

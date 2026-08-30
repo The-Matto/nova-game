@@ -1,11 +1,20 @@
-﻿import {clientsConnections, CreateSocketListener} from "./Sockets";
+﻿import {createServer} from "http";
+import {clientsConnections, CreateSocketListener} from "./Sockets";
 import {decodeBufferMessage} from "nova-shared/array-buffer-handler";
-
-
-
+import {HandleLevelsRequest} from "./LevelsApi";
 
 console.log("Launching Server");
-const socket = CreateSocketListener();
+
+const httpServer = createServer((req, res) => {
+    if (HandleLevelsRequest(req, res)) return;
+    res.writeHead(404);
+    res.end();
+});
+
+CreateSocketListener(httpServer);
+
+const PORT = 8080;
+httpServer.listen(PORT, () => console.log('Start listening on port: ' + PORT));
 
 
 //Setup game loop

@@ -8,7 +8,7 @@ import {Octree} from "three/examples/jsm/math/Octree.js";
 import {LevelObjectives} from "./Gameplay/LevelObjectives";
 import {EditorSelection} from "./Editor/EditorSelection";
 import {MainCamera} from "./Camera.ts";
-import {EditorState} from "./Utility/PlayerGlobals.ts";
+import {EditorState, LevelSelection} from "./Utility/PlayerGlobals.ts";
 
 export class NVScene {
 
@@ -42,7 +42,7 @@ export class NVScene {
 
         NVScene.worldOctree = new Octree();
 
-        NVScene.initialLoadPromise = NVScene.LoadLevel("/TestWorld.json");
+        NVScene.initialLoadPromise = NVScene.LoadLevel(LevelSelection.selectedLevelPath);
 
 
         const fillLight1 = new THREE.HemisphereLight( 0x8dc1de, 0x00668d, 1.5 );

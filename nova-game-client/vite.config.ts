@@ -12,6 +12,9 @@ export default defineConfig({
         '/game': {
           target: 'ws://localhost:8080/',
           ws: true
+        },
+        '/api': {
+          target: 'http://localhost:8080'
         }
       },
       fs: {
