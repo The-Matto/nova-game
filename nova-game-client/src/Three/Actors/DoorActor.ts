@@ -14,7 +14,7 @@ import {NVTargetActor} from "./TargetActor.ts";
 export class NVDoorActor extends NVActor {
 
     //Fraction of its full travel the door covers per second while opening.
-    private static readonly OPEN_SPEED : number = 1.5;
+    private static readonly OPEN_SPEED : number = 4;
     private static readonly COLOR : string = '#5a5a6a';
 
     @EditableProperty({min: 0})

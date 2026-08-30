@@ -80,6 +80,14 @@ export const GameMenuOverlay = () => {
         )}
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
             <div className="text-5xl font-bold text-orange-500">{reason === 'died' ? "You Died" : "Paused"}</div>
+            {reason === 'paused' && (
+                <button
+                    className="bg-emerald-700 hover:bg-emerald-600 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
+                    onClick={() => PlayerStatics.PlayerCharacter?.Resume()}
+                >
+                    Resume
+                </button>
+            )}
             <button
                 className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
                 onClick={retry}
