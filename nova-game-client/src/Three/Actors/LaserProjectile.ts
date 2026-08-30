@@ -6,8 +6,9 @@ import {EditorState, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlo
 
 const LIFETIME = 5;
 const SPEED = 25;
-//Generous enough to cover the player's own capsule radius plus a frame or two of travel.
-const HIT_RADIUS = 0.5;
+//Added on top of the player's own capsule radius (see HitsPlayer) - just enough slack for a
+//frame or two of travel between checks, not a second copy of the capsule's own size.
+const HIT_RADIUS = 0.15;
 
 //A pooled laser bolt fired by NVCannonActor - never placed in level JSON. Flies straight for
 //LIFETIME seconds, then deactivates (hidden, inert) instead of being destroyed, ready for
