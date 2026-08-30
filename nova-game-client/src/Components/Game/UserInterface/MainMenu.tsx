@@ -14,6 +14,7 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
 
     const playLevel = (level : LevelSummary) => {
         LevelSelection.selectedLevelPath = level.path;
+        LevelSelection.selectedLevelId = level.id;
         GameMode.appMode = "play";
         EditorState.isInEditor = false;
         CursorState.isCursorNeeded = false;

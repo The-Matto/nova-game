@@ -63,8 +63,11 @@ export const GameMode = {
 
 //Which level NVScene's constructor loads - set by LevelBrowser before Play mounts the game.
 //Editor mode never touches this, so it keeps loading the same TestWorld.json it always has.
+//selectedLevelId matches a LevelSummary.id (see LevelBrowser) - what LeaderboardPanel submits/
+//fetches against, since the level's file path isn't a stable identifier on the backend.
 export const LevelSelection = {
     selectedLevelPath: "/TestWorld.json",
+    selectedLevelId: "test-world",
 };
 
 //True while the player is in editor mode (free-fly, no-clip, RMB-to-look). Defaults from

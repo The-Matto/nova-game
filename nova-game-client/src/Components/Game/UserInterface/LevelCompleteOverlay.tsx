@@ -1,13 +1,18 @@
 import {useEffect, useState} from "react";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
-import {CursorState, GameMode, PlayerStatics, UIState} from "../../../Three/Utility/PlayerGlobals";
+import {CursorState, GameMode, LevelSelection, PlayerStatics, UIState} from "../../../Three/Utility/PlayerGlobals";
 import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
 import {FormatLevelTime, LevelTimer} from "../../../Three/Utility/LevelTimer";
+import {PlayerIdentity} from "../../../Three/Utility/PlayerIdentity";
+import {LeaderboardPanel} from "./LeaderboardPanel";
+import type {LeaderboardResponse} from "nova-shared/leaderboard";
 
 //Shown when the player reaches the goal volume with all objectives complete.
 export const LevelCompleteOverlay = () => {
 
     const [isComplete, setIsComplete] = useState(false);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
+    const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
     useEffect(() => {
         return GameEvents.On('levelComplete', () => {
@@ -18,12 +23,34 @@ export const LevelCompleteOverlay = () => {
             CursorState.isCursorNeeded = true;
             UIState.isModalOpen = true;
             if (document.pointerLockElement) document.exitPointerLock();
+
+            //Submit first, then re-fetch, so the just-finished run is guaranteed to be in the
+            //list LeaderboardPanel renders instead of racing a GET fired at the same time.
+            const levelId = LevelSelection.selectedLevelId;
+            fetch('/api/leaderboard', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    levelId,
+                    playerName: PlayerIdentity.name,
+                    timeSeconds: LevelTimer.elapsedTime,
+                }),
+            })
+                .then(() => fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerName=${encodeURIComponent(PlayerIdentity.name)}`))
+                .then(res => {
+                    if (!res.ok) throw new Error(`Server responded ${res.status}`);
+                    return res.json();
+                })
+                .then(setLeaderboard)
+                .catch(() => setLeaderboardError("Couldn't reach the leaderboard server"));
         });
     }, []);
 
     const retry = () => {
         PlayInEditor.RestartPlaying();
         setIsComplete(false);
+        setLeaderboard(null);
+        setLeaderboardError(null);
 
         //Hand control back to normal FPS look.
         CursorState.isCursorNeeded = false;
@@ -44,11 +71,13 @@ export const LevelCompleteOverlay = () => {
     };
 
     if (isComplete) {
-        return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
-                {FormatLevelTime(LevelTimer.elapsedTime)}
-            </div>
-            <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
+        return <div className="absolute inset-0 z-30 flex items-center justify-center gap-6 bg-slate-950/25">
+            <LeaderboardPanel data={leaderboard} error={leaderboardError} />
+
+            <div className="relative flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
+                <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
+                    {FormatLevelTime(LevelTimer.elapsedTime)}
+                </div>
                 <div className="text-5xl font-bold text-orange-500">Level Complete!</div>
                 <button
                     className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"

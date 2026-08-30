@@ -2,11 +2,13 @@
 import {clientsConnections, CreateSocketListener} from "./Sockets";
 import {decodeBufferMessage} from "nova-shared/array-buffer-handler";
 import {HandleLevelsRequest} from "./LevelsApi";
+import {HandleLeaderboardRequest} from "./LeaderboardApi";
 
 console.log("Launching Server");
 
-const httpServer = createServer((req, res) => {
+const httpServer = createServer(async (req, res) => {
     if (HandleLevelsRequest(req, res)) return;
+    if (await HandleLeaderboardRequest(req, res)) return;
     res.writeHead(404);
     res.end();
 });

@@ -1,5 +1,6 @@
 import {useEffect, useState} from "react";
 import type {LevelSummary} from "nova-shared/level-listing";
+import {LevelLeaderboardPreview} from "./LevelLeaderboardPreview";
 
 //Star rating rendered as filled/empty glyphs plus the raw number - good enough without needing
 //an icon font.
@@ -21,6 +22,8 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
 
     const [levels, setLevels] = useState<LevelSummary[] | null>(null);
     const [error, setError] = useState<string | null>(null);
+    //Accordion - only one level's leaderboard preview is expanded at a time.
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     useEffect(() => {
         fetch('/api/levels')
@@ -41,23 +44,40 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                 {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
                 {!error && levels?.length === 0 && <div className="text-white/50 py-6 text-center">No levels yet.</div>}
 
-                {levels?.map(level => (
-                    <button
-                        key={level.id}
-                        onClick={() => onSelectLevel(level)}
-                        className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-slate-800 text-left cursor-pointer"
-                    >
-                        {level.thumbnailUrl
-                            ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
-                            : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
-                        <div className="flex-1 min-w-0 text-xl text-white font-semibold truncate">{level.name}</div>
-                        <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
-                        <div className="w-32"><RatingStars rating={level.rating} /></div>
-                        <div className="w-24 text-white/50 text-sm text-right">
-                            {new Date(level.uploadedAt).toLocaleDateString()}
-                        </div>
-                    </button>
-                ))}
+                {levels?.map(level => {
+                    const isExpanded = expandedId === level.id;
+                    return <div key={level.id} className="rounded-xl overflow-hidden">
+                        <button
+                            onClick={() => setExpandedId(isExpanded ? null : level.id)}
+                            className={`w-full flex items-center gap-4 px-4 py-3 text-left cursor-pointer ${isExpanded ? "bg-orange-500/15" : "hover:bg-slate-800"}`}
+                        >
+                            {level.thumbnailUrl
+                                ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
+                                : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
+                            <div className="flex-1 min-w-0 text-xl text-white font-semibold truncate">{level.name}</div>
+                            <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
+                            <div className="w-32"><RatingStars rating={level.rating} /></div>
+                            <div className="w-24 text-white/50 text-sm text-right">
+                                {new Date(level.uploadedAt).toLocaleDateString()}
+                            </div>
+                        </button>
+
+                        {isExpanded && <div className="flex gap-6 px-6 pb-6 pt-2 bg-slate-800/50">
+                            {level.thumbnailUrl
+                                ? <img src={level.thumbnailUrl} alt="" className="w-64 h-36 object-cover rounded-lg bg-slate-900 shrink-0" />
+                                : <div className="w-64 h-36 rounded-lg bg-slate-900 shrink-0" />}
+                            <div className="flex-1 min-w-0">
+                                <LevelLeaderboardPreview levelId={level.id} />
+                            </div>
+                            <button
+                                className="self-end bg-emerald-700 hover:bg-emerald-600 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer shrink-0"
+                                onClick={() => onSelectLevel(level)}
+                            >
+                                Play
+                            </button>
+                        </div>}
+                    </div>;
+                })}
             </div>
 
             <button
