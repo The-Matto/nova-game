@@ -182,9 +182,10 @@ export class PlayerController {
         this.possessedPawn?.Crouch(isStart)
     }
 
-    //In editor mode, left click picks the actor under the cursor (EditorSelection). Otherwise
-    //it's routed to the possessed pawn as fire input - UI buttons have their own onClick, not this.
-    public HandleMouseClick =  (pressedButton : number, clientX : number, clientY : number) => {
+    //In editor mode, left click picks the actor under the cursor (EditorSelection) - Ctrl held
+    //adds it to the selection instead of replacing it. Otherwise it's routed to the possessed
+    //pawn as fire input - UI buttons have their own onClick, not this.
+    public HandleMouseClick =  (pressedButton : number, clientX : number, clientY : number, isCtrlHeld : boolean = false) => {
 
         if (pressedButton !== 0) return;
 
@@ -196,7 +197,7 @@ export class PlayerController {
         //A click that landed on a gizmo handle is TransformControls' to handle (starting a
         //drag), not a new selection attempt - see EditorSelection.IsDragging.
         if (!this.isRightMouseDown && !EditorSelection.IsDragging()) {
-            EditorSelection.TryPickAtScreenPoint(clientX, clientY);
+            EditorSelection.TryPickAtScreenPoint(clientX, clientY, isCtrlHeld);
         }
     }
 
@@ -211,15 +212,15 @@ export class PlayerController {
         keyActions[keyCode].isEcho = true;
     }
 
-    //Editor-mode-only: deletes whatever actor is currently selected.
+    //Editor-mode-only: deletes every currently-selected actor.
     private DeleteSelectedActor = () => {
         if (!EditorState.isInEditor) return;
 
-        const actor = EditorSelection.GetSelectedActor();
-        if (!actor) return;
+        const actors = EditorSelection.GetSelectedActors();
+        if (actors.length === 0) return;
 
         EditorSelection.ClearSelection();
-        NVScene.DestroyActor(actor);
+        for (const actor of actors) NVScene.DestroyActor(actor);
     }
 
     //'P' - starts a fresh PIE session from editor mode; during gameplay it opens/closes the

@@ -55,7 +55,7 @@ export function ReactInputHandler() {
             if (!canvasEl?.contains(event.target as Node)) return;
 
             if (event.button === 0) {
-                PlayerStatics.PlayerController.HandleMouseClick(event.button, event.clientX, event.clientY)
+                PlayerStatics.PlayerController.HandleMouseClick(event.button, event.clientX, event.clientY, event.ctrlKey)
             } else if (event.button === 2) {
                 PlayerStatics.PlayerController.SetRightMouseDown(true);
             }

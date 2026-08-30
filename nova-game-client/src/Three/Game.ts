@@ -4,6 +4,7 @@ import {NVRenderer} from "./Renderer.ts";
 import {NVScene} from "./NVScene.ts";
 import {MainCamera} from "./Camera.ts";
 import {PlayInEditor} from "./Editor/PlayInEditor.ts";
+import {EditorSelection} from "./Editor/EditorSelection.ts";
 
 import "./Includes.ts"
 import {InputInfo} from "../InputMaps.ts";
@@ -80,6 +81,9 @@ export class Game {
                 actor.Tick(GameStats.deltaTime);
             }
         }
+
+        //Keeps selection outlines tracking their actors regardless of how they moved.
+        EditorSelection.UpdateSelectionOutlines();
 
         //Render the frame
         this.renderer.RenderFrame(Game.scene, MainCamera);
