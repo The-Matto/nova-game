@@ -74,10 +74,11 @@ See [TODO.md](TODO.md) for the current task list.
 - Keep an eye on `// TODO` comments scattered in recently touched files — they're the live task
   list until this doc says otherwise.
 - Keep comments light — this has been flagged repeatedly, so treat it as a hard cap, not a
-  suggestion: 1 line is the norm, 2 is the absolute max, and most methods/fields need zero. A
-  comment earns its place only for a genuinely non-obvious *why*; don't add one to every new
-  method/field, and don't restate what the code already says. If it doesn't fit in 1–2 lines,
-  that's a sign to cut it down, not to keep writing.
+  suggestion: most comments should be 1 line, 2 only when genuinely needed, and most
+  methods/fields need zero. 3 lines is over the top for the vast majority of cases — treat
+  hitting it as a sign to cut the comment down, not a sign to keep writing. A comment earns its
+  place only for a genuinely non-obvious *why*; don't add one to every new method/field, and
+  don't restate what the code already says.
 - Use `DragNumberInput` (`Components/UI/DragNumberInput.tsx`) for every numeric input in the
   editor UI, instead of a native `<input type="number">` — click to type a value, drag left/right
   to scrub it, no spinner buttons. `Vector3Input` (`Components/UI/Vector3Input.tsx`) builds an
