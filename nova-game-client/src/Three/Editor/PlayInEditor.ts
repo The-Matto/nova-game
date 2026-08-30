@@ -5,6 +5,7 @@ import {NVPlayerCharacter} from "../Actors/PlayerCharacter.ts";
 import {NVPlayerSpawn} from "../Actors/PlayerSpawn.ts";
 import {PlayerController} from "../Actors/PlayerController.ts";
 import {GameMode, PlayerStatics} from "../Utility/PlayerGlobals.ts";
+import {InputInfo} from "../../InputMaps.ts";
 import {StopLevelTimer} from "../Utility/LevelTimer.ts";
 import {Countdown, StartCountdown} from "../Utility/Countdown.ts";
 import type {LevelData} from "../ClassDescripter.ts";
@@ -43,6 +44,10 @@ export class PlayInEditor {
     }
 
     public static StartPlaying(){
+        //Defaults true and only updates once pointer lock is (re)acquired - force it false so a
+        //fresh session doesn't tick (countdown included) before the player's clicked in at all.
+        InputInfo.gameHasFocus = false;
+
         PlayInEditor.levelSnapshot = NVScene.SerializeLevel();
         //The gizmo is an editor tool - don't leave it attached/visible during actual play.
         EditorSelection.ClearSelection();

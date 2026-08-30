@@ -3,7 +3,7 @@ import {useRef, useEffect} from 'react';
 
 import {Game} from "../Three/Game.ts";
 import {InputInfo} from "../InputMaps.ts";
-import {CursorState} from "../Three/Utility/PlayerGlobals.ts";
+import {CursorState, EditorState, PlayerStatics} from "../Three/Utility/PlayerGlobals.ts";
 import {GameUIMain} from "./Game/UserInterface/UI-Main.tsx";
 
 
@@ -52,6 +52,15 @@ export const ThreeCanvas = () => {
                 //the game loop still needs to tick/render then - gameHasFocus isn't purely this.
                 const isLocked = document.pointerLockElement === container;
                 InputInfo.gameHasFocus = isLocked || CursorState.isCursorNeeded;
+
+                //Losing lock mid-gameplay (Escape, clicking away, ...) force-pauses - same as
+                //losing window focus (see ReactInputHandler's blur handler).
+                if (!isLocked && !EditorState.isInEditor) {
+                    const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
+                    if (physics && !physics.isDead && !physics.isPaused) {
+                        PlayerStatics.PlayerCharacter?.Pause();
+                    }
+                }
         });
 
 

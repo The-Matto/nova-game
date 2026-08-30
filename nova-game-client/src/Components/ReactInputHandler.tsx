@@ -1,6 +1,6 @@
 ﻿import { useEffect } from 'react';
 import { keyActions, keyStates, ModifierKeys, mousePosition} from "../InputMaps.ts";
-import {PlayerSettings, PlayerStatics} from "../Three/Utility/PlayerGlobals.ts";
+import {EditorState, PlayerSettings, PlayerStatics} from "../Three/Utility/PlayerGlobals.ts";
 
 export function ReactInputHandler() {
 
@@ -73,7 +73,14 @@ export function ReactInputHandler() {
 
         //Alt-Tabbing away is a common way to lose Alt's keyup - without this it'd stay stuck
         //"down", silently duplicating actors on every gizmo drag until pressed again.
-        const handleBlur = () => { ModifierKeys.isAltDown = false; };
+        const handleBlur = () => {
+            ModifierKeys.isAltDown = false;
+
+            //Losing window focus mid-run shouldn't let the game keep ticking unseen.
+            if (EditorState.isInEditor) return;
+            const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
+            if (physics && !physics.isDead && !physics.isPaused) PlayerStatics.PlayerCharacter?.Pause();
+        };
 
         document.addEventListener( 'mousemove', handleMouseMove);
         document.addEventListener('keyup', handleKeyUp);
