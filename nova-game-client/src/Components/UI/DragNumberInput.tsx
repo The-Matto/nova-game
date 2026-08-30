@@ -2,7 +2,7 @@ import {useRef, useState} from "react";
 
 //A number field with no spinner buttons: click to type, drag left/right to scrub (Blender/UE-
 //style). Use this everywhere a numeric input is needed in the editor UI.
-export const DragNumberInput = ({value, onChange, sensitivity = 0.1, min, max, className} : {
+export const DragNumberInput = ({value, onChange, sensitivity = 0.1, min, max, isInteger, className} : {
     value : number,
     onChange : (value : number) => void,
     sensitivity? : number,
@@ -10,6 +10,8 @@ export const DragNumberInput = ({value, onChange, sensitivity = 0.1, min, max, c
     //than rejected.
     min? : number,
     max? : number,
+    //Rounds to a whole number on every commit (drag, type, or blur).
+    isInteger? : boolean,
     className? : string,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -17,7 +19,7 @@ export const DragNumberInput = ({value, onChange, sensitivity = 0.1, min, max, c
     const drag = useRef<{ startX : number, startValue : number, dragged : boolean } | null>(null);
 
     const clamp = (raw : number) => {
-        let result = raw;
+        let result = isInteger ? Math.round(raw) : raw;
         if (min !== undefined) result = Math.max(min, result);
         if (max !== undefined) result = Math.min(max, result);
         return result;
@@ -58,6 +60,9 @@ export const DragNumberInput = ({value, onChange, sensitivity = 0.1, min, max, c
         return <input
             type="text"
             autoFocus
+            //Selects the existing value so typing straight away replaces it, instead of just
+            //dropping a cursor into the middle of it.
+            onFocus={e => e.target.select()}
             value={text}
             onChange={e => setText(e.target.value)}
             onBlur={() => {
@@ -73,6 +78,6 @@ export const DragNumberInput = ({value, onChange, sensitivity = 0.1, min, max, c
     }
 
     return <div onMouseDown={handleMouseDown} className={`${className} cursor-ew-resize select-none`}>
-        {value.toFixed(2)}
+        {isInteger ? Math.round(value) : value.toFixed(2)}
     </div>;
 };

@@ -15,12 +15,14 @@ export class NVDoorActor extends NVActor {
 
     //Fraction of its full travel the door covers per second while opening.
     private static readonly OPEN_SPEED : number = 4;
+    //How many multiples of its own height the door rises when fully open.
+    private static readonly OPEN_HEIGHT_MULTIPLIER : number = 2;
     private static readonly COLOR : string = '#5a5a6a';
 
-    @EditableProperty({min: 0})
+    @EditableProperty({min: 0, isInteger: true})
     public targetsBeforeOpen : number = 1;
 
-    //0 = closed, 1 = fully open (raised by its own height) - lerped toward, not snapped.
+    //0 = closed, 1 = fully open (see OPEN_HEIGHT_MULTIPLIER) - lerped toward, not snapped.
     private openAmount : number = 0;
     private isOpen : boolean = false;
 
@@ -65,6 +67,6 @@ export class NVDoorActor extends NVActor {
 
         this.openAmount = Math.min(1, this.openAmount + deltaTime * NVDoorActor.OPEN_SPEED);
         this.scene.position.y = this.spawnDescriptor.location.y
-            + this.openAmount * this.spawnDescriptor.scale.y;
+            + this.openAmount * this.spawnDescriptor.scale.y * NVDoorActor.OPEN_HEIGHT_MULTIPLIER;
     }
 }

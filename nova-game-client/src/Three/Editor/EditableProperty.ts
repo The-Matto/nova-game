@@ -8,6 +8,8 @@ export interface EditablePropertyOptions {
     max? : number;
     editCondition? : string;
     choices? : string[];
+    //Rounds to a whole number (drag, type, and display) - see DragNumberInput.
+    isInteger? : boolean;
 }
 
 //Marks a field as editable in the inspector panel while selected - same pattern as
