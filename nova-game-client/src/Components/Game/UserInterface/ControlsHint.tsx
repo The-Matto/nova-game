@@ -3,7 +3,7 @@ import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {EditorState, UIState} from "../../../Three/Utility/PlayerGlobals";
 
 const EDITOR_CONTROLS = [
-    "WASD Move · RMB Look Around · LMB Select / Drag Gizmo · Alt+Drag Duplicate",
+    "WASD Move · RMB Look Around · LMB Select / Drag Gizmo · Ctrl+LMB Add to Selection · Alt+Drag Duplicate",
     "W/E/R Move / Rotate / Scale Gizmo · Del Delete · P Play",
 ];
 
