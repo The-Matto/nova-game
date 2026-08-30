@@ -24,6 +24,11 @@ export class NVCamera {
 
     GetCamera = (): THREE.PerspectiveCamera => {return this.camera;}
 
+    //Cosmetic screen roll while strafing - see NVWeapon.Tick, the only current caller.
+    public SetRoll(radians : number) {
+        this.camera.rotation.z = radians;
+    }
+
     //Resets to a specific yaw, zeroing pitch - used when spawning at an NVPlayerSpawn marker so
     //the player starts facing the way its arrow points.
     public SetYaw(yawRadians : number) {

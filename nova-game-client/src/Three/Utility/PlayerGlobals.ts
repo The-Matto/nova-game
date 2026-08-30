@@ -16,6 +16,9 @@ export const PlayerSettings = {
 
     mouseSensitivityMenuX: 15.0,
     mouseSensitivityMenuY: 15.0,
+
+    //Max camera roll (degrees) while strafing - see NVWeapon.Tick.
+    cameraTiltDegrees: 2.5,
 }
 
 const PLAYER_SETTINGS_STORAGE_KEY = 'nova-game:player-settings';

@@ -6,7 +6,7 @@ import {MainCamera} from "../Camera.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {NVTargetActor} from "./TargetActor.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
-import {PlayerStatics} from "../Utility/PlayerGlobals.ts";
+import {PlayerSettings, PlayerStatics} from "../Utility/PlayerGlobals.ts";
 
 //A momentary visual per shot (impact marker, trace beam) - see NVWeapon.UpdateEffects.
 type TimedEffect = {
@@ -56,8 +56,9 @@ export class NVWeapon extends NVActor {
         this.meshComponent = new StaticMeshComponent(this, new THREE.BoxGeometry(0.1, 0.12, 0.4), material, NVWeapon.VIEWMODEL_OFFSET);
     }
 
-    //Leans the viewmodel into whichever way the player's moving - strafing rolls it, moving
-    //forward/back pitches it - just a cosmetic read on player velocity, not physically driven.
+    //Leans the viewmodel (and, more subtly, the camera itself) into whichever way the player's
+    //moving - strafing rolls it, moving forward/back pitches it - just a cosmetic read on player
+    //velocity, not physically driven.
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
@@ -82,6 +83,11 @@ export class NVWeapon extends NVActor {
         const lerpFactor = Math.min(1, deltaTime * NVWeapon.TILT_SMOOTHING);
         mesh.rotation.z = THREE.MathUtils.lerp(mesh.rotation.z, targetRoll, lerpFactor);
         this.movementPitch = THREE.MathUtils.lerp(this.movementPitch, targetPitch, lerpFactor);
+
+        //Read live (not cached) so a slider drag in Options takes effect immediately.
+        const camera = MainCamera.GetCamera();
+        const targetCameraRoll = strafeAmount * THREE.MathUtils.degToRad(PlayerSettings.cameraTiltDegrees);
+        MainCamera.SetRoll(THREE.MathUtils.lerp(camera.rotation.z, targetCameraRoll, lerpFactor));
 
         //Recoil eases back to 0 on its own, independent of the movement lean above.
         const recoilLerpFactor = Math.min(1, deltaTime * NVWeapon.RECOIL_RECOVERY_SPEED);
