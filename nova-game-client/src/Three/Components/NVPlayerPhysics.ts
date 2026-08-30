@@ -38,6 +38,9 @@ export class NVPlayerPhysics extends NVComponent {
     //True during the pre-run countdown (see Utility/Countdown.ts) - also freezes physics, so
     //the player can't drift/fall before the run actually starts.
     isCountingDown : boolean = false;
+    //True once the goal volume has been reached - also freezes physics, so the player can't
+    //keep moving/falling behind the Level Complete screen.
+    isLevelComplete : boolean = false;
 
     //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
@@ -58,7 +61,7 @@ export class NVPlayerPhysics extends NVComponent {
     private readonly AIR_ACCELERATION : number = 1.5;
 
     TickComponent(delta : number){
-        if (this.isDead || this.isPaused || this.isCountingDown) return;
+        if (this.isDead || this.isPaused || this.isCountingDown || this.isLevelComplete) return;
         this.updatePlayer(delta);
     }
 
@@ -83,9 +86,9 @@ export class NVPlayerPhysics extends NVComponent {
     //Applies a jump impulse once per ground contact - see hasJumpedSinceGrounded. Unlike most
     //input this isn't gated by TickComponent's freeze (it's called directly from NVPawn.Jump),
     //so it needs its own guard - otherwise a held Space would queue an impulse that launches the
-    //player the instant isDead/isPaused/isCountingDown clears.
+    //player the instant isDead/isPaused/isCountingDown/isLevelComplete clears.
     public TryJump(impulse : number) : boolean {
-        if (this.isDead || this.isPaused || this.isCountingDown) return false;
+        if (this.isDead || this.isPaused || this.isCountingDown || this.isLevelComplete) return false;
         if (this.timeSinceGrounded > NVPlayerPhysics.COYOTE_TIME || this.hasJumpedSinceGrounded) return false;
 
         //Set, not added - clears residual fall velocity from the coyote window instead of just

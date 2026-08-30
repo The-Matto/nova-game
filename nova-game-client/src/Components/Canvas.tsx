@@ -57,7 +57,7 @@ export const ThreeCanvas = () => {
                 //losing window focus (see ReactInputHandler's blur handler).
                 if (!isLocked && !EditorState.isInEditor) {
                     const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
-                    if (physics && !physics.isDead && !physics.isPaused) {
+                    if (physics && !physics.isDead && !physics.isPaused && !physics.isLevelComplete) {
                         PlayerStatics.PlayerCharacter?.Pause();
                     }
                 }

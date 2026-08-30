@@ -66,6 +66,7 @@ export class NVGoalVolume extends NVActor {
         //it once every target's been hit.
         if (LevelObjectives.AllComplete()) {
             StopLevelTimer();
+            PlayerStatics.PlayerCharacter?.LevelComplete();
             GameEvents.Emit('levelComplete', undefined);
         }
     }

@@ -79,7 +79,7 @@ export function ReactInputHandler() {
             //Losing window focus mid-run shouldn't let the game keep ticking unseen.
             if (EditorState.isInEditor) return;
             const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
-            if (physics && !physics.isDead && !physics.isPaused) PlayerStatics.PlayerCharacter?.Pause();
+            if (physics && !physics.isDead && !physics.isPaused && !physics.isLevelComplete) PlayerStatics.PlayerCharacter?.Pause();
         };
 
         document.addEventListener( 'mousemove', handleMouseMove);

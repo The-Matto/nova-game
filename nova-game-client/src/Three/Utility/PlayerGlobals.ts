@@ -93,5 +93,5 @@ export const PlayerStatics : IPlayerStatics = {};
 //NVPlayerPhysics itself, so the whole world actually stops while a menu's up.
 export function IsGameplayFrozen() : boolean {
     const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
-    return !!physics && (physics.isDead || physics.isPaused || physics.isCountingDown);
+    return !!physics && (physics.isDead || physics.isPaused || physics.isCountingDown || physics.isLevelComplete);
 }

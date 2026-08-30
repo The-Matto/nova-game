@@ -58,8 +58,16 @@ export class NVPlayerCharacter extends NVPawn {
     public PlayerRetry() {
         this.playerPhysics.isDead = false;
         this.playerPhysics.isPaused = false;
+        this.playerPhysics.isLevelComplete = false;
         this.playerPhysics.RespawnAtSpawnPoint();
         StartCountdown();
+    }
+
+    //Reaching the goal volume (see NVGoalVolume.OnPlayerEnter) - freezes physics like PlayerDeath,
+    //so the player can't keep moving/falling behind the Level Complete screen.
+    public LevelComplete() {
+        this.playerPhysics.isLevelComplete = true;
+        this.playerPhysics.playerVelocity.set(0, 0, 0);
     }
 
     //'P' during gameplay (see PlayerController.ToggleEditorMode) - opens the same menu as
