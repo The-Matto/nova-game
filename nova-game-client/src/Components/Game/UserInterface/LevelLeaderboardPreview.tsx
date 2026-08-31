@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import type {LeaderboardResponse} from "nova-shared/leaderboard";
-import {PlayerIdentity} from "../../../Three/Utility/PlayerIdentity";
+import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {LeaderboardList} from "./LeaderboardList";
 
 //Fetched only once a level's row is actually expanded (see LevelBrowser) - not eagerly for
@@ -10,7 +10,8 @@ export const LevelLeaderboardPreview = ({levelId} : {levelId : string}) => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerName=${encodeURIComponent(PlayerIdentity.name)}`)
+        EnsureRegistered()
+            .then(playerId => fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerId=${encodeURIComponent(playerId)}`))
             .then(res => {
                 if (!res.ok) throw new Error(`Server responded ${res.status}`);
                 return res.json();

@@ -4,30 +4,41 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 
 ## Core gameplay
 
-- [ ] Target actors: placeable in the level editor, shootable, register a hit.
-- [ ] Shooting/combat: raycast or projectile hit detection from the player camera.
-- [ ] Level timer: start on level begin, stop when all targets are cleared / level goal is met.
-- [ ] Level completion + scoring flow (best time, maybe splits).
+- [x] Target actors: placeable in the level editor, shootable, register a hit.
+- [x] Shooting/combat: raycast or projectile hit detection from the player camera.
+- [x] Level timer: start on level begin, stop when all targets are cleared / level goal is met.
+- [x] Level completion + scoring flow (Level Complete screen, leaderboard submission).
 
 ## Level editor
 
-- [ ] Move free-fly + `TransformControls` test code into a real editor mode (place/move/rotate/
-      scale actors, including targets).
-- [ ] Level save: serialize editor state to the level JSON format.
-- [ ] Level upload: send serialized level JSON to the backend.
-- [ ] Level browser UI: list/search levels stored on the backend, load one into the player.
+- [x] Move free-fly + `TransformControls` test code into a real editor mode (place/move/rotate/
+      scale actors, including targets, multi-select).
+- [x] Level save: serialize editor state to the level JSON format (Export/Import).
+- [ ] Level upload: send serialized level JSON to the backend — the level browser can list/load
+      levels already, but there's still no path from "Export in the editor" to the server.
+- [x] Level browser UI: list levels from the backend, load one into the player. Search still TODO.
 
 ## Backend
 
-- [ ] Level storage API (save/list/fetch level JSON) — persisted in PostgreSQL.
-- [ ] Leaderboard service backed by Redis (e.g. sorted set per level: player → best time).
-- [ ] PostgreSQL schema: users, levels, run/attempt history.
-- [ ] Auth (even minimal) so leaderboard entries and uploaded levels are attributable to a player.
+- [x] PostgreSQL schema: `users`, `levels`, `leaderboard_entries` (run/attempt history) — see
+      `nove-game-server/migrations/`.
+- [x] Auth (even minimal): `POST /api/players` mints a real `users` row; leaderboard entries and
+      `levels.author_id` reference it as a real foreign key, not a trusted display-name string.
+      Still anonymous (no login) - see root CLAUDE.md's Vision for the planned OAuth follow-up.
+- [x] Leaderboard durability: `GET`/`POST /api/leaderboard` query real Postgres now (ranked,
+      deduped per-player).
+- [ ] Level storage API (save/list/fetch level JSON) — the `levels` table exists (schema only),
+      but `GET /api/levels` still returns a hardcoded array, and there's no save/upload endpoint.
+- [ ] Leaderboard service backed by Redis — still Postgres-only; Redis would sit in front for
+      fast ranked reads, per the durable-Postgres/fast-Redis split in root CLAUDE.md's Vision.
 
 ## Infra / deployment
 
-- [ ] Provision Redis + PostgreSQL on Railway.
-- [ ] Deploy `nove-game-server` to Railway.
+- [x] Provision PostgreSQL on Railway (Redis provisioned too, not wired into code yet).
+- [ ] Deploy `nove-game-server` to Railway. Local dev currently connects to the same Railway
+      Postgres instance over an SSH tunnel (`railway connect postgres --tunnel-only`) - see
+      nove-game-server/CLAUDE.md. Once the server itself is deployed there, it should switch to
+      Railway's private `DATABASE_URL` instead of the tunnel/public one.
 - [ ] Decide + set up client hosting/deployment.
 
 ## Notes

@@ -12,7 +12,7 @@ dist
 dist-ssr
 *.local
 
-# Secrets - see nove-game-server/.env.example for the expected shape
+# Secrets - see the root CLAUDE.md's "Running it" section for what nove-game-server/.env needs
 .env
 
 # Editor directories and files

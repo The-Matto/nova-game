@@ -27,9 +27,9 @@ npm workspaces, three packages:
 - Multiplayer/netcode groundwork exists (`WebSocketConnection.ts`, `client-net-driver.ts`,
   `Sockets.ts`, `Replication.ts`) — likely aiming for at least ghost/leaderboard-style
   competition, possibly live multiplayer.
-- **Leaderboards**: planned, backed by Redis (fast read/write for ranking, e.g. sorted sets for
-  per-level best times) and a PostgreSQL server (durable storage — levels, users, run history).
-  Neither is wired up yet.
+- **Leaderboards**: durable storage (levels, users, run history) is PostgreSQL, wired up and live
+  — see "Current state" below. Redis, for fast per-level ranked reads in front of it, isn't wired
+  up yet.
 
 ## Deployment (planned)
 
@@ -41,36 +41,56 @@ npm workspaces, three packages:
 
 Already working / in progress:
 - Basic player movement (`NVPlayerPhysics.ts`, `PlayerController.ts`, `PlayerCharacter.ts`).
-- A test free-fly camera mode for the level editor.
-- React UI layer with buttons overlaid on the Three.js canvas (`Components/Game/UserInterface`,
-  `ReactInputHandler.tsx`).
-- Level loading from JSON (`SceneBuilder.ts`, `NVScene.ts`).
-- A basic DOM interop layer for in-game UI (`ui-DOM-interop.ts`) and a virtual cursor.
-- Test `TransformControls` for editor gizmo work.
+- A free-fly editor mode with gizmo-based placement/transform, multi-select, and Play-In-Editor.
+- React UI layer overlaid on the Three.js canvas (`Components/Game/UserInterface`), including a
+  full gameplay loop: pre-run countdown, target placement/shooting/hit detection, a level timer,
+  and a Level Complete screen.
+- A REST-backed level browser (`GET /api/levels`) and leaderboard (`GET`/`POST /api/leaderboard`)
+  backed by a real PostgreSQL database (see "Running it" below) — levels are still hardcoded
+  (see next point), but players and leaderboard runs are real rows.
+- Anonymous-but-real player identity: `POST /api/players` mints a real database row and UUID per
+  browser, no login yet — see `PlayerIdentity.ts` (client) and `PlayersApi.ts` (server).
 
 Not yet built (expected next):
-- Target placement + shooting/combat and hit detection.
-- Timer/level-completion logic and scoring.
-- Level upload/download flow to the server, and a level browser.
-- Full level editor UX beyond the current free-fly test.
+- Actual level upload (editor → server): the level browser exists, but `GET /api/levels` still
+  returns a hardcoded array (the `levels` table exists, just isn't queried yet) — there's no path
+  yet from "Export in the editor" to "shows up in the browser."
+- Redis, for fast leaderboard reads in front of Postgres (Postgres alone is the whole leaderboard
+  right now, which is fine at this scale).
+- Real accounts (OAuth) — see the anonymous-identity point above; this is the planned upgrade.
+- Full level editor UX beyond the current feature set (e.g. undo/redo, better palette browsing).
 
 ## Running it
 
-- Front end: `cd nova-game-client && npm run dev` (plain Vite dev server). The dev server proxies
-  `/game` to `ws://localhost:8080/`, so the backend is expected to be running locally on port 8080
-  alongside it for networked features to work.
+### First-time setup
+
+1. `npm install` from the repo root (npm workspaces — installs all three packages).
+2. Install the [Railway CLI](https://railway.app/cli), then `railway login` and `railway link`
+   (from the repo root) to connect it to the project that has the Postgres/Redis instances. See
+   [nove-game-server/CLAUDE.md](nove-game-server/CLAUDE.md) for why local dev uses Railway's
+   Postgres rather than a local one, and what to do if `railway connect` complains about a
+   missing SSH key.
+3. Open a tunnel to Postgres and leave it running in its own terminal:
+   `railway connect postgres --tunnel-only -P 5433`. The first time it starts, it prints a
+   connection string.
+4. Create `nove-game-server/.env` (gitignored, never commit it) containing exactly one line:
+   `DATABASE_URL=<that connection string>`.
+5. Apply the schema: `cd nove-game-server && npm run migrate`.
+
+### Every time you work on it
+
+- Keep the DB tunnel running: `railway connect postgres --tunnel-only -P 5433` (step 3 above) —
+  `npm run migrate`/`npm start` in `nove-game-server` can't reach Postgres without it.
 - Backend: `cd nove-game-server && npm start` (runs `tsx src/server.ts`).
+- Front end: `cd nova-game-client && npm run dev` (plain Vite dev server). The dev server proxies
+  `/game` (WebSocket) and `/api` (REST) to `localhost:8080`, so the backend needs to be running
+  alongside it for anything networked to work.
 
 See [TODO.md](TODO.md) for the current task list.
 
 ## Working conventions
 
 - Everything is TypeScript on both ends.
-- The client follows a **Unreal Engine–style architecture** on top of Three.js: Actors and
-  Components rather than a third-party ECS (`Three/Actor.ts`, `Three/Components/NVComponent.ts`,
-  `Interfaces/TickableInterface.ts`), naming/patterns lean UE-ish elsewhere too (e.g.
-  `PlayerController.ts`, `PlayerCharacter.ts`, `Replication.ts`). Follow this Actor/Component/
-  Controller style for new gameplay code rather than introducing a different framework or an ECS.
 - Keep an eye on `// TODO` comments scattered in recently touched files — they're the live task
   list until this doc says otherwise.
 - Keep comments light — this has been flagged repeatedly, so treat it as a hard cap, not a
@@ -79,26 +99,6 @@ See [TODO.md](TODO.md) for the current task list.
   hitting it as a sign to cut the comment down, not a sign to keep writing. A comment earns its
   place only for a genuinely non-obvious *why*; don't add one to every new method/field, and
   don't restate what the code already says.
-- Use `DragNumberInput` (`Components/UI/DragNumberInput.tsx`) for every numeric input in the
-  editor UI, instead of a native `<input type="number">` — click to type a value, drag left/right
-  to scrub it, no spinner buttons. `Vector3Input` (`Components/UI/Vector3Input.tsx`) builds an
-  X/Y/Z triple of these on top, with the standard red/green/blue axis colors.
-- Every `@EditableProperty` field must round-trip through the level JSON: saved into
-  `properties` on export/serialize and applied back on load/respawn. This is automatic —
-  `NVActor.ToSpawnDescriptor()` and `ApplyEditableProperties()` (called from
-  `NVScene.SpawnActor()`) handle any field decorated with `@EditableProperty`, so a new property
-  needs no extra wiring — but always verify a new one actually survives a save → load cycle
-  (Export then Import, or a PIE restart), especially if the actor's own constructor also reads
-  `descripter.properties` directly for something else.
-- Any actor with a timer/counter/cycle that drives its own gameplay behavior (a cooldown before
-  firing, a hazard's on/off cycle, a projectile's flight) must reset that state on
-  `OnPlayerRespawned()`. Retrying (death, voluntary pause, or falling to KILL_Y) calls this on
-  every actor via `NVPlayerPhysics.RespawnAtSpawnPoint()`, and a run should be deterministic: the
-  same hazard state at the same point every attempt, not whatever it drifted to before the last
-  death. See `NVCannonActor`, `NVSpikeActor`, `NVLaserProjectile` for the pattern — purely
-  cosmetic state (e.g. a weapon's view-model recoil) doesn't need this.
-- The same actors must also check `IsGameplayFrozen()` (`Utility/PlayerGlobals.ts`) in `Tick()`,
-  alongside the existing `EditorState.isInEditor` check, and skip their own timer/cycle/movement
-  entirely while it's true — otherwise a hazard keeps firing/animating/damaging right through the
-  pause or death menu, or during the pre-run countdown. `EditorState.isInEditor` alone only
-  covers the editor; `IsGameplayFrozen()` covers dead/paused/counting-down.
+
+See [nova-game-client/CLAUDE.md](nova-game-client/CLAUDE.md) and
+[nove-game-server/CLAUDE.md](nove-game-server/CLAUDE.md) for conventions specific to each side.

@@ -3,7 +3,7 @@ import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {CursorState, GameMode, LevelSelection, PlayerStatics, UIState} from "../../../Three/Utility/PlayerGlobals";
 import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
 import {FormatLevelTime, LevelTimer} from "../../../Three/Utility/LevelTimer";
-import {PlayerIdentity} from "../../../Three/Utility/PlayerIdentity";
+import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {LeaderboardPanel} from "./LeaderboardPanel";
 import type {LeaderboardResponse} from "nova-shared/leaderboard";
 
@@ -27,16 +27,13 @@ export const LevelCompleteOverlay = () => {
             //Submit first, then re-fetch, so the just-finished run is guaranteed to be in the
             //list LeaderboardPanel renders instead of racing a GET fired at the same time.
             const levelId = LevelSelection.selectedLevelId;
-            fetch('/api/leaderboard', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    levelId,
-                    playerName: PlayerIdentity.name,
-                    timeSeconds: LevelTimer.elapsedTime,
-                }),
-            })
-                .then(() => fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerName=${encodeURIComponent(PlayerIdentity.name)}`))
+            EnsureRegistered()
+                .then(playerId => fetch('/api/leaderboard', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({levelId, playerId, timeSeconds: LevelTimer.elapsedTime}),
+                }).then(() => playerId))
+                .then(playerId => fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerId=${encodeURIComponent(playerId)}`))
                 .then(res => {
                     if (!res.ok) throw new Error(`Server responded ${res.status}`);
                     return res.json();
