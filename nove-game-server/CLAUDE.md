@@ -16,9 +16,11 @@ included). Package folder name is `nove-game-server` (typo intentional/existing 
   Follow this pattern for a new REST resource: a new `XApi.ts` exporting `HandleXRequest`, wired
   into `server.ts`'s chain.
 - Postgres is wired up (`pg`, raw SQL, no ORM by choice) via `Db.ts`'s connection pool, reading
-  `DATABASE_URL` from the environment (see "Local development database" below). `LevelsApi.ts`
-  still returns a hardcoded array (level upload/storage isn't built yet), but `PlayersApi.ts` and
-  `LeaderboardApi.ts` both query real tables. Redis isn't wired up yet.
+  `DATABASE_URL` from the environment (see "Local development database" below). `LevelsApi.ts`,
+  `PlayersApi.ts`, and `LeaderboardApi.ts` all query real tables. Redis isn't wired up yet. Level
+  *upload* still isn't built though - a `levels` row today only gets created by a direct DB
+  insert, not through any endpoint, so `GET /api/levels` has real data to list but nothing yet
+  lets the editor actually add to it.
 - No migration framework - `migrations/*.sql` are plain numbered SQL files, applied in order by
   `Migrate.ts` (`npm run migrate`), which tracks what's already run in a `_migrations` table.
   Add a new migration by creating the next-numbered `.sql` file; never edit one that's already

@@ -9,7 +9,7 @@ console.log("Launching Server");
 
 const httpServer = createServer(async (req, res) => {
     try {
-        if (HandleLevelsRequest(req, res)) return;
+        if (await HandleLevelsRequest(req, res)) return;
         if (await HandlePlayersRequest(req, res)) return;
         if (await HandleLeaderboardRequest(req, res)) return;
         res.writeHead(404);

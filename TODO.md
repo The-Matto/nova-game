@@ -27,8 +27,9 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
       Still anonymous (no login) - see root CLAUDE.md's Vision for the planned OAuth follow-up.
 - [x] Leaderboard durability: `GET`/`POST /api/leaderboard` query real Postgres now (ranked,
       deduped per-player).
-- [ ] Level storage API (save/list/fetch level JSON) — the `levels` table exists (schema only),
-      but `GET /api/levels` still returns a hardcoded array, and there's no save/upload endpoint.
+- [x] Level list/fetch API — `GET /api/levels` queries the real `levels` table.
+- [ ] Level save/upload API — no endpoint yet for the editor to actually create a `levels` row;
+      today one only gets in via a direct DB insert.
 - [ ] Leaderboard service backed by Redis — still Postgres-only; Redis would sit in front for
       fast ranked reads, per the durable-Postgres/fast-Redis split in root CLAUDE.md's Vision.
 

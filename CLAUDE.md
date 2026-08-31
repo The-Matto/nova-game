@@ -46,15 +46,15 @@ Already working / in progress:
   full gameplay loop: pre-run countdown, target placement/shooting/hit detection, a level timer,
   and a Level Complete screen.
 - A REST-backed level browser (`GET /api/levels`) and leaderboard (`GET`/`POST /api/leaderboard`)
-  backed by a real PostgreSQL database (see "Running it" below) — levels are still hardcoded
-  (see next point), but players and leaderboard runs are real rows.
+  both querying a real PostgreSQL database (see "Running it" below) — levels, players, and
+  leaderboard runs are all real rows.
 - Anonymous-but-real player identity: `POST /api/players` mints a real database row and UUID per
   browser, no login yet — see `PlayerIdentity.ts` (client) and `PlayersApi.ts` (server).
 
 Not yet built (expected next):
-- Actual level upload (editor → server): the level browser exists, but `GET /api/levels` still
-  returns a hardcoded array (the `levels` table exists, just isn't queried yet) — there's no path
-  yet from "Export in the editor" to "shows up in the browser."
+- Actual level upload (editor → server): the level browser correctly lists whatever's in the
+  `levels` table, but there's still no path from "Export in the editor" to a new row appearing
+  there — rows only get in via a direct DB insert today, not a real upload flow.
 - Redis, for fast leaderboard reads in front of Postgres (Postgres alone is the whole leaderboard
   right now, which is fine at this scale).
 - Real accounts (OAuth) — see the anonymous-identity point above; this is the planned upgrade.

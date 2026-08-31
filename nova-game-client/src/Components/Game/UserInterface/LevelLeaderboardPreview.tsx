@@ -21,7 +21,7 @@ export const LevelLeaderboardPreview = ({levelId} : {levelId : string}) => {
     }, [levelId]);
 
     return <div className="flex flex-col gap-2">
-        <div className="text-lg font-bold text-orange-500">Top Times</div>
+        <div className="text-lg font-bold text-orange-500">Leaderboard</div>
         <LeaderboardList data={data} error={error} />
     </div>;
 };
