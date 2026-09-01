@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    "composite": true,
+    //Composite projects must emit something (see tsconfig.json's references), but Vite - not
+    //tsc - does the actual JS output; this keeps tsc's own emit to just the .d.ts files that
+    //satisfy the project-reference requirement, nothing runtime-relevant.
+    "emitDeclarationOnly": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -13,7 +18,6 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
     "jsx": "react-jsx",
 
     /* Linting */

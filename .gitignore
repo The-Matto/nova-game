@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# tsc -b's composite build output (declaration-only, see tsconfig.app/node.json) and its
+# incremental caches - generated next to source files (tsconfig.node.json's vite.config.ts
+# included, hence the client-root entry, not just src/), not meant to be committed.
+*.tsbuildinfo
+nova-game-client/src/**/*.d.ts
+nova-game-client/vite.config.d.ts
+!nova-game-client/src/vite-env.d.ts
+
 # Secrets - see the root CLAUDE.md's "Running it" section for what nove-game-server/.env needs
 .env
 

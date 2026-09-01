@@ -33,6 +33,16 @@ repo layout, vision, and conventions that apply everywhere (comment-length rule 
   entirely while it's true — otherwise a hazard keeps firing/animating/damaging right through the
   pause or death menu, or during the pre-run countdown. `EditorState.isInEditor` alone only
   covers the editor; `IsGameplayFrozen()` covers dead/paused/counting-down/level-complete.
-- No real accounts yet: `Three/Utility/PlayerIdentity.ts` generates a stable per-browser display
-  name (localStorage-persisted) used to identify the player to the backend (leaderboard
-  submissions, etc.) — not a real player ID. See the server CLAUDE.md's note on the same thing.
+- No login yet, but `Three/Utility/PlayerIdentity.ts` isn't just a display-name string either:
+  `EnsureRegistered()` mints a real server-side player id (`POST /api/players`) the first time a
+  browser is seen and remembers it in localStorage — call it before anything that needs
+  `PlayerIdentity.id` (submitting a run, uploading a level), since it may not have resolved yet.
+  See the server CLAUDE.md's note on the same thing.
+- `npm run build` is just `vite build` - it does **not** typecheck. `tsc -b` is a separate
+  `npm run typecheck` script. They were combined (`tsc -b && vite build`) once, but the project's
+  `composite`/reference setup was broken in a way that only surfaced when `tsc -b` actually ran
+  for real (not `--noEmit`) - see the git history around when this was split, or just don't
+  recombine them without first confirming `tsc -b` (no `--noEmit`) succeeds project-wide, since a
+  handful of pre-existing type errors (missing `three/examples/jsm` subpath types, a couple of
+  unused-import/variable warnings) are still there and were never actually fixed, only excluded
+  from the build path.

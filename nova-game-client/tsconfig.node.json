@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "composite": true,
+    //Same reasoning as tsconfig.app.json - composite requires emit, but only .d.ts is wanted.
+    "emitDeclarationOnly": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2023",
     "lib": ["ES2023"],
@@ -11,7 +14,6 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
 
     /* Linting */
     "strict": true,
