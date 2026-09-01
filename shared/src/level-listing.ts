@@ -1,6 +1,7 @@
 //Metadata for one entry in the level browser (see LevelBrowser.tsx / LevelsApi.ts). `path` is
-//where the client fetches the actual level JSON from - today that's always a static file under
-//nova-game-client/public, later a level-hosting endpoint of its own.
+//where the client fetches the actual level JSON from - either a static file under
+//nova-game-client/public (the seeded demo levels) or a full R2 public URL (uploaded levels, see
+//UploadLevelRequest) - a plain fetch(path) works for both, no special-casing needed.
 export interface LevelSummary {
     id : string;
     name : string;
@@ -10,4 +11,15 @@ export interface LevelSummary {
     path : string;
     //Optional - a level with none shown a placeholder in the browser instead.
     thumbnailUrl? : string;
+}
+
+//Body of a POST /api/levels - uploads a level built in the editor. The server stores levelData
+//and the thumbnail in R2 and creates the levels row; levelData's actual shape (LevelData) is a
+//client-only concept, so it's untyped here - the server only shape-checks it loosely.
+export interface UploadLevelRequest {
+    playerId : string;
+    name : string;
+    levelData : unknown;
+    //A data URL (e.g. "data:image/jpeg;base64,...") - see EditorPalettePanel's canvas capture.
+    thumbnailDataUrl : string;
 }

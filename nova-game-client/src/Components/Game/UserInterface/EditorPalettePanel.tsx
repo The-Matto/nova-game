@@ -3,6 +3,8 @@ import {PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
 import {EDITOR_PALETTE} from "../../../Three/Editor/EditorPalette";
 import {EditorSpawning} from "../../../Three/Editor/EditorSpawning";
 import {NVScene} from "../../../Three/NVScene";
+import {Game} from "../../../Three/Game";
+import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import type {LevelData} from "../../../Three/ClassDescripter";
 
 //Sits at the far right (see EditorMenu) - clicking an item spawns and selects it (see
@@ -16,6 +18,9 @@ export const EditorPalettePanel = () => {
     const [showImport, setShowImport] = useState(false);
     const [importText, setImportText] = useState("");
     const [importError, setImportError] = useState<string | null>(null);
+    const [showUpload, setShowUpload] = useState(false);
+    const [uploadName, setUploadName] = useState("");
+    const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
 
     const query = search.trim().toLowerCase();
     //Categories with nothing matching the search drop out entirely, rather than showing an
@@ -40,6 +45,34 @@ export const EditorPalettePanel = () => {
             setTimeout(() => setCopied(false), 1500);
         } catch {
             console.error("Failed to copy level JSON to clipboard");
+        }
+    };
+
+    //Sends the current level (plus a screenshot of the editor view as its thumbnail) to the
+    //backend - see LevelsApi.ts's POST /api/levels.
+    const uploadLevel = async () => {
+        if (!uploadName.trim()) return;
+        setUploadStatus('uploading');
+        try {
+            const playerId = await EnsureRegistered();
+            const thumbnailDataUrl = Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85);
+            const res = await fetch('/api/levels', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    playerId,
+                    name: uploadName.trim(),
+                    levelData: NVScene.SerializeLevel(),
+                    thumbnailDataUrl,
+                }),
+            });
+            if (!res.ok) throw new Error(`Server responded ${res.status}`);
+
+            setUploadStatus('idle');
+            setShowUpload(false);
+            setUploadName("");
+        } catch {
+            setUploadStatus('error');
         }
     };
 
@@ -89,7 +122,36 @@ export const EditorPalettePanel = () => {
             >
                 Import
             </button>
+            <button
+                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
+                onClick={() => {
+                    setShowUpload(v => !v);
+                    setUploadStatus('idle');
+                }}
+            >
+                Upload
+            </button>
         </div>
+
+        {showUpload && (
+            <div className="mb-3 flex flex-col gap-2">
+                <input
+                    type="text"
+                    value={uploadName}
+                    onChange={e => setUploadName(e.target.value)}
+                    placeholder="Level name..."
+                    className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+                />
+                {uploadStatus === 'error' && <div className="text-sm text-red-400">Upload failed - try again.</div>}
+                <button
+                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer disabled:opacity-50"
+                    onClick={uploadLevel}
+                    disabled={uploadStatus === 'uploading' || !uploadName.trim()}
+                >
+                    {uploadStatus === 'uploading' ? "Uploading…" : "Upload to Nova"}
+                </button>
+            </div>
+        )}
 
         {showImport && (
             <div className="mb-3 flex flex-col gap-2">

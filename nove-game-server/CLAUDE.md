@@ -17,10 +17,14 @@ included). Package folder name is `nove-game-server` (typo intentional/existing 
   into `server.ts`'s chain.
 - Postgres is wired up (`pg`, raw SQL, no ORM by choice) via `Db.ts`'s connection pool, reading
   `DATABASE_URL` from the environment (see "Local development database" below). `LevelsApi.ts`,
-  `PlayersApi.ts`, and `LeaderboardApi.ts` all query real tables. Redis isn't wired up yet. Level
-  *upload* still isn't built though - a `levels` row today only gets created by a direct DB
-  insert, not through any endpoint, so `GET /api/levels` has real data to list but nothing yet
-  lets the editor actually add to it.
+  `PlayersApi.ts`, and `LeaderboardApi.ts` all query real tables. Redis isn't wired up yet.
+- Level files (JSON + thumbnail) live in Cloudflare R2, not Postgres - `levels.path`/
+  `thumbnail_url` just store the resulting public URLs (`R2.ts`'s `UploadToR2`). Keyed by level
+  id, not author id: `levels/<id>/level.json` and `levels/<id>/thumbnail.(jpg|png)` - the id is
+  already the one key everything else (leaderboard FKs, the client's selected-level state) joins
+  on, so storage shouldn't need a second key (the author) just to find a level's files. The
+  bucket is public-read (so the client's plain `fetch(path)` needs no auth/proxy - see
+  `SceneBuilder.ts`), write-only via the server's R2 credentials, never the client's.
 - No migration framework - `migrations/*.sql` are plain numbered SQL files, applied in order by
   `Migrate.ts` (`npm run migrate`), which tracks what's already run in a `_migrations` table.
   Add a new migration by creating the next-numbered `.sql` file; never edit one that's already

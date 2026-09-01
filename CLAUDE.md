@@ -37,28 +37,36 @@ npm workspaces, three packages:
   instances.
 - No deployment for the client has been decided yet.
 
-## Current state (as of Aug 2026)
+## Current state (as of Sep 2026)
 
 Already working / in progress:
-- Basic player movement (`NVPlayerPhysics.ts`, `PlayerController.ts`, `PlayerCharacter.ts`).
-- A free-fly editor mode with gizmo-based placement/transform, multi-select, and Play-In-Editor.
-- React UI layer overlaid on the Three.js canvas (`Components/Game/UserInterface`), including a
-  full gameplay loop: pre-run countdown, target placement/shooting/hit detection, a level timer,
-  and a Level Complete screen.
-- A REST-backed level browser (`GET /api/levels`) and leaderboard (`GET`/`POST /api/leaderboard`)
-  both querying a real PostgreSQL database (see "Running it" below) — levels, players, and
-  leaderboard runs are all real rows.
+- Core gameplay loop: pre-run countdown → movement/shooting → targets → level timer → Level
+  Complete, with hazards (spikes, a cannon firing laser projectiles, falling platforms, a door
+  that opens after enough targets are shot), death (vignette + respawn/retry), and pause (also
+  triggered automatically by losing window focus or pointer lock, not just the P key).
+- Level editor: a free-fly pawn, a `TransformControls` gizmo (move/rotate/scale), multi-select
+  with group transform and Alt-drag duplicate, a selection outline, a categorized palette panel,
+  Export/Import (clipboard) plus a real Upload to the backend, and Play-In-Editor testing.
+- Menus: Main Menu (Play/Editor/Options), an Options menu (mouse sensitivity, camera tilt), and
+  pause/death/Level Complete overlays.
+- A REST-backed level browser and leaderboard, both querying a real PostgreSQL database (see
+  "Running it" below) — level rows, player identities, and leaderboard runs are all real data,
+  not hardcoded/in-memory. The browser expands a level to show a bigger thumbnail, its top-5
+  leaderboard (plus your own rank if you're outside it), and a Play button.
+- Level upload: the editor's Upload button captures a screenshot as the thumbnail, POSTs the
+  level JSON to the backend, which stores both in Cloudflare R2 (keyed by level id, not author -
+  see `nove-game-server/CLAUDE.md`) and creates the `levels` row - no direct DB insert needed
+  anymore to add a level.
 - Anonymous-but-real player identity: `POST /api/players` mints a real database row and UUID per
   browser, no login yet — see `PlayerIdentity.ts` (client) and `PlayersApi.ts` (server).
 
 Not yet built (expected next):
-- Actual level upload (editor → server): the level browser correctly lists whatever's in the
-  `levels` table, but there's still no path from "Export in the editor" to a new row appearing
-  there — rows only get in via a direct DB insert today, not a real upload flow.
 - Redis, for fast leaderboard reads in front of Postgres (Postgres alone is the whole leaderboard
   right now, which is fine at this scale).
 - Real accounts (OAuth) — see the anonymous-identity point above; this is the planned upgrade.
-- Full level editor UX beyond the current feature set (e.g. undo/redo, better palette browsing).
+- Anything built on the WebSocket/multiplayer groundwork mentioned above (ghost racing, live
+  multiplayer) — the socket scaffold exists but nothing gameplay-facing runs on it yet.
+- Further editor/browser UX (undo/redo, level browser search).
 
 ## Running it
 
@@ -73,9 +81,14 @@ Not yet built (expected next):
 3. Open a tunnel to Postgres and leave it running in its own terminal:
    `railway connect postgres --tunnel-only -P 5433`. The first time it starts, it prints a
    connection string.
-4. Create `nove-game-server/.env` (gitignored, never commit it) containing exactly one line:
+4. Create `nove-game-server/.env` (gitignored, never commit it) containing:
    `DATABASE_URL=<that connection string>`.
 5. Apply the schema: `cd nove-game-server && npm run migrate`.
+6. For level upload (Cloudflare R2 - see `nove-game-server/CLAUDE.md` for the storage layout):
+   create an R2 bucket, enable public access on it (get the resulting public base URL), and
+   create an R2 API token scoped to it (Object Read & Write) for an Access Key ID/Secret. Add
+   five more lines to `nove-game-server/.env`: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+   `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`.
 
 ### Every time you work on it
 

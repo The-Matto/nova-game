@@ -1,23 +1,25 @@
 import type {IncomingMessage, ServerResponse} from "http";
-import type {LevelSummary} from "nova-shared/level-listing";
+import {randomUUID} from "crypto";
+import type {LevelSummary, UploadLevelRequest} from "nova-shared/level-listing";
 import {pool} from "./Db";
+import {ReadBody} from "./Http";
+import {UploadToR2} from "./R2";
 
-//Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
-export async function HandleLevelsRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
-    if (req.method !== "GET" || req.url !== "/api/levels") return false;
+const MAX_NAME_LENGTH = 80;
+const MAX_LEVEL_DATA_BYTES = 2 * 1024 * 1024;
+const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024;
+const THUMBNAIL_DATA_URL = /^data:(image\/(?:jpeg|png));base64,(.+)$/;
 
-    //path IS NOT NULL - a level with only level_data (a real upload, not built yet - see
-    //TODO.md) has nothing the client can actually load right now, so it's excluded rather than
-    //returned broken.
-    const result = await pool.query(`
-        SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
-        FROM levels l
-        JOIN users u ON u.id = l.author_id
-        WHERE l.path IS NOT NULL
-        ORDER BY l.created_at ASC
-    `);
+function IsValidUpload(value : any) : value is UploadLevelRequest {
+    return typeof value?.playerId === "string" && typeof value?.name === "string"
+        && value.name.trim().length > 0 && value.name.trim().length <= MAX_NAME_LENGTH
+        && typeof value?.levelData === "object" && value.levelData !== null
+        && Array.isArray(value.levelData.actorsToSpawn)
+        && typeof value?.thumbnailDataUrl === "string";
+}
 
-    const levels : LevelSummary[] = result.rows.map(row => ({
+function RowToSummary(row : any) : LevelSummary {
+    return {
         id: row.id,
         name: row.name,
         createdBy: row.created_by,
@@ -25,9 +27,89 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
         uploadedAt: row.created_at.toISOString(),
         path: row.path,
         thumbnailUrl: row.thumbnail_url ?? undefined,
-    }));
+    };
+}
 
-    res.writeHead(200, {"Content-Type": "application/json"});
-    res.end(JSON.stringify(levels));
-    return true;
+//Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
+export async function HandleLevelsRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
+    if (req.url !== "/api/levels") return false;
+
+    if (req.method === "GET") {
+        //path IS NOT NULL - a level with only level_data (used before it's uploaded, see below)
+        //has nothing the client can actually load, so it's excluded rather than returned broken.
+        const result = await pool.query(`
+            SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
+            FROM levels l
+            JOIN users u ON u.id = l.author_id
+            WHERE l.path IS NOT NULL
+            ORDER BY l.created_at ASC
+        `);
+
+        res.writeHead(200, {"Content-Type": "application/json"});
+        res.end(JSON.stringify(result.rows.map(RowToSummary)));
+        return true;
+    }
+
+    if (req.method === "POST") {
+        let parsed : unknown;
+        try {
+            parsed = JSON.parse(await ReadBody(req));
+        } catch {
+            res.writeHead(400);
+            res.end();
+            return true;
+        }
+        if (!IsValidUpload(parsed)) {
+            res.writeHead(400);
+            res.end();
+            return true;
+        }
+
+        const thumbnailMatch = THUMBNAIL_DATA_URL.exec(parsed.thumbnailDataUrl);
+        if (!thumbnailMatch) {
+            res.writeHead(400);
+            res.end();
+            return true;
+        }
+        const thumbnailContentType = thumbnailMatch[1];
+        const thumbnailBuffer = Buffer.from(thumbnailMatch[2], "base64");
+        const levelDataBuffer = Buffer.from(JSON.stringify(parsed.levelData));
+
+        if (levelDataBuffer.byteLength > MAX_LEVEL_DATA_BYTES || thumbnailBuffer.byteLength > MAX_THUMBNAIL_BYTES) {
+            res.writeHead(413);
+            res.end();
+            return true;
+        }
+
+        //Checked before touching R2 at all - a bad/forged playerId shouldn't leave orphaned
+        //objects behind (unlike a plain DB insert, an R2 upload has no transaction to roll back).
+        const authorExists = await pool.query("SELECT 1 FROM users WHERE id = $1", [parsed.playerId]);
+        if (authorExists.rowCount === 0) {
+            res.writeHead(400);
+            res.end();
+            return true;
+        }
+
+        const id = randomUUID();
+        const thumbnailExtension = thumbnailContentType === "image/png" ? "png" : "jpg";
+        const [path, thumbnailUrl] = await Promise.all([
+            UploadToR2(`levels/${id}/level.json`, levelDataBuffer, "application/json"),
+            UploadToR2(`levels/${id}/thumbnail.${thumbnailExtension}`, thumbnailBuffer, thumbnailContentType),
+        ]);
+
+        const result = await pool.query(`
+            WITH inserted AS (
+                INSERT INTO levels (id, author_id, name, path, thumbnail_url)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id, name, rating, created_at, path, thumbnail_url
+            )
+            SELECT inserted.*, u.display_name AS created_by FROM inserted JOIN users u ON u.id = $2
+        `, [id, parsed.playerId, parsed.name.trim(), path, thumbnailUrl]);
+
+        res.writeHead(201, {"Content-Type": "application/json"});
+        res.end(JSON.stringify(RowToSummary(result.rows[0])));
+        return true;
+    }
+
+    return false;
 }

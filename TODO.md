@@ -14,8 +14,8 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Move free-fly + `TransformControls` test code into a real editor mode (place/move/rotate/
       scale actors, including targets, multi-select).
 - [x] Level save: serialize editor state to the level JSON format (Export/Import).
-- [ ] Level upload: send serialized level JSON to the backend — the level browser can list/load
-      levels already, but there's still no path from "Export in the editor" to the server.
+- [x] Level upload: an Upload button sends the level JSON + a captured screenshot thumbnail to
+      the backend, which stores both in Cloudflare R2 and creates the `levels` row.
 - [x] Level browser UI: list levels from the backend, load one into the player. Search still TODO.
 
 ## Backend
@@ -28,8 +28,8 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Leaderboard durability: `GET`/`POST /api/leaderboard` query real Postgres now (ranked,
       deduped per-player).
 - [x] Level list/fetch API — `GET /api/levels` queries the real `levels` table.
-- [ ] Level save/upload API — no endpoint yet for the editor to actually create a `levels` row;
-      today one only gets in via a direct DB insert.
+- [x] Level save/upload API — `POST /api/levels` stores the level JSON + thumbnail in Cloudflare
+      R2 (`R2.ts`, keyed by level id) and creates the `levels` row.
 - [ ] Leaderboard service backed by Redis — still Postgres-only; Redis would sit in front for
       fast ranked reads, per the durable-Postgres/fast-Redis split in root CLAUDE.md's Vision.
 

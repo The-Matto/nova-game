@@ -10,7 +10,9 @@ import {WindowSettings} from "./Utility/PlayerGlobals.ts";
 export class NVRenderer {
 
 
-    renderer = new THREE.WebGLRenderer({antialias: true});
+    //preserveDrawingBuffer - without it, canvas.toDataURL() (level thumbnail capture, see
+    //EditorPalettePanel) can read back blank/garbage pixels once the buffer's been swapped.
+    renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
 
     canvas: HTMLDivElement = null;
 
