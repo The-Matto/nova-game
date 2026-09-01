@@ -36,11 +36,16 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 ## Infra / deployment
 
 - [x] Provision PostgreSQL on Railway (Redis provisioned too, not wired into code yet).
-- [ ] Deploy `nove-game-server` to Railway. Local dev currently connects to the same Railway
-      Postgres instance over an SSH tunnel (`railway connect postgres --tunnel-only`) - see
-      nove-game-server/CLAUDE.md. Once the server itself is deployed there, it should switch to
-      Railway's private `DATABASE_URL` instead of the tunnel/public one.
-- [ ] Decide + set up client hosting/deployment.
+- [x] Client deployed: Cloudflare Pages, auto-deploys from GitHub on push to `master`.
+- [ ] `nove-game-server` deployed to Railway - service created, connected to GitHub, `DATABASE_URL`
+      wired via Railway's internal reference (the private URL, not the local-dev tunnel/public
+      one), but not yet confirmed live end-to-end (needs the R2 env vars added to the service, and
+      a push to actually trigger the first real deploy with `railway.json` in place). Local dev
+      still connects to the same Postgres instance over an SSH tunnel
+      (`railway connect postgres --tunnel-only`) - see `nove-game-server/CLAUDE.md`.
+- [x] `nova-game-client/public/_redirects` proxies `/api/*` from the client's own domain to the
+      Railway server - same-origin from the browser's perspective, no CORS/base-URL-env-var
+      needed. Needs updating if the Railway URL/domain ever changes (it's hardcoded, not derived).
 
 ## Notes
 

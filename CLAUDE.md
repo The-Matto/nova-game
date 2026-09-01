@@ -31,11 +31,17 @@ npm workspaces, three packages:
   — see "Current state" below. Redis, for fast per-level ranked reads in front of it, isn't wired
   up yet.
 
-## Deployment (planned)
+## Deployment
 
-- Backend (`nove-game-server`) will be hosted on **Railway**, alongside its Redis and PostgreSQL
-  instances.
-- No deployment for the client has been decided yet.
+- Client (`nova-game-client`): **Cloudflare Pages**, auto-deploys from GitHub on push to
+  `master`. Build command `npm install && npm run build --workspace=nova-game-client`, output
+  directory `nova-game-client/dist` (set as the Pages project's Root directory stays the repo
+  root - see the monorepo note under "First-time setup" below, same reasoning applies).
+- Backend (`nove-game-server`): **Railway**, alongside its Postgres (wired up) and Redis
+  (provisioned, not wired up yet) instances - also auto-deploys from GitHub on push to `master`,
+  config in the repo root's `railway.json`.
+- The client reaches the backend via `nova-game-client/public/_redirects` proxying `/api/*` to
+  the Railway server's URL - see `nova-game-client/CLAUDE.md` for how/why.
 
 ## Current state (as of Sep 2026)
 

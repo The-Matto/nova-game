@@ -46,3 +46,11 @@ repo layout, vision, and conventions that apply everywhere (comment-length rule 
   handful of pre-existing type errors (missing `three/examples/jsm` subpath types, a couple of
   unused-import/variable warnings) are still there and were never actually fixed, only excluded
   from the build path.
+- The deployed client (Cloudflare Pages) reaches the backend (Railway) through `public/_redirects`
+  - it proxies `/api/*` to the Railway server's URL (status `200`, not a redirect, so Cloudflare
+    Pages fetches server-side and the browser sees only its own domain - no CORS needed, and the
+    client's `fetch('/api/...')` calls stay relative, no build-time base-URL env var needed). If
+    the Railway URL/domain ever changes, this file's target needs updating to match - it's not
+    derived from anything, just a hardcoded proxy target. WebSocket traffic (`/game`) isn't
+    proxied by this and would need a different approach if that ever becomes load-bearing (it
+    isn't yet - see root CLAUDE.md's Vision).
