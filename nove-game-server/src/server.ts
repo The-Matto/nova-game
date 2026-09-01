@@ -25,7 +25,8 @@ const httpServer = createServer(async (req, res) => {
 
 CreateSocketListener(httpServer);
 
-const PORT = 8080;
+//Railway (and most hosts) inject PORT and expect the app to bind to it, rather than a fixed one.
+const PORT = Number(process.env.PORT) || 8080;
 httpServer.listen(PORT, () => console.log('Start listening on port: ' + PORT));
 
 
