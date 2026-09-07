@@ -2,10 +2,15 @@ import type {IncomingMessage, ServerResponse} from "http";
 import {randomUUID} from "crypto";
 import type {LevelSummary, UploadLevelRequest} from "nova-shared/level-listing";
 import {pool} from "./Db";
+import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ReadBody} from "./Http";
 import {UploadToR2} from "./R2";
 
 const MAX_NAME_LENGTH = 80;
+//Tighter than the other endpoints - this is the costliest one (R2 writes + a DB row), and
+//uploading a level isn't something a real player does often.
+const RATE_LIMIT = 5;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 const MAX_LEVEL_DATA_BYTES = 2 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024;
 const THUMBNAIL_DATA_URL = /^data:(image\/(?:jpeg|png));base64,(.+)$/;
@@ -51,6 +56,12 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
     }
 
     if (req.method === "POST") {
+        if (await IsRateLimited(GetClientIp(req), "levels", RATE_LIMIT, RATE_LIMIT_WINDOW_SECONDS)) {
+            res.writeHead(429);
+            res.end();
+            return true;
+        }
+
         let parsed : unknown;
         try {
             parsed = JSON.parse(await ReadBody(req));

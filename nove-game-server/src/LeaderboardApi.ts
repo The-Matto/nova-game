@@ -2,9 +2,14 @@ import type {IncomingMessage, ServerResponse} from "http";
 import type {LeaderboardEntry, LeaderboardResponse, SubmitTimeRequest} from "nova-shared/leaderboard";
 import {pool} from "./Db";
 import {GetRedis} from "./Redis";
+import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ReadBody} from "./Http";
 
 const TOP_COUNT = 5;
+//Generous - a real session can submit once per level attempt, and multiple players can share an
+//IP (school/office NAT). Still low enough to block a flood script.
+const RATE_LIMIT = 30;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 
 function IsValidSubmission(value : any) : value is SubmitTimeRequest {
     return typeof value?.levelId === "string" && typeof value?.playerId === "string"
@@ -135,6 +140,12 @@ export async function HandleLeaderboardRequest(req : IncomingMessage, res : Serv
     }
 
     if (req.method === "POST") {
+        if (await IsRateLimited(GetClientIp(req), "leaderboard", RATE_LIMIT, RATE_LIMIT_WINDOW_SECONDS)) {
+            res.writeHead(429);
+            res.end();
+            return true;
+        }
+
         let parsed : unknown;
         try {
             parsed = JSON.parse(await ReadBody(req));
