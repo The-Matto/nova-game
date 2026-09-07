@@ -27,9 +27,9 @@ npm workspaces, three packages:
 - Multiplayer/netcode groundwork exists (`WebSocketConnection.ts`, `client-net-driver.ts`,
   `Sockets.ts`, `Replication.ts`) — likely aiming for at least ghost/leaderboard-style
   competition, possibly live multiplayer.
-- **Leaderboards**: durable storage (levels, users, run history) is PostgreSQL, wired up and live
-  — see "Current state" below. Redis, for fast per-level ranked reads in front of it, isn't wired
-  up yet.
+- **Leaderboards**: durable storage (levels, users, run history) is PostgreSQL, wired up and live;
+  Redis sits in front of it for fast per-level ranked reads (a sorted set per level, falling back
+  to/warming from Postgres on a miss) — see "Current state" below.
 
 ## Deployment
 
@@ -37,9 +37,16 @@ npm workspaces, three packages:
   `master`. Build command `npm install && npm run build --workspace=nova-game-client`, output
   directory `nova-game-client/dist` (set as the Pages project's Root directory stays the repo
   root - see the monorepo note under "First-time setup" below, same reasoning applies).
-- Backend (`nove-game-server`): **Railway**, alongside its Postgres (wired up) and Redis
-  (provisioned, not wired up yet) instances - also auto-deploys from GitHub on push to `master`,
-  config in the repo root's `railway.json`.
+- Backend (`nove-game-server`): **Railway**, alongside its Postgres and Redis instances (both
+  wired up) - also auto-deploys from GitHub on push to `master`, config in the repo root's
+  `railway.json`. Note: Railway has deprecated Config as Code (`railway.json`) in favor of
+  Infrastructure as Code (`.railway/railway.ts`), existing files "keep working" only until
+  2026-12-01 - migrating is an open TODO, previously blocked by local Node being too old for that
+  tooling (needs `--experimental-strip-types` support). If a push ever stops auto-deploying,
+  check for this before assuming something else broke - `railway redeploy --from-source` is the
+  manual fallback.
+- A separate `nova-cleanup-cron` Railway service (same repo, same Postgres) runs
+  `CleanupAnonymousUsers.ts` daily to wipe stale anonymous accounts - see "Current state" below.
 - The client reaches the backend via a Cloudflare Pages Function
   (`functions/api/[[path]].ts`, at the repo root - see the monorepo note below for why) proxying
   `/api/*` to the Railway server's URL -
@@ -66,11 +73,15 @@ Already working / in progress:
   see `nove-game-server/CLAUDE.md`) and creates the `levels` row - no direct DB insert needed
   anymore to add a level.
 - Anonymous-but-real player identity: `POST /api/players` mints a real database row and UUID per
-  browser, no login yet — see `PlayerIdentity.ts` (client) and `PlayersApi.ts` (server).
+  browser, no login yet — see `PlayerIdentity.ts` (client) and `PlayersApi.ts` (server). Accounts
+  that never link a real login get wiped after 7 days (`CleanupAnonymousUsers.ts`, run daily by
+  the `nova-cleanup-cron` Railway service) - their leaderboard entries go with them, but any level
+  they uploaded survives with its author reassigned to "Unknown" rather than deleted too.
+- Redis-backed leaderboard caching (`Redis.ts`, `LeaderboardApi.ts`) and per-IP rate limiting on
+  every POST endpoint (`RateLimit.ts`) - both fail open/fall back to Postgres-only behavior if
+  Redis is ever unconfigured or unreachable, so local dev works fine without it too.
 
 Not yet built (expected next):
-- Redis, for fast leaderboard reads in front of Postgres (Postgres alone is the whole leaderboard
-  right now, which is fine at this scale).
 - Real accounts (OAuth) — see the anonymous-identity point above; this is the planned upgrade.
 - Anything built on the WebSocket/multiplayer groundwork mentioned above (ghost racing, live
   multiplayer) — the socket scaffold exists but nothing gameplay-facing runs on it yet.
@@ -97,6 +108,10 @@ Not yet built (expected next):
    create an R2 API token scoped to it (Object Read & Write) for an Access Key ID/Secret. Add
    five more lines to `nove-game-server/.env`: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
    `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL_BASE`.
+7. Redis is optional locally (`Redis.ts` lazily degrades to Postgres-only/no rate limiting if
+   unconfigured) - to actually exercise it, tunnel the same way as Postgres:
+   `railway connect redis --tunnel-only -P 6380`, then add the printed connection string as
+   `REDIS_URL` in `.env`.
 
 ### Every time you work on it
 

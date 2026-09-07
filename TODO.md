@@ -16,7 +16,8 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Level save: serialize editor state to the level JSON format (Export/Import).
 - [x] Level upload: an Upload button sends the level JSON + a captured screenshot thumbnail to
       the backend, which stores both in Cloudflare R2 and creates the `levels` row.
-- [x] Level browser UI: list levels from the backend, load one into the player. Search still TODO.
+- [ ] Level browser UI: list levels from the backend, load one into the player. Search still TODO.
+- [ ] Undo/redo in the editor.
 
 ## Backend
 
@@ -30,24 +31,48 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Level list/fetch API — `GET /api/levels` queries the real `levels` table.
 - [x] Level save/upload API — `POST /api/levels` stores the level JSON + thumbnail in Cloudflare
       R2 (`R2.ts`, keyed by level id) and creates the `levels` row.
-- [ ] Leaderboard service backed by Redis — still Postgres-only; Redis would sit in front for
-      fast ranked reads, per the durable-Postgres/fast-Redis split in root CLAUDE.md's Vision.
+- [x] Leaderboard service backed by Redis — a sorted set per level caches the ranking in front of
+      Postgres, falling back to (and warming from) a full Postgres scan on a miss. See
+      `Redis.ts`/`LeaderboardApi.ts`.
+- [x] Rate limiting on every POST endpoint (`RateLimit.ts`) — fixed-window per-IP counters via
+      Redis, fails open if Redis is down. Coarse by design (shared IPs behind NAT share a bucket);
+      revisit as (IP, playerId) if that becomes a real problem.
+- [x] Anonymous account cleanup — accounts that never link a real login (`users.claimed_at` still
+      null) get deleted after 7 days (`CleanupAnonymousUsers.ts`), cascading their leaderboard
+      entries and nulling out `levels.author_id` instead of deleting their uploaded levels too.
+- [ ] Real accounts (OAuth) — the planned upgrade from the current anonymous-but-real identity
+      model. Would also let `claimed_at` actually get set, rather than only seed users being
+      exempt from the anonymous-account cleanup above.
+
+## Security / hardening
+
+- [x] Leaderboard submissions reject non-positive `timeSeconds` (was letting anyone fake #1).
+- [x] Request bodies are capped before being buffered into memory (`Http.ts`), independent of any
+      endpoint-specific size check.
+- [x] `displayName` length is capped on registration, matching `LevelsApi.ts`'s own name cap.
+- [x] `ws`/`nanoid`/`postcss`/`vite` bumped to patch known vulnerabilities (`npm audit fix`).
+- [x] Documented (not changed) why Postgres's `rejectUnauthorized: false` is an accepted tradeoff
+      - see `Db.ts`'s comment.
+- [ ] `esbuild`'s remaining low-severity dev-server vulnerability - needs a breaking version bump,
+      left alone since it's dev-only and low severity. Revisit if `npm audit fix --force` is ever
+      worth it.
 
 ## Infra / deployment
 
-- [x] Provision PostgreSQL on Railway (Redis provisioned too, not wired into code yet).
+- [x] Provision PostgreSQL and Redis on Railway, both wired into the code (see Backend above).
 - [x] Client deployed: Cloudflare Pages, auto-deploys from GitHub on push to `master`.
-- [ ] `nove-game-server` deployed to Railway - service created, connected to GitHub, `DATABASE_URL`
-      wired via Railway's internal reference (the private URL, not the local-dev tunnel/public
-      one), but not yet confirmed live end-to-end (needs the R2 env vars added to the service, and
-      a push to actually trigger the first real deploy with `railway.json` in place). Local dev
-      still connects to the same Postgres instance over an SSH tunnel
-      (`railway connect postgres --tunnel-only`) - see `nove-game-server/CLAUDE.md`.
+- [x] `nove-game-server` deployed to Railway, confirmed live end-to-end (R2 env vars set, real
+      traffic verified through both the direct Railway URL and the live site).
 - [x] `functions/api/[[path]].ts` (repo root, a Cloudflare Pages Function) proxies `/api/*`
       from the client's own domain to the Railway server - same-origin from the browser's
-      perspective, no CORS/base-URL-env-var needed. A `public/_redirects` rule was tried first but
-      never actually worked live, so this replaced it. Needs updating if the Railway URL/domain
+      perspective, no CORS/base-URL-env-var needed. Needs updating if the Railway URL/domain
       ever changes (it's hardcoded, not derived).
+- [x] `nova-cleanup-cron` — a separate Railway service (same repo/Postgres) running
+      `CleanupAnonymousUsers.ts` on a daily cron schedule.
+- [ ] Migrate `railway.json` (Config as Code) to `.railway/railway.ts` (Infrastructure as Code) -
+      Railway's deprecated the former, "existing files keep working" only until 2026-12-01.
+      Previously blocked by local Node being too old for that tooling's `--experimental-strip-types`
+      requirement - needs a newer local Node before retrying.
 
 ## Notes
 
