@@ -12,6 +12,12 @@ function GetState() {
     for (const key of REQUIRED_ENV) {
         if (!process.env[key]) throw new Error(`${key} is not set - see CLAUDE.md's Running it section`);
     }
+    //A scheme-less value (e.g. "assets.example.com" instead of "https://assets.example.com")
+    //silently produces broken URLs client-side - a bare host:path looks like a relative link to
+    //a browser, not a link to a different domain - so this fails loudly instead.
+    if (!/^https?:\/\//.test(process.env.R2_PUBLIC_URL_BASE!)) {
+        throw new Error("R2_PUBLIC_URL_BASE must start with http:// or https://");
+    }
 
     //R2 is S3-API-compatible - same client, just pointed at Cloudflare's endpoint instead of AWS's.
     const client = new S3Client({
