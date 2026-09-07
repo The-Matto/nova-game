@@ -36,11 +36,7 @@ export class NVStaticMeshActor extends NVActor{
 
 
         if (!descripter.properties?.modelPath) {
-            //"properties": { "color": "#rrggbb" } overrides the default per-actor.
-            const color = (descripter.properties?.color as string) ?? '#c79b9b';
-            const material = new THREE.MeshStandardMaterial({color});
-            this.mesh = new THREE.Mesh(NVStaticMeshActor.CreateGeometry(this.shape, descripter.scale), material);
-            this.scene = this.mesh;
+            this.BuildPrimitiveMesh(descripter);
             //Not registered with worldOctree here - the mesh is still at the origin until
             //Init() below runs SetWorldLocation.
 
@@ -52,6 +48,14 @@ export class NVStaticMeshActor extends NVActor{
        // Scene.AddSceneActor(this);
 
 
+    }
+
+    //"properties": { "color": "#rrggbb" } overrides the default per-actor.
+    private BuildPrimitiveMesh(descripter : SpawnDescriptor) {
+        const color = (descripter.properties?.color as string) ?? '#c79b9b';
+        const material = new THREE.MeshStandardMaterial({color});
+        this.mesh = new THREE.Mesh(NVStaticMeshActor.CreateGeometry(this.shape, descripter.scale), material);
+        this.scene = this.mesh;
     }
 
     public OnEditablePropertyChanged(key : string) {
@@ -86,9 +90,16 @@ export class NVStaticMeshActor extends NVActor{
     }
 
     private async LoadModel(modelPath : string)  {
-        this.scene = await AssetManager.RequestModel(modelPath);
+        try {
+            this.scene = await AssetManager.RequestModel(modelPath);
+        } catch {
+            //No asset server wired up yet (see AssetManager.ts) - fall back to a plain shape
+            //rather than leaving this actor with no scene at all.
+            this.BuildPrimitiveMesh(this.spawnDescriptor);
+        }
         //Re-tag: SpawnActor tagged the old placeholder before this swapped `scene` out for the
-        //loaded model, so EditorSelection couldn't otherwise walk up from a click on it.
+        //loaded model (or the fallback mesh above), so EditorSelection couldn't otherwise walk
+        //up from a click on it.
         this.scene.userData.nvActor = this;
         //levelRoot, not scene directly, so this gets torn down along with everything else on
         //NVScene.ReloadLevel().

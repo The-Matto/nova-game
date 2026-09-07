@@ -20,27 +20,24 @@ export class AssetManager {
     private static gltfLoader = new GLTFLoader();
     private static audioLoader = new THREE.AudioLoader();
 
+    //No asset server exists yet - ASSETSERVERURL only ever pointed at a local dev-only one, so
+    //requesting anything would just try (and fail) to reach localhost from wherever the game's
+    //actually hosted, which browsers now flag as a page reaching into your local network. Left
+    //disabled like this, rather than ripping the loading code out, for whenever real hosting
+    //(R2, matching how levels/thumbnails already work) is wired up - see loadModel/loadAudio.
     public static async RequestModel(assetPath : string) : Promise<THREE.Scene>{
-        if (AssetManager.gotModelAssets.has(assetPath)){
-            const mesh = AssetManager.gotModelAssets.get(assetPath);
-            if (mesh)
-             return mesh;
-        }
-        return await AssetManager.loadModel(assetPath);
+        throw new Error(`AssetManager: no asset server configured (requested "${assetPath}")`);
     }
 
     public static async RequestAudio(assetPath : string) : Promise<AudioBuffer>{
-        if (AssetManager.gotAudioAssets.has(assetPath)){
-            const audio = AssetManager.gotAudioAssets.get(assetPath);
-            if (audio)
-                return audio;
-        }
-        return await AssetManager.loadAudio(assetPath)
+        throw new Error(`AssetManager: no asset server configured (requested "${assetPath}")`);
     }
 
 
 
-    private static async loadModel(url: string)  {
+    //Not private - nothing in the class calls these while disabled above, and TS flags an
+    //unused *private* method as an error (unlike public ones, which it can't prove are dead).
+    static async loadModel(url: string)  {
          return new Promise<THREE.Scene>((resolve, reject) => {
 
              //TODO Add local storage support, so we can query local storage before reaching out to the storage bucket
@@ -58,7 +55,7 @@ export class AssetManager {
 
 
 
-     private static async loadAudio(url: string) {
+     static async loadAudio(url: string) {
          return new Promise<AudioBuffer>((resolve, reject) => {
              const fullUrl = ASSETSERVERURL.replace(/\/+$/, '') + '/audio/' + url.replace(/^\/+/, '');
 
