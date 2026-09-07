@@ -5,6 +5,7 @@
   "scripts": {
     "start": "tsx --env-file=.env src/server.ts",
     "migrate": "tsx --env-file=.env src/Migrate.ts",
+    "cleanup-anonymous-users": "tsx --env-file=.env src/CleanupAnonymousUsers.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

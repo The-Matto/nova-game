@@ -27,7 +27,7 @@ function RowToSummary(row : any) : LevelSummary {
     return {
         id: row.id,
         name: row.name,
-        createdBy: row.created_by,
+        createdBy: row.created_by ?? "Unknown",
         rating: Number(row.rating),
         uploadedAt: row.created_at.toISOString(),
         path: row.path,
@@ -42,10 +42,12 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
     if (req.method === "GET") {
         //path IS NOT NULL - a level with only level_data (used before it's uploaded, see below)
         //has nothing the client can actually load, so it's excluded rather than returned broken.
+        //LEFT JOIN since author_id can be null (an anonymous author who's since been wiped - see
+        //0006_anonymous_player_cleanup.sql) - the level survives that, just loses its byline.
         const result = await pool.query(`
             SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
             FROM levels l
-            JOIN users u ON u.id = l.author_id
+            LEFT JOIN users u ON u.id = l.author_id
             WHERE l.path IS NOT NULL
             ORDER BY l.created_at ASC
         `);
