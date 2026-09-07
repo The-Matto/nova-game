@@ -3,8 +3,11 @@ import type {PlayerIdentityDto, RegisterPlayerRequest} from "nova-shared/player"
 import {pool} from "./Db";
 import {ReadBody} from "./Http";
 
+const MAX_DISPLAY_NAME_LENGTH = 40;
+
 function IsValidRegistration(value : any) : value is RegisterPlayerRequest {
-    return typeof value?.displayName === "string" && value.displayName.trim().length > 0;
+    return typeof value?.displayName === "string"
+        && value.displayName.trim().length > 0 && value.displayName.trim().length <= MAX_DISPLAY_NAME_LENGTH;
 }
 
 //Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
