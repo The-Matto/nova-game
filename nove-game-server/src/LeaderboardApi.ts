@@ -7,7 +7,7 @@ const TOP_COUNT = 5;
 
 function IsValidSubmission(value : any) : value is SubmitTimeRequest {
     return typeof value?.levelId === "string" && typeof value?.playerId === "string"
-        && typeof value?.timeSeconds === "number" && Number.isFinite(value.timeSeconds);
+        && typeof value?.timeSeconds === "number" && Number.isFinite(value.timeSeconds) && value.timeSeconds > 0;
 }
 
 function RowToEntry(row : any) : LeaderboardEntry {
