@@ -40,8 +40,10 @@ npm workspaces, three packages:
 - Backend (`nove-game-server`): **Railway**, alongside its Postgres (wired up) and Redis
   (provisioned, not wired up yet) instances - also auto-deploys from GitHub on push to `master`,
   config in the repo root's `railway.json`.
-- The client reaches the backend via `nova-game-client/public/_redirects` proxying `/api/*` to
-  the Railway server's URL - see `nova-game-client/CLAUDE.md` for how/why.
+- The client reaches the backend via a Cloudflare Pages Function
+  (`functions/api/[[path]].ts`, at the repo root - see the monorepo note below for why) proxying
+  `/api/*` to the Railway server's URL -
+  see `nova-game-client/CLAUDE.md` for how/why.
 
 ## Current state (as of Sep 2026)
 

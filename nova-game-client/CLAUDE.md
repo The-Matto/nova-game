@@ -46,14 +46,23 @@ repo layout, vision, and conventions that apply everywhere (comment-length rule 
   handful of pre-existing type errors (missing `three/examples/jsm` subpath types, a couple of
   unused-import/variable warnings) are still there and were never actually fixed, only excluded
   from the build path.
-- The deployed client (Cloudflare Pages) reaches the backend (Railway) through `public/_redirects`
-  - it proxies `/api/*` to the Railway server's URL (status `200`, not a redirect, so Cloudflare
-    Pages fetches server-side and the browser sees only its own domain - no CORS needed, and the
-    client's `fetch('/api/...')` calls stay relative, no build-time base-URL env var needed). If
-    the Railway URL/domain ever changes, this file's target needs updating to match - it's not
-    derived from anything, just a hardcoded proxy target. WebSocket traffic (`/game`) isn't
-    proxied by this and would need a different approach if that ever becomes load-bearing (it
-    isn't yet - see root CLAUDE.md's Vision).
+- The deployed client (Cloudflare Pages) reaches the backend (Railway) through a Pages Function,
+  the repo root's `functions/api/[[path]].ts` (not under this package - Cloudflare Pages resolves
+  Functions relative to the project's Root Directory setting, which is the repo root, same reason
+  `npm install` needs to run there for the workspaces to link). It forwards every `/api/*` request
+  to the Railway server's URL at
+  Cloudflare's edge, so the browser only ever sees its own domain (no CORS needed, and the
+  client's `fetch('/api/...')` calls stay relative, no build-time base-URL env var needed). A
+  declarative `public/_redirects` proxy rule was tried first and looked right, but never actually
+  proxied anything live - every `/api/*` path silently fell through to the SPA's `index.html`
+  instead (confirmed by curl-ing a nonsense `/api/*` path and getting `index.html` back, not a
+  404 from anywhere real) - not fully root-caused, just replaced with something that reliably
+  works. If the Railway URL/domain ever changes, the hardcoded target in that function needs
+  updating to match. Note the function explicitly strips the incoming `Host` header before
+  forwarding - forwarding the original one breaks TLS/SNI against Railway, same class of bug the
+  local dev proxy needed `changeOrigin: true` for. WebSocket traffic (`/game`) isn't proxied by
+  this and would need a different approach if that ever becomes load-bearing (it isn't yet - see
+  root CLAUDE.md's Vision).
 - `npm run dev`'s proxy (`vite.config.ts`) defaults to the local backend (`localhost:8080`), same
   as always. To point it at a remote backend instead (e.g. the deployed Railway server) without
   running that backend/its DB tunnel locally, set `VITE_DEV_API_TARGET` in a gitignored

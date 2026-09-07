@@ -43,9 +43,11 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
       a push to actually trigger the first real deploy with `railway.json` in place). Local dev
       still connects to the same Postgres instance over an SSH tunnel
       (`railway connect postgres --tunnel-only`) - see `nove-game-server/CLAUDE.md`.
-- [x] `nova-game-client/public/_redirects` proxies `/api/*` from the client's own domain to the
-      Railway server - same-origin from the browser's perspective, no CORS/base-URL-env-var
-      needed. Needs updating if the Railway URL/domain ever changes (it's hardcoded, not derived).
+- [x] `functions/api/[[path]].ts` (repo root, a Cloudflare Pages Function) proxies `/api/*`
+      from the client's own domain to the Railway server - same-origin from the browser's
+      perspective, no CORS/base-URL-env-var needed. A `public/_redirects` rule was tried first but
+      never actually worked live, so this replaced it. Needs updating if the Railway URL/domain
+      ever changes (it's hardcoded, not derived).
 
 ## Notes
 
