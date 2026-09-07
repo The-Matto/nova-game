@@ -54,3 +54,10 @@ repo layout, vision, and conventions that apply everywhere (comment-length rule 
     derived from anything, just a hardcoded proxy target. WebSocket traffic (`/game`) isn't
     proxied by this and would need a different approach if that ever becomes load-bearing (it
     isn't yet - see root CLAUDE.md's Vision).
+- `npm run dev`'s proxy (`vite.config.ts`) defaults to the local backend (`localhost:8080`), same
+  as always. To point it at a remote backend instead (e.g. the deployed Railway server) without
+  running that backend/its DB tunnel locally, set `VITE_DEV_API_TARGET` in a gitignored
+  `nova-game-client/.env.local`, e.g. `VITE_DEV_API_TARGET=https://nova-server-production-70d5.up.railway.app`.
+  Needs `changeOrigin: true` on the proxy to work against a real HTTPS host (without it, the
+  proxy forwards the original `Host: localhost` header, which breaks TLS/SNI against anything
+  that isn't plain local HTTP) - don't remove that if touching this config.

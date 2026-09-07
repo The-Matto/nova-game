@@ -118,6 +118,12 @@ See [TODO.md](TODO.md) for the current task list.
   hitting it as a sign to cut the comment down, not a sign to keep writing. A comment earns its
   place only for a genuinely non-obvious *why*; don't add one to every new method/field, and
   don't restate what the code already says.
+- Keep commit messages short too — a one-line imperative title, and a body only when it's
+  genuinely needed, capped at 2-3 sentences. Commits have been drifting into multi-paragraph
+  essays walking through every design decision in the diff; that level of detail belongs in code
+  comments or here in CLAUDE.md, where it's actually discoverable later, not repeated in the git
+  log every time. Needing several paragraphs to explain a commit is a sign to write less in the
+  commit message, not a sign the explanation was warranted.
 
 See [nova-game-client/CLAUDE.md](nova-game-client/CLAUDE.md) and
 [nove-game-server/CLAUDE.md](nove-game-server/CLAUDE.md) for conventions specific to each side.
