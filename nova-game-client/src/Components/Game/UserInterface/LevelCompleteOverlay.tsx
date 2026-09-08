@@ -4,8 +4,10 @@ import {CursorState, GameMode, LevelSelection, PlayerStatics, UIState} from "../
 import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
 import {FormatLevelTime, LevelTimer} from "../../../Three/Utility/LevelTimer";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
+import {GetRunHistory, RecordRun} from "../../../Three/Utility/RunHistory";
 import {LeaderboardPanel} from "./LeaderboardPanel";
 import {LevelRatingWidget} from "./LevelRatingWidget";
+import {RunHistoryPanel} from "./RunHistoryPanel";
 import type {LeaderboardResponse} from "nova-shared/leaderboard";
 
 //Shown when the player reaches the goal volume with all objectives complete.
@@ -14,6 +16,7 @@ export const LevelCompleteOverlay = () => {
     const [isComplete, setIsComplete] = useState(false);
     const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
     const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+    const [runHistory, setRunHistory] = useState<number[]>([]);
 
     useEffect(() => {
         return GameEvents.On('levelComplete', () => {
@@ -25,9 +28,16 @@ export const LevelCompleteOverlay = () => {
             UIState.isModalOpen = true;
             if (document.pointerLockElement) document.exitPointerLock();
 
+            const levelId = LevelSelection.selectedLevelId;
+
+            //Local-only, not PIE testing - same gating as LevelRatingWidget below.
+            if (GameMode.appMode !== "createLevel") {
+                RecordRun(levelId, LevelTimer.elapsedTime);
+                setRunHistory(GetRunHistory(levelId));
+            }
+
             //Submit first, then re-fetch, so the just-finished run is guaranteed to be in the
             //list LeaderboardPanel renders instead of racing a GET fired at the same time.
-            const levelId = LevelSelection.selectedLevelId;
             EnsureRegistered()
                 .then(playerId => fetch('/api/leaderboard', {
                     method: 'POST',
@@ -49,6 +59,7 @@ export const LevelCompleteOverlay = () => {
         setIsComplete(false);
         setLeaderboard(null);
         setLeaderboardError(null);
+        setRunHistory([]);
 
         //Hand control back to normal FPS look.
         CursorState.isCursorNeeded = false;
@@ -71,6 +82,7 @@ export const LevelCompleteOverlay = () => {
     if (isComplete) {
         return <div className="absolute inset-0 z-30 flex items-center justify-center gap-6 bg-slate-950/25">
             <LeaderboardPanel data={leaderboard} error={leaderboardError} />
+            {GameMode.appMode !== "createLevel" && <RunHistoryPanel attempts={runHistory} />}
 
             <div className="relative flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
