@@ -41,6 +41,11 @@ export class NVPlayerCharacter extends NVPawn {
         this.weapon?.Fire();
     }
 
+    //For NVPowerupPickup's fast fire ability.
+    public GetWeapon() : NVWeapon | null {
+        return this.weapon;
+    }
+
     Jump() {
         this.playerPhysics.TryJump(5);
     }

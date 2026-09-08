@@ -17,6 +17,10 @@ export class PlayerController {
     //held, which looks around instead. Toggled with 'P'.
     private isRightMouseDown : boolean = false;
 
+    //Tracked purely for auto-fire (see ProcessInput) - a normal semi-auto shot is already handled
+    //by HandleMouseClick firing once per press, this only matters while NVWeapon.isAutoFire.
+    private isLeftMouseDown : boolean = false;
+
     constructor() {
         this.BindInputEvents();
         PlayerStatics.PlayerController = this;
@@ -146,6 +150,16 @@ export class PlayerController {
                 action.startFunc();
              }
         }
+
+        //Auto-fire while holding LMB - only actually fires anything while NVWeapon.isAutoFire
+        //(a fast-fire powerup is active); otherwise a shot only ever comes from HandleMouseClick's
+        //one-per-press handling, so this is a no-op the rest of the time. Fire() itself is still
+        //the one enforcing the cooldown between shots, same as a real held trigger would be.
+        if (this.isLeftMouseDown && !EditorState.isInEditor && !Countdown.isActive) {
+            const weapon = PlayerStatics.PlayerCharacter?.GetWeapon();
+            if (weapon?.isAutoFire) weapon.Fire();
+        }
+
         //Handle mouse input
         if (mousePosition.x != 0 || mousePosition.y != 0){
 
@@ -205,6 +219,10 @@ export class PlayerController {
         this.isRightMouseDown = isDown;
     }
 
+    public SetLeftMouseDown = (isDown : boolean) => {
+        this.isLeftMouseDown = isDown;
+    }
+
     //isEcho-guarded like KeyP/Delete - switching mode is one-shot, not repeat-while-held.
     private TrySetTransformMode = (mode : 'translate' | 'rotate' | 'scale', keyCode : string) => {
         if (keyActions[keyCode].isEcho) return;
@@ -256,6 +274,7 @@ export class PlayerController {
         if (GameMode.appMode !== "createLevel") return;
 
         this.isRightMouseDown = false;
+        this.isLeftMouseDown = false;
         EditorState.isInEditor = true;
         CursorState.isCursorNeeded = true;
         //Explicit rather than relying on a pointerlockchange event to set this - pointer lock is

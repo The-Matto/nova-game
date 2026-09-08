@@ -50,6 +50,16 @@ export class NVWeapon extends NVActor {
     private movementPitch : number = 0;
     private recoilOffset : number = 0;
 
+    //Shots/second - Fire() no-ops while cooldownRemaining hasn't reached 0 yet.
+    private static readonly DEFAULT_FIRE_RATE : number = 4;
+    private fireRate : number = NVWeapon.DEFAULT_FIRE_RATE;
+    private cooldownRemaining : number = 0;
+
+    //Set while a temporary fast-fire powerup is active (see ApplyFireRateOverride/
+    //NVPowerupPickup) - same pattern as NVPlayerPhysics's gravity/speed overrides.
+    private baseFireRate : number = this.fireRate;
+    private fireRateOverrideRemaining : number = 0;
+
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
 
@@ -57,11 +67,43 @@ export class NVWeapon extends NVActor {
         this.meshComponent = new StaticMeshComponent(this, new THREE.BoxGeometry(0.1, 0.12, 0.4), material, NVWeapon.VIEWMODEL_OFFSET);
     }
 
+    //Called by NVPowerupPickup - overrides the fire rate for `duration` seconds, then reverts on
+    //its own (see Tick). Same pattern as NVPlayerPhysics's gravity/speed overrides.
+    public ApplyFireRateOverride(value : number, duration : number) {
+        if (this.fireRateOverrideRemaining <= 0) this.baseFireRate = this.fireRate;
+        this.fireRate = value;
+        this.fireRateOverrideRemaining = duration;
+    }
+
+    private TickFireRateOverride(deltaTime : number) {
+        if (this.fireRateOverrideRemaining <= 0) return;
+
+        this.fireRateOverrideRemaining -= deltaTime;
+        if (this.fireRateOverrideRemaining <= 0) this.fireRate = this.baseFireRate;
+    }
+
+    //A powerup mid-effect shouldn't carry over into a fresh attempt - same reasoning as
+    //NVPlayerPhysics.RespawnAtSpawnPoint's own gravity/speed reverts.
+    public OnPlayerRespawned() : void {
+        if (this.fireRateOverrideRemaining <= 0) return;
+        this.fireRate = this.baseFireRate;
+        this.fireRateOverrideRemaining = 0;
+    }
+
+    //True only while a fast-fire powerup is active - see PlayerController.ProcessInput, which
+    //holds this to "hold to keep firing" while it's true, one shot per click otherwise.
+    public get isAutoFire() : boolean {
+        return this.fireRateOverrideRemaining > 0;
+    }
+
     //Leans the viewmodel (and, more subtly, the camera itself) into whichever way the player's
     //moving - strafing rolls it, moving forward/back pitches it - just a cosmetic read on player
     //velocity, not physically driven.
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
+
+        this.cooldownRemaining = Math.max(0, this.cooldownRemaining - deltaTime);
+        this.TickFireRateOverride(deltaTime);
 
         //Horizontal only - vertical velocity (falling, jumping) never decays via friction, so
         //including it would keep the lean alive well after the player's actually stopped moving.
@@ -110,6 +152,9 @@ export class NVWeapon extends NVActor {
     private static activeEffects = new Set<TimedEffect>();
 
     public Fire() {
+        if (this.cooldownRemaining > 0) return;
+        this.cooldownRemaining = 1 / this.fireRate;
+
         PlaySound('fireWeapon');
         this.recoilOffset = Math.min(this.recoilOffset + NVWeapon.RECOIL_KICK, NVWeapon.RECOIL_MAX);
 

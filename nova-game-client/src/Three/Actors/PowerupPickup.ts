@@ -6,13 +6,14 @@ import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 
 //The full set of abilities this pickup can grant - add a new one here, give it its own
 //`isXAbility` getter + editCondition-gated properties below, and a new case in ApplyAbility.
-const POWERUP_TYPES = ['Gravity', 'Speed'] as const;
+const POWERUP_TYPES = ['Gravity', 'Speed', 'FastFire'] as const;
 type PowerupType = typeof POWERUP_TYPES[number];
 
 //One glow color per type, so different pickups read apart at a glance before you even touch one.
 const POWERUP_COLORS : Record<PowerupType, string> = {
     Gravity: '#7c5cff',
     Speed: '#3de0ff',
+    FastFire: '#ff5533',
 };
 
 const BOB_HEIGHT = 0.15;
@@ -51,6 +52,11 @@ export class NVPowerupPickup extends NVActor {
     @EditableProperty({min: 0, editCondition: 'isSpeedAbility'})
     public speedValue : number = 10;
 
+    //Fast fire ability - see NVWeapon.ApplyFireRateOverride. Shots/second; well above the
+    //weapon's own default (4) so an untouched pickup is obviously "fast fire".
+    @EditableProperty({min: 0.1, editCondition: 'isFastFireAbility'})
+    public fireRateValue : number = 12;
+
     //Not @EditableProperty themselves - just computed checks other properties' editCondition can
     //point at (see EditablePropertyOptions/GetEditableProperties). Public so they're not flagged
     //as unused private members - they're only ever read reflectively, by key, from there.
@@ -60,6 +66,10 @@ export class NVPowerupPickup extends NVActor {
 
     public get isSpeedAbility() : boolean {
         return this.powerupType === 'Speed';
+    }
+
+    public get isFastFireAbility() : boolean {
+        return this.powerupType === 'FastFire';
     }
 
     constructor(descripter : SpawnDescriptor) {
@@ -147,15 +157,18 @@ export class NVPowerupPickup extends NVActor {
     }
 
     private ApplyAbility() {
-        const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
-        if (!physics) return;
+        const player = PlayerStatics.PlayerCharacter;
+        if (!player) return;
 
         switch (this.powerupType) {
             case 'Gravity':
-                physics.ApplyGravityOverride(this.gravityValue, this.abilityDuration);
+                player.GetPhysicsComp().ApplyGravityOverride(this.gravityValue, this.abilityDuration);
                 break;
             case 'Speed':
-                physics.ApplyWalkSpeedOverride(this.speedValue, this.abilityDuration);
+                player.GetPhysicsComp().ApplyWalkSpeedOverride(this.speedValue, this.abilityDuration);
+                break;
+            case 'FastFire':
+                player.GetWeapon()?.ApplyFireRateOverride(this.fireRateValue, this.abilityDuration);
                 break;
         }
     }
