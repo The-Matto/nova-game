@@ -1,7 +1,7 @@
 ﻿
 import * as THREE from "three"
 import type {NVActor} from "./Actor.ts";
-import {ClassRegistry, type LevelData, type SpawnDescriptor} from "./ClassDescripter.ts";
+import {ClassRegistry, type LevelData, type SpawnDescriptor, type WorldSettings} from "./ClassDescripter.ts";
 import {SceneBuilder} from "./SceneBuilder.ts";
 import {Octree} from "three/examples/jsm/math/Octree.js";
 
@@ -9,6 +9,9 @@ import {LevelObjectives} from "./Gameplay/LevelObjectives";
 import {EditorSelection} from "./Editor/EditorSelection";
 import {MainCamera} from "./Camera.ts";
 import {EditorState, LevelSelection} from "./Utility/PlayerGlobals.ts";
+
+//Matches what every level used before this was configurable.
+export const DEFAULT_WORLD_SETTINGS : WorldSettings = {skyColor: "#88ccee", killY: -50, fogDistance: 1000};
 
 export class NVScene {
 
@@ -24,6 +27,8 @@ export class NVScene {
 
     public static worldOctree : Octree
 
+    public static worldSettings : WorldSettings = {...DEFAULT_WORLD_SETTINGS};
+
     private static currentLevelPath : string;
 
     //Resolves once the initial level JSON has finished spawning - see
@@ -33,8 +38,7 @@ export class NVScene {
     constructor() {
         NVScene.scene = new THREE.Scene();
 
-        NVScene.scene.background = new THREE.Color( 0x88ccee );
-        NVScene.scene.fog = new THREE.Fog( 0x88ccee, 0, 1000 );
+        NVScene.ApplyWorldSettings(NVScene.worldSettings);
         NVScene.scene.add(NVScene.levelRoot);
         //Parented once, up front, regardless of which pawn possesses it later - see
         //AddSceneActor's "already parented" check.
@@ -90,9 +94,19 @@ export class NVScene {
         return new SceneBuilder(path).ready;
     }
 
+    //Updates the live scene (background/fog) and remembers the values for SerializeLevel() -
+    //called both on initial load and live from EditorWorldSettingsPanel as the editor drags a
+    //value, same "mutate the live instance directly" pattern as EditorInspectorPanel.
+    public static ApplyWorldSettings(settings : WorldSettings){
+        NVScene.worldSettings = settings;
+        NVScene.scene.background = new THREE.Color(settings.skyColor);
+        NVScene.scene.fog = new THREE.Fog(settings.skyColor, 0, settings.fogDistance);
+    }
+
     //Spawns every actor described by `data` - shared by SceneBuilder (level JSON fetched from
     //disk) and LoadFromSnapshot (an in-memory snapshot, see NVScene.SerializeLevel()).
     public static SpawnActorsFromData(data : LevelData){
+        NVScene.ApplyWorldSettings(data.worldSettings ?? {...DEFAULT_WORLD_SETTINGS});
         data.actorsToSpawn.forEach((entry : SpawnDescriptor) => {
             NVScene.SpawnActor(entry);
         });
@@ -140,7 +154,7 @@ export class NVScene {
             if (NVScene.persistentActors.has(actor)) continue;
             actorsToSpawn.push(actor.ToSpawnDescriptor());
         }
-        return {actorsToSpawn};
+        return {actorsToSpawn, worldSettings: {...NVScene.worldSettings}};
     }
 
     public static GetSceneActors() : Set<NVActor>{

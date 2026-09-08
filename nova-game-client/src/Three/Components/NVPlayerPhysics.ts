@@ -14,15 +14,11 @@ export class NVPlayerPhysics extends NVComponent {
     playerOnFloor: boolean = false;
     playerVelocity = new THREE.Vector3();
 
-    //Where/which way the player respawns after KILL_Y or a retry - set via SetSpawnYaw, since
-    //the marker's rotation isn't part of the pawn's own SpawnDescriptor (see PlayInEditor).
+    //Where/which way the player respawns after falling below worldSettings.killY or a retry -
+    //set via SetSpawnYaw, since the marker's rotation isn't part of the pawn's own
+    //SpawnDescriptor (see PlayInEditor).
     private spawnPoint = this.playerCollider.end.clone();
     private spawnYaw : number = 0;
-
-    //UE-style "Kill Z" naming, but Y is vertical here - fall below this and respawn instead of
-    //falling forever.
-    //TODO Make level-configurable once world settings exist in the level JSON.
-    private static readonly KILL_Y : number = -50;
 
     private walkSpeed : number = 10;
 
@@ -133,7 +129,7 @@ export class NVPlayerPhysics extends NVComponent {
     }
 
     private checkKillY() {
-        if (this.playerCollider.end.y >= NVPlayerPhysics.KILL_Y) return;
+        if (this.playerCollider.end.y >= NVScene.worldSettings.killY) return;
         (this.owningActor as NVPawn).PlayerDeath();
     }
 

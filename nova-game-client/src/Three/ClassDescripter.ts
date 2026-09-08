@@ -11,10 +11,23 @@ export type SpawnDescriptor = {
     properties?: Record<string, unknown>
 };
 
+//Level-wide settings, as opposed to any one actor's - see NVScene.worldSettings/
+//EditorWorldSettingsPanel. Optional on LevelData so existing level JSON without this still loads
+//fine, defaulting to DEFAULT_WORLD_SETTINGS (see NVScene.ts).
+export type WorldSettings = {
+    //Hex string ("#rrggbb") - also drives fog color, matching them was already today's behavior
+    //before this was configurable.
+    skyColor: string,
+    //UE-style "Kill Z" naming, but Y is vertical here - fall below this and respawn.
+    killY: number,
+    fogDistance: number,
+};
+
 //Shape of a level JSON file (see public/*.json) and of NVScene.SerializeLevel()'s in-memory
 //snapshot.
 export type LevelData = {
     actorsToSpawn: SpawnDescriptor[],
+    worldSettings?: WorldSettings,
 };
 
 export const ClassRegistry = new Map<string, unknown>();

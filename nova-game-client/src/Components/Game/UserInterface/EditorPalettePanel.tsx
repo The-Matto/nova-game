@@ -2,25 +2,14 @@ import {useState} from "react";
 import {PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
 import {EDITOR_PALETTE} from "../../../Three/Editor/EditorPalette";
 import {EditorSpawning} from "../../../Three/Editor/EditorSpawning";
-import {NVScene} from "../../../Three/NVScene";
-import {Game} from "../../../Three/Game";
-import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
-import type {LevelData} from "../../../Three/ClassDescripter";
 
 //Sits at the far right (see EditorMenu) - clicking an item spawns and selects it (see
-//EditorSpawning). Also Export/Import for the level snapshot, clipboard-based for now. Unmounted
-//along with the rest of EditorMenu on leaving editor mode, so search/import state doesn't need
-//resetting by hand - it just starts fresh next mount.
+//EditorSpawning). Save/load/upload live in EditorWorldSettingsPanel instead, on the left -
+//unmounted along with the rest of EditorMenu on leaving editor mode, so search state doesn't
+//need resetting by hand, it just starts fresh next mount.
 export const EditorPalettePanel = () => {
 
     const [search, setSearch] = useState("");
-    const [copied, setCopied] = useState(false);
-    const [showImport, setShowImport] = useState(false);
-    const [importText, setImportText] = useState("");
-    const [importError, setImportError] = useState<string | null>(null);
-    const [showUpload, setShowUpload] = useState(false);
-    const [uploadName, setUploadName] = useState("");
-    const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
 
     const query = search.trim().toLowerCase();
     //Categories with nothing matching the search drop out entirely, rather than showing an
@@ -32,70 +21,6 @@ export const EditorPalettePanel = () => {
         }))
         .filter(category => category.items.length > 0);
 
-    //JSON.stringify replacer - rounds every number to 3 decimal places, so a gizmo-dragged value
-    //like 5.32523346241 gets stored as 5.325 instead of full floating-point noise.
-    const roundNumbers = (_key : string, value : unknown) =>
-        typeof value === 'number' ? Math.round(value * 1000) / 1000 : value;
-
-    const exportLevel = async () => {
-        const json = JSON.stringify(NVScene.SerializeLevel(), roundNumbers, 2);
-        try {
-            await navigator.clipboard.writeText(json);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-        } catch {
-            console.error("Failed to copy level JSON to clipboard");
-        }
-    };
-
-    //Sends the current level (plus a screenshot of the editor view as its thumbnail) to the
-    //backend - see LevelsApi.ts's POST /api/levels.
-    const uploadLevel = async () => {
-        if (!uploadName.trim()) return;
-        setUploadStatus('uploading');
-        try {
-            const playerId = await EnsureRegistered();
-            const thumbnailDataUrl = Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85);
-            const res = await fetch('/api/levels', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    playerId,
-                    name: uploadName.trim(),
-                    levelData: NVScene.SerializeLevel(),
-                    thumbnailDataUrl,
-                }),
-            });
-            if (!res.ok) throw new Error(`Server responded ${res.status}`);
-
-            setUploadStatus('idle');
-            setShowUpload(false);
-            setUploadName("");
-        } catch {
-            setUploadStatus('error');
-        }
-    };
-
-    const importLevel = () => {
-        let data : LevelData;
-        try {
-            data = JSON.parse(importText);
-        } catch {
-            setImportError("That's not valid JSON.");
-            return;
-        }
-
-        if (!Array.isArray(data.actorsToSpawn)) {
-            setImportError('Missing an "actorsToSpawn" array.');
-            return;
-        }
-
-        NVScene.LoadFromSnapshot(data);
-        setShowImport(false);
-        setImportText("");
-        setImportError(null);
-    };
-
     return <div className="pointer-events-auto w-36 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
         <div className="text-x2 font-bold mb-3">Editor</div>
 
@@ -105,72 +30,6 @@ export const EditorPalettePanel = () => {
         >
             ▶ Play
         </button>
-
-        <div className="flex flex-col gap-2 mb-3">
-            <button
-                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={exportLevel}
-            >
-                {copied ? "Copied!" : "Export"}
-            </button>
-            <button
-                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={() => {
-                    setShowImport(v => !v);
-                    setImportError(null);
-                }}
-            >
-                Import
-            </button>
-            <button
-                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={() => {
-                    setShowUpload(v => !v);
-                    setUploadStatus('idle');
-                }}
-            >
-                Upload
-            </button>
-        </div>
-
-        {showUpload && (
-            <div className="mb-3 flex flex-col gap-2">
-                <input
-                    type="text"
-                    value={uploadName}
-                    onChange={e => setUploadName(e.target.value)}
-                    placeholder="Level name..."
-                    className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
-                />
-                {uploadStatus === 'error' && <div className="text-sm text-red-400">Upload failed - try again.</div>}
-                <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer disabled:opacity-50"
-                    onClick={uploadLevel}
-                    disabled={uploadStatus === 'uploading' || !uploadName.trim()}
-                >
-                    {uploadStatus === 'uploading' ? "Uploading…" : "Upload to Nova"}
-                </button>
-            </div>
-        )}
-
-        {showImport && (
-            <div className="mb-3 flex flex-col gap-2">
-                <textarea
-                    value={importText}
-                    onChange={e => setImportText(e.target.value)}
-                    placeholder="Paste level JSON..."
-                    rows={5}
-                    className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm resize-none"
-                />
-                {importError && <div className="text-sm text-red-400">{importError}</div>}
-                <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                    onClick={importLevel}
-                >
-                    Load
-                </button>
-            </div>
-        )}
 
         <input
             type="text"

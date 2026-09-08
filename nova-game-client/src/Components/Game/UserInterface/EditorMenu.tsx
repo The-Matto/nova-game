@@ -3,11 +3,12 @@ import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {EditorState} from "../../../Three/Utility/PlayerGlobals";
 import {EditorInspectorPanel} from "./EditorInspectorPanel";
 import {EditorPalettePanel} from "./EditorPalettePanel";
+import {EditorWorldSettingsPanel} from "./EditorWorldSettingsPanel";
 
-//Top-right editor layout, shown in editor mode - the spawn-actor menu sits at the far right, with
-//the selected-actor inspector to its left (only taking up space once something's selected). Both
-//children unmount (rather than merely hiding) on leaving editor mode, so their own state resets
-//for free.
+//Editor layout, shown in editor mode - world settings/save/load/upload at the far left, the
+//spawn-actor menu at the far right with the selected-actor inspector to its left (only taking up
+//space once something's selected). All children unmount (rather than merely hiding) on leaving
+//editor mode, so their own state resets for free.
 export const EditorMenu = () => {
 
     //Reflects EditorState.isInEditor's current value (rather than always starting false) since
@@ -22,8 +23,13 @@ export const EditorMenu = () => {
 
     //pointer-events-none - otherwise the empty space below the shorter card would still swallow
     //clicks meant for the game view. Each card opts back in via pointer-events-auto.
-    return <div className="absolute top-4 right-4 z-30 flex flex-row items-start gap-3 pointer-events-none">
-        <EditorInspectorPanel />
-        <EditorPalettePanel />
-    </div>;
+    return <>
+        <div className="absolute top-4 left-4 z-30 pointer-events-none">
+            <EditorWorldSettingsPanel />
+        </div>
+        <div className="absolute top-4 right-4 z-30 flex flex-row items-start gap-3 pointer-events-none">
+            <EditorInspectorPanel />
+            <EditorPalettePanel />
+        </div>
+    </>;
 };
