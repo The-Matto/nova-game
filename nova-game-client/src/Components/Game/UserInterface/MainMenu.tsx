@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {CursorState, EditorState, GameMode, LevelSelection} from "../../../Three/Utility/PlayerGlobals";
+import {CursorState, EditingLevel, EditorState, GameMode, LevelSelection} from "../../../Three/Utility/PlayerGlobals";
 import {RecordLevelPlay} from "../../../Three/Utility/LevelPlays";
 import {OptionsMenu} from "./OptionsMenu";
 import {LevelBrowser} from "./LevelBrowser";
@@ -31,6 +31,22 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         onStart();
     };
 
+    //From a level's ⋮ menu (see LevelBrowser) - opens the editor on that level instead of a
+    //fresh one, and remembers its id/metadata so Upload can offer "Update" instead of only
+    //ever creating a new level.
+    const editLevel = (level : LevelSummary) => {
+        LevelSelection.selectedLevelPath = level.path;
+        LevelSelection.selectedLevelId = level.id;
+        EditingLevel.id = level.id;
+        EditingLevel.name = level.name;
+        EditingLevel.tags = level.tags;
+        EditingLevel.description = level.description;
+        GameMode.appMode = "createLevel";
+        EditorState.isInEditor = true;
+        CursorState.isCursorNeeded = true;
+        onStart();
+    };
+
     if (showOptions) {
         return <div className="fixed inset-0 bg-slate-950">
             <OptionsMenu onBack={() => setShowOptions(false)} />
@@ -38,7 +54,7 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
     }
 
     if (showLevelBrowser) {
-        return <LevelBrowser onSelectLevel={playLevel} onBack={() => setShowLevelBrowser(false)} />;
+        return <LevelBrowser onSelectLevel={playLevel} onEditLevel={editLevel} onBack={() => setShowLevelBrowser(false)} />;
     }
 
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">

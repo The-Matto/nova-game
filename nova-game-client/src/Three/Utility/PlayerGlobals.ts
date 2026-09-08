@@ -1,6 +1,7 @@
 ﻿
 import {PlayerController} from "../Actors/PlayerController";
 import {NVPlayerCharacter} from "../Actors/PlayerCharacter";
+import type {LevelTag} from "nova-shared/level-tags";
 
 
 export const CameraSettings = {
@@ -62,12 +63,26 @@ export const GameMode = {
 };
 
 //Which level NVScene's constructor loads - set by LevelBrowser before Play mounts the game.
-//Editor mode never touches this, so it keeps loading the same TestWorld.json it always has.
+//Also set by MainMenu's "Edit Level" (see EditingLevel below) so the editor opens that level
+//instead of the default TestWorld.json - editor mode is otherwise unaware of this.
 //selectedLevelId matches a LevelSummary.id (see LevelBrowser) - what LeaderboardPanel submits/
 //fetches against, since the level's file path isn't a stable identifier on the backend.
 export const LevelSelection = {
     selectedLevelPath: "/TestWorld.json",
     selectedLevelId: "test-world",
+};
+
+//Set by MainMenu's "Edit Level" (see LevelBrowser.tsx) when the editor was opened to edit an
+//existing upload rather than start a fresh level - lets EditorWorldSettingsPanel's Upload button
+//offer "Update" (overwrite this level) alongside "Upload as New". null for a fresh level, where
+//Upload always creates a new one. Never explicitly reset - every path back to the main menu is a
+//full page reload (see LevelCompleteOverlay/GameMenuOverlay's "Return to Menu"), which clears it
+//along with everything else in memory.
+export const EditingLevel = {
+    id: null as string | null,
+    name: null as string | null,
+    tags: [] as LevelTag[],
+    description: null as string | null,
 };
 
 const PENDING_LEVEL_STORAGE_KEY = 'nova-game:pending-level-selection';

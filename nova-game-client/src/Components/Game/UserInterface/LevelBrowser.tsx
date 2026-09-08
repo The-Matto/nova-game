@@ -26,10 +26,10 @@ const RatingStars = ({rating} : {rating : number}) => {
     </span>;
 };
 
-//Only shown on a level the current player authored - a ⋮ button opening a small menu with a
-//Delete option, gated behind an inline confirm since (unlike EditorLevelStorageModal's local
-//saves) this permanently deletes real, shared backend data.
-const LevelOwnerMenu = ({onConfirmDelete} : {onConfirmDelete : () => Promise<void>}) => {
+//Only shown on a level the current player authored - a ⋮ button opening a small menu with Edit
+//and Delete options. Delete is gated behind an inline confirm since (unlike
+//EditorLevelStorageModal's local saves) this permanently deletes real, shared backend data.
+const LevelOwnerMenu = ({onEdit, onConfirmDelete} : {onEdit : () => void, onConfirmDelete : () => Promise<void>}) => {
     const [open, setOpen] = useState(false);
     const [confirming, setConfirming] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -60,12 +60,20 @@ const LevelOwnerMenu = ({onConfirmDelete} : {onConfirmDelete : () => Promise<voi
         {open && (
             <div className="absolute top-8 right-0 bg-slate-800 rounded-lg overflow-hidden text-xs z-20 w-40 shadow-lg">
                 {!confirming ? (
-                    <button
-                        className="block w-full px-3 py-2 text-left text-red-400 hover:bg-slate-700 cursor-pointer"
-                        onClick={() => setConfirming(true)}
-                    >
-                        Delete Level
-                    </button>
+                    <>
+                        <button
+                            className="block w-full px-3 py-2 text-left text-orange-100 hover:bg-slate-700 cursor-pointer"
+                            onClick={onEdit}
+                        >
+                            Edit Level
+                        </button>
+                        <button
+                            className="block w-full px-3 py-2 text-left text-red-400 hover:bg-slate-700 cursor-pointer"
+                            onClick={() => setConfirming(true)}
+                        >
+                            Delete Level
+                        </button>
+                    </>
                 ) : (
                     <div className="px-3 py-2 flex flex-col gap-2">
                         <div className="text-white/80">Delete permanently?</div>
@@ -108,8 +116,9 @@ const SORT_OPTIONS : {mode : SortMode, label : string}[] = [
 //Shown after clicking Play - list of community levels, fetched from the
 //backend's REST API. Only "Test World" exists for now (see LevelsApi.ts on the server), but the
 //list itself is already real, not a placeholder.
-export const LevelBrowser = ({onSelectLevel, onBack} : {
+export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
     onSelectLevel : (level : LevelSummary) => void,
+    onEditLevel : (level : LevelSummary) => void,
     onBack : () => void,
 }) => {
 
@@ -259,7 +268,7 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
 
                             {isOwnLevel && (
                                 <div className="absolute top-1/2 -translate-y-1/2 right-3">
-                                    <LevelOwnerMenu onConfirmDelete={() => deleteLevel(level.id)} />
+                                    <LevelOwnerMenu onEdit={() => onEditLevel(level)} onConfirmDelete={() => deleteLevel(level.id)} />
                                 </div>
                             )}
                         </div>

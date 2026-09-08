@@ -1,9 +1,12 @@
 import {useState} from "react";
 import {NVScene} from "../../../Three/NVScene";
 import {Game} from "../../../Three/Game";
+import {EditingLevel} from "../../../Three/Utility/PlayerGlobals";
 import {DragNumberInput} from "../../UI/DragNumberInput";
 import {EditorLevelStorageModal} from "./EditorLevelStorageModal";
 import {EditorUploadModal} from "./EditorUploadModal";
+import {EditorUploadChoiceModal} from "./EditorUploadChoiceModal";
+import {EditorUpdateModal} from "./EditorUpdateModal";
 
 //Sits at the far left (see EditorMenu) - level-wide settings (as opposed to any one actor's, see
 //EditorInspectorPanel) plus save/load (browser storage, see EditorLevelStorageModal) and upload,
@@ -18,6 +21,19 @@ export const EditorWorldSettingsPanel = () => {
     //Set (not just a boolean) so the captured thumbnail is available to render as soon as the
     //modal opens - captured once here, at open time, not re-captured at submit time.
     const [uploadThumbnail, setUploadThumbnail] = useState<string | null>(null);
+    //'choice' only appears when editing an existing level (see EditingLevel) - a fresh level
+    //skips straight to 'new', since there's nothing to update yet.
+    const [uploadMode, setUploadMode] = useState<'choice' | 'update' | 'new' | null>(null);
+
+    const openUploadFlow = () => {
+        setUploadThumbnail(Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85));
+        setUploadMode(EditingLevel.id !== null ? 'choice' : 'new');
+    };
+
+    const closeUploadFlow = () => {
+        setUploadThumbnail(null);
+        setUploadMode(null);
+    };
 
     //Applies straight to the live scene, same "mutate the live instance directly" pattern as
     //EditorInspectorPanel - the local state above is only for these controls to be controlled
@@ -77,7 +93,7 @@ export const EditorWorldSettingsPanel = () => {
             </button>
             <button
                 className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={() => setUploadThumbnail(Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85))}
+                onClick={openUploadFlow}
             >
                 Upload
             </button>
@@ -87,8 +103,18 @@ export const EditorWorldSettingsPanel = () => {
             <EditorLevelStorageModal onClose={onLevelLoaded} />
         )}
 
-        {uploadThumbnail && (
-            <EditorUploadModal thumbnailDataUrl={uploadThumbnail} onClose={() => setUploadThumbnail(null)} />
+        {uploadThumbnail && uploadMode === 'choice' && (
+            <EditorUploadChoiceModal
+                onChooseUpdate={() => setUploadMode('update')}
+                onChooseNew={() => setUploadMode('new')}
+                onClose={closeUploadFlow}
+            />
+        )}
+        {uploadThumbnail && uploadMode === 'update' && (
+            <EditorUpdateModal thumbnailDataUrl={uploadThumbnail} onClose={closeUploadFlow} />
+        )}
+        {uploadThumbnail && uploadMode === 'new' && (
+            <EditorUploadModal thumbnailDataUrl={uploadThumbnail} onClose={closeUploadFlow} />
         )}
     </div>;
 };

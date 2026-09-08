@@ -40,6 +40,19 @@ export interface UploadLevelRequest {
     description : string;
 }
 
+//Body of a PUT /api/levels - overwrites an existing level in place (same id, same R2 keys).
+//Only the level's own author can do this (checked server-side against authorId, same spoofing
+//protection as upload/rating/delete). Same shape as UploadLevelRequest plus the id to overwrite.
+export interface UpdateLevelRequest {
+    playerId : string;
+    levelId : string;
+    name : string;
+    levelData : unknown;
+    thumbnailDataUrl : string;
+    tags : LevelTag[];
+    description : string;
+}
+
 //Body of a POST /api/levels/rating - 1-5, upserted per (levelId, playerId) rather than
 //accumulated, so re-rating updates a player's existing score instead of skewing the average.
 export interface RateLevelRequest {
