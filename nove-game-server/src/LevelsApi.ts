@@ -3,6 +3,7 @@ import {randomUUID} from "crypto";
 import type {LevelSummary, UploadLevelRequest} from "nova-shared/level-listing";
 import {pool} from "./Db";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
+import {ResolveEffectivePlayerId} from "./Session";
 import {ReadBody} from "./Http";
 import {UploadToR2} from "./R2";
 
@@ -94,9 +95,13 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
             return true;
         }
 
+        //A logged-in session always wins over whatever playerId the body claims - closes the
+        //spoofing gap for anyone actually signed in. Anonymous callers keep today's behavior.
+        const playerId = await ResolveEffectivePlayerId(req, parsed.playerId);
+
         //Checked before touching R2 at all - a bad/forged playerId shouldn't leave orphaned
         //objects behind (unlike a plain DB insert, an R2 upload has no transaction to roll back).
-        const authorExists = await pool.query("SELECT 1 FROM users WHERE id = $1", [parsed.playerId]);
+        const authorExists = await pool.query("SELECT 1 FROM users WHERE id = $1", [playerId]);
         if (authorExists.rowCount === 0) {
             res.writeHead(400);
             res.end();
@@ -117,7 +122,7 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
                 RETURNING id, name, rating, created_at, path, thumbnail_url
             )
             SELECT inserted.*, u.display_name AS created_by FROM inserted JOIN users u ON u.id = $2
-        `, [id, parsed.playerId, parsed.name.trim(), path, thumbnailUrl]);
+        `, [id, playerId, parsed.name.trim(), path, thumbnailUrl]);
 
         res.writeHead(201, {"Content-Type": "application/json"});
         res.end(JSON.stringify(RowToSummary(result.rows[0])));

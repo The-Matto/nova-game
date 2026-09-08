@@ -3,6 +3,7 @@ import type {LeaderboardEntry, LeaderboardResponse, SubmitTimeRequest} from "nov
 import {pool} from "./Db";
 import {GetRedis} from "./Redis";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
+import {ResolveEffectivePlayerId} from "./Session";
 import {ReadBody} from "./Http";
 
 const TOP_COUNT = 5;
@@ -160,6 +161,10 @@ export async function HandleLeaderboardRequest(req : IncomingMessage, res : Serv
             return true;
         }
 
+        //A logged-in session always wins over whatever playerId the body claims - closes the
+        //spoofing gap for anyone actually signed in. Anonymous callers keep today's behavior.
+        const playerId = await ResolveEffectivePlayerId(req, parsed.playerId);
+
         let result;
         try {
             result = await pool.query(`
@@ -169,7 +174,7 @@ export async function HandleLeaderboardRequest(req : IncomingMessage, res : Serv
                     RETURNING id, level_id, player_id, time_seconds, submitted_at
                 )
                 SELECT inserted.*, u.display_name FROM inserted JOIN users u ON u.id = inserted.player_id
-            `, [parsed.levelId, parsed.playerId, parsed.timeSeconds]);
+            `, [parsed.levelId, playerId, parsed.timeSeconds]);
         } catch {
             //Most likely a playerId that doesn't exist (FK violation) - a bad/forged id, not a
             //server error, and left uncaught this would crash the process (server.ts's request
@@ -183,7 +188,7 @@ export async function HandleLeaderboardRequest(req : IncomingMessage, res : Serv
         //the next read falls back and re-backfills, not a failed submission.
         try {
             const redis = GetRedis();
-            await redis.zadd(RedisKey(parsed.levelId), "LT", parsed.timeSeconds, parsed.playerId);
+            await redis.zadd(RedisKey(parsed.levelId), "LT", parsed.timeSeconds, playerId);
         } catch {
             //Ignore - see comment above.
         }
