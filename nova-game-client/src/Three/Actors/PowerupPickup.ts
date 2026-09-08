@@ -28,9 +28,11 @@ export class NVPowerupPickup extends NVActor {
     private material : THREE.MeshStandardMaterial;
     private hasBeenCollected : boolean = false;
     private age : number = 0;
-    //The mesh's own local Y before any bob offset is applied - bob adds/subtracts around this,
-    //rather than drifting from accumulating onto a moving base each frame.
+    //The Y the bob adds/subtracts around - (re)captured from the actual placed position every
+    //time real gameplay starts (see Tick), not just once at spawn, so a level author repositioning
+    //it in the editor isn't fought by the bob snapping back to a stale value every frame.
     private restY : number = 0;
+    private wasInEditor : boolean = true;
 
     @EditableProperty({choices: [...POWERUP_TYPES]})
     public powerupType : PowerupType = 'Gravity';
@@ -68,7 +70,6 @@ export class NVPowerupPickup extends NVActor {
 
     public async Init(descripter : SpawnDescriptor) {
         this.SetWorldLocation(descripter.location);
-        this.restY = this.scene.position.y;
         this.RegisterCollision();
     }
 
@@ -101,13 +102,25 @@ export class NVPowerupPickup extends NVActor {
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
+        //Bob/spin (and the trigger check below) are gameplay-only - editor mode is for
+        //inspecting/moving around the level, not playing it, and continuously overwriting
+        //position/rotation every frame would otherwise fight a gizmo drag or Location/Rotation
+        //edit right back to wherever the bob/spin math says they should be.
+        if (EditorState.isInEditor) {
+            this.wasInEditor = true;
+            return;
+        }
+
+        //Just-entered real gameplay - bob around wherever it's actually placed, not a stale
+        //value from whenever this instance was first constructed.
+        if (this.wasInEditor) this.restY = this.scene.position.y;
+        this.wasInEditor = false;
+
         this.age += deltaTime;
         this.scene.rotation.y += SPIN_SPEED * deltaTime;
         this.scene.position.y = this.restY + Math.sin(this.age * BOB_SPEED) * BOB_HEIGHT;
 
-        //Trigger volumes are gameplay-only - editor mode is for inspecting/moving around the
-        //level, not playing it.
-        if (EditorState.isInEditor || this.hasBeenCollected) return;
+        if (this.hasBeenCollected) return;
 
         const playerCollider = PlayerStatics.PlayerCharacter?.GetPhysicsComp().playerCollider;
         if (!playerCollider) return;
