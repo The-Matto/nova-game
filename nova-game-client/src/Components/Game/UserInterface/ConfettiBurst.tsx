@@ -68,7 +68,7 @@ export const ConfettiBurst = () => {
 
     if (particlesRef.current.length === 0) return null;
 
-    return <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    return <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         {particlesRef.current.map(p => (
             <div
                 key={p.id}
