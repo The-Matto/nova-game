@@ -94,9 +94,11 @@ export async function RefreshAuthState() : Promise<void> {
     if (dto.loggedIn && dto.id && dto.displayName) {
         PlayerIdentity.id = dto.id;
         PlayerIdentity.name = dto.displayName;
+        //NAME_STORAGE_KEY deliberately isn't touched here - it holds the pre-login anonymous
+        //name, left alone so SignOutOfGitHub can restore that same name instead of generating a
+        //new one every time.
         try {
             localStorage.setItem(ID_STORAGE_KEY, dto.id);
-            localStorage.setItem(NAME_STORAGE_KEY, dto.displayName);
         } catch {
             //Ignore - not critical if this fails.
         }
@@ -117,15 +119,15 @@ export async function SignInWithGitHub() : Promise<void> {
 export async function SignOutOfGitHub() : Promise<void> {
     await fetch('/api/auth/logout', {method: 'POST'});
 
-    const freshName = GenerateRandomName();
+    //LoadOrCreateName() recovers the same anonymous name used before signing in (RefreshAuthState
+    //never overwrote it in storage) rather than generating a new one every time.
     PlayerIdentity.id = null;
-    PlayerIdentity.name = freshName;
+    PlayerIdentity.name = LoadOrCreateName();
     PlayerIdentity.loggedIn = false;
     PlayerIdentity.email = undefined;
     registerPromise = null;
 
     try {
-        localStorage.setItem(NAME_STORAGE_KEY, freshName);
         localStorage.removeItem(ID_STORAGE_KEY);
     } catch {
         //Ignore - not critical if this fails.
