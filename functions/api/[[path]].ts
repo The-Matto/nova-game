@@ -13,7 +13,10 @@ export async function onRequest(context : {request : Request}) : Promise<Respons
     headers.delete("host");
 
     const method = context.request.method;
-    const init : RequestInit = {method, headers};
+    //Without this, fetch() follows a redirect (e.g. the OAuth login/callback endpoints) itself
+    //at the edge and hands back the final page's content as if it were this domain's own -
+    //"manual" instead relays the raw 3xx so the browser does the actual navigation.
+    const init : RequestInit = {method, headers, redirect: "manual"};
     if (method !== "GET" && method !== "HEAD") {
         init.body = await context.request.arrayBuffer();
     }
