@@ -8,6 +8,11 @@ import {NVScene} from "../NVScene.ts";
 
 const SPIKE_GRID_SIZE = 5;
 
+//Shared by every spike instance - one texture, loaded once from public/ (same pattern as
+//NVTargetActor's TARGET_TEXTURE). Only on the spike cones, not the base - spikeColor already
+//only tints those too.
+const SPIKE_TEXTURE = new THREE.TextureLoader().load('/T_Spikes.png');
+
 //A cube base with a 5x5 grid of cone spikes. Always solid (doubles as a platform); a trigger
 //respawns the player on touch whenever extended. isTimed cycles extended/retracted, interpolated.
 @RegisterClass("NVSpikeActor")
@@ -77,7 +82,7 @@ export class NVSpikeActor extends NVActor {
 
         const spikeHeight = descripter.scale.y * 0.8;
         const spikeRadius = Math.min(stepX, stepZ) * 0.35;
-        this.spikeMaterial = new THREE.MeshStandardMaterial({color: this.spikeColor, metalness: 0.6, roughness: 0.4});
+        this.spikeMaterial = new THREE.MeshStandardMaterial({color: this.spikeColor, map: SPIKE_TEXTURE, metalness: 0.6, roughness: 0.4});
 
         //Extended: tip pokes up above the cube. Retracted: sunk back down flush with its top.
         this.extendedY = descripter.scale.y / 2 + spikeHeight / 2;

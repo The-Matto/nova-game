@@ -6,6 +6,10 @@ import {EditorState, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlo
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import type {NVPlayerPhysics} from "../Components/NVPlayerPhysics.ts";
 
+//Shared by every falling platform instance - one texture, loaded once from public/ (same pattern
+//as NVTargetActor's TARGET_TEXTURE).
+const FALLING_PLATFORM_TEXTURE = new THREE.TextureLoader().load('/T_Fallingplatform.png');
+
 //A cube platform that warns (color change) then falls and hides itself once stood on too long.
 //OnPlayerRespawned puts it back together, so a death can't permanently strand a level.
 @RegisterClass("FallingPlatform")
@@ -34,7 +38,7 @@ export class NVFallingPlatform extends NVActor {
         super(descripter);
 
         const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
-        this.material = new THREE.MeshStandardMaterial({color: NVFallingPlatform.IDLE_COLOR});
+        this.material = new THREE.MeshStandardMaterial({color: NVFallingPlatform.IDLE_COLOR, map: FALLING_PLATFORM_TEXTURE});
         this.scene = new THREE.Mesh(geometry, this.material);
     }
 
