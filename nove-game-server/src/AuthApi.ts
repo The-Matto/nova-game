@@ -1,14 +1,20 @@
 import type {IncomingMessage, ServerResponse} from "http";
 import {randomBytes} from "crypto";
 import type {AuthMeResponse} from "nova-shared/auth";
+import type {RenameRequest} from "nova-shared/profile";
 import {pool} from "./Db";
 import {GetRedis} from "./Redis";
 import {GetGitHubOAuthConfig} from "./GitHubOAuth";
 import {CreateSession, DestroySession, GetSessionUserId, SESSION_COOKIE_NAME} from "./Session";
 import {BuildClearCookie, BuildSetCookie, GetCookie} from "./Cookies";
+import {GetClientIp, IsRateLimited} from "./RateLimit";
+import {ReadBody} from "./Http";
 
 const OAUTH_STATE_TTL_SECONDS = 10 * 60;
 const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+const MAX_DISPLAY_NAME_LENGTH = 40;
+const RATE_LIMIT = 5;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 //GitHub's API requires a User-Agent on every request - it's not optional like most REST APIs.
 const GITHUB_USER_AGENT = "nova-game";
 
@@ -159,6 +165,50 @@ async function HandleLogout(req : IncomingMessage, res : ServerResponse) : Promi
     res.end();
 }
 
+//Renames the CALLER's own account - userId comes from the session cookie, never the request
+//body, so this can't be used to rename anyone else. No anonymous equivalent exists (no session
+//to prove ownership - anyone could claim any playerId, same reasoning as everywhere else).
+async function HandleRename(req : IncomingMessage, res : ServerResponse) : Promise<void> {
+    const token = GetCookie(req, SESSION_COOKIE_NAME);
+    const userId = token ? await GetSessionUserId(token) : null;
+    if (!userId) {
+        res.writeHead(401);
+        res.end();
+        return;
+    }
+
+    if (await IsRateLimited(GetClientIp(req), "rename", RATE_LIMIT, RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
+
+    let parsed : unknown;
+    try {
+        parsed = JSON.parse(await ReadBody(req));
+    } catch {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+    const request = parsed as Partial<RenameRequest>;
+    if (typeof request.displayName !== "string" || request.displayName.trim().length === 0
+        || request.displayName.trim().length > MAX_DISPLAY_NAME_LENGTH) {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+
+    const result = await pool.query(
+        "UPDATE users SET display_name = $2 WHERE id = $1 RETURNING id, display_name",
+        [userId, request.displayName.trim()],
+    );
+
+    const response : AuthMeResponse = {loggedIn: true, id: result.rows[0].id, displayName: result.rows[0].display_name};
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.end(JSON.stringify(response));
+}
+
 //Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
 export async function HandleAuthRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
     const url = new URL(req.url ?? "", "http://localhost");
@@ -173,6 +223,10 @@ export async function HandleAuthRequest(req : IncomingMessage, res : ServerRespo
     }
     if (url.pathname === "/api/auth/me" && req.method === "GET") {
         await HandleMe(req, res);
+        return true;
+    }
+    if (url.pathname === "/api/auth/me" && req.method === "PATCH") {
+        await HandleRename(req, res);
         return true;
     }
     if (url.pathname === "/api/auth/logout" && req.method === "POST") {

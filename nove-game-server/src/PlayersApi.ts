@@ -1,5 +1,6 @@
 import type {IncomingMessage, ServerResponse} from "http";
 import type {PlayerIdentityDto, RegisterPlayerRequest} from "nova-shared/player";
+import type {PersonalBest, PlayerProfile} from "nova-shared/profile";
 import {pool} from "./Db";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ReadBody} from "./Http";
@@ -15,15 +16,11 @@ function IsValidRegistration(value : any) : value is RegisterPlayerRequest {
         && value.displayName.trim().length > 0 && value.displayName.trim().length <= MAX_DISPLAY_NAME_LENGTH;
 }
 
-//Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
-export async function HandlePlayersRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
-    const url = new URL(req.url ?? "", "http://localhost");
-    if (url.pathname !== "/api/players" || req.method !== "POST") return false;
-
+async function HandleRegister(req : IncomingMessage, res : ServerResponse) : Promise<void> {
     if (await IsRateLimited(GetClientIp(req), "players", RATE_LIMIT, RATE_LIMIT_WINDOW_SECONDS)) {
         res.writeHead(429);
         res.end();
-        return true;
+        return;
     }
 
     let parsed : unknown;
@@ -32,12 +29,12 @@ export async function HandlePlayersRequest(req : IncomingMessage, res : ServerRe
     } catch {
         res.writeHead(400);
         res.end();
-        return true;
+        return;
     }
     if (!IsValidRegistration(parsed)) {
         res.writeHead(400);
         res.end();
-        return true;
+        return;
     }
 
     const result = await pool.query(
@@ -48,5 +45,78 @@ export async function HandlePlayersRequest(req : IncomingMessage, res : ServerRe
     const dto : PlayerIdentityDto = {id: result.rows[0].id, displayName: result.rows[0].display_name};
     res.writeHead(201, {"Content-Type": "application/json"});
     res.end(JSON.stringify(dto));
-    return true;
+}
+
+//Public - anyone can view anyone's profile (levels they've made, their best time per level).
+async function HandleProfile(res : ServerResponse, url : URL) : Promise<void> {
+    const playerId = url.searchParams.get("playerId");
+    if (!playerId) {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+
+    const user = await pool.query("SELECT display_name FROM users WHERE id = $1", [playerId]);
+    if (user.rowCount === 0) {
+        res.writeHead(404);
+        res.end();
+        return;
+    }
+
+    const levels = await pool.query(
+        `SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
+         FROM levels l
+         LEFT JOIN users u ON u.id = l.author_id
+         WHERE l.author_id = $1 AND l.path IS NOT NULL
+         ORDER BY l.created_at DESC`,
+        [playerId],
+    );
+
+    //One row per level this player's played, their best time on each - not one level's top N.
+    const bests = await pool.query(
+        `SELECT DISTINCT ON (le.level_id) le.level_id, l.name AS level_name, le.time_seconds
+         FROM leaderboard_entries le
+         JOIN levels l ON l.id = le.level_id
+         WHERE le.player_id = $1
+         ORDER BY le.level_id, le.time_seconds ASC`,
+        [playerId],
+    );
+
+    const profile : PlayerProfile = {
+        id: playerId,
+        displayName: user.rows[0].display_name,
+        levels: levels.rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            createdBy: row.created_by ?? "Unknown",
+            rating: Number(row.rating),
+            uploadedAt: row.created_at.toISOString(),
+            path: row.path,
+            thumbnailUrl: row.thumbnail_url ?? undefined,
+        })),
+        personalBests: bests.rows.map((row) : PersonalBest => ({
+            levelId: row.level_id,
+            levelName: row.level_name,
+            timeSeconds: Number(row.time_seconds),
+        })),
+    };
+
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.end(JSON.stringify(profile));
+}
+
+//Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
+export async function HandlePlayersRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
+    const url = new URL(req.url ?? "", "http://localhost");
+
+    if (url.pathname === "/api/players" && req.method === "POST") {
+        await HandleRegister(req, res);
+        return true;
+    }
+    if (url.pathname === "/api/players/profile" && req.method === "GET") {
+        await HandleProfile(res, url);
+        return true;
+    }
+
+    return false;
 }

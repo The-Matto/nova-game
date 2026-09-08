@@ -1,5 +1,6 @@
 import {useEffect, useState} from "react";
-import {PlayerIdentity, RefreshAuthState, SignInWithGitHub, SignOutOfGitHub} from "../../../Three/Utility/PlayerIdentity";
+import {EnsureRegistered, PlayerIdentity, RefreshAuthState, SignInWithGitHub, SignOutOfGitHub} from "../../../Three/Utility/PlayerIdentity";
+import {ProfileViewer} from "./ProfileViewer";
 
 //GitHub silently skips its own consent screen for an already-authorized app (no equivalent of
 //Google's prompt=consent to force it back) - this stands in for that missing "are you sure"
@@ -35,6 +36,7 @@ export const AccountSection = () => {
     const [name, setName] = useState(PlayerIdentity.name);
     const [loading, setLoading] = useState(true);
     const [showSignInConfirm, setShowSignInConfirm] = useState(false);
+    const [profilePlayerId, setProfilePlayerId] = useState<string | null>(null);
 
     useEffect(() => {
         RefreshAuthState().finally(() => {
@@ -46,12 +48,17 @@ export const AccountSection = () => {
 
     if (loading) return null;
 
+    //Anonymous players may not have registered yet (that's normally lazy - see EnsureRegistered's
+    //own doc comment), so this resolves an id before opening the profile rather than assuming one.
+    const openOwnProfile = () => { EnsureRegistered().then(setProfilePlayerId); };
+
     return <>
         {showSignInConfirm && <SignInConfirm onCancel={() => setShowSignInConfirm(false)} />}
+        {profilePlayerId && <ProfileViewer playerId={profilePlayerId} onClose={() => setProfilePlayerId(null)} />}
         <div className="absolute top-4 right-4 flex items-center gap-3 text-orange-500 text-sm">
             {loggedIn
                 ? <>
-                    <span>Signed in as {name}</span>
+                    <span>Signed in as <button className="underline cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
                     <button
                         className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"
                         onClick={() => SignOutOfGitHub().then(() => { setLoggedIn(false); setName(PlayerIdentity.name); })}
@@ -60,7 +67,7 @@ export const AccountSection = () => {
                     </button>
                 </>
                 : <>
-                    <span>Playing as {name}</span>
+                    <span>Playing as <button className="underline cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
                     <button
                         className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"
                         onClick={() => setShowSignInConfirm(true)}
