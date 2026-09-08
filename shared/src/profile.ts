@@ -14,6 +14,9 @@ export interface PlayerProfile {
     displayName : string;
     levels : LevelSummary[];
     personalBests : PersonalBest[];
+    //null once permanently claimed (a real login linked) - an ISO date otherwise, when this
+    //account will be deleted if never claimed (see CleanupAnonymousUsers.ts).
+    deletionAt : string | null;
 }
 
 //Body of a PATCH /api/auth/me - renames the currently signed-in session's own account. There's

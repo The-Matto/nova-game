@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import type {PlayerProfile} from "nova-shared/profile";
 import type {AuthMeResponse} from "nova-shared/auth";
-import {PlayerIdentity} from "../../../Three/Utility/PlayerIdentity";
+import {PlayerIdentity, SignInWithGitHub} from "../../../Three/Utility/PlayerIdentity";
 
 const FormatTime = (seconds : number) => `${seconds.toFixed(2)}s`;
 
@@ -22,7 +22,9 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
             .catch(() => setError("Couldn't load this profile."));
     }, [playerId]);
 
-    const isOwnProfile = PlayerIdentity.loggedIn && playerId === PlayerIdentity.id;
+    //Deliberately not gated on PlayerIdentity.loggedIn - an anonymous player viewing their own
+    //(unclaimed) profile still needs this to be "own", to see the claim-account rundown below.
+    const isOwnProfile = playerId === PlayerIdentity.id;
 
     return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
         <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-2xl max-h-[80vh]">
@@ -30,9 +32,12 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
             {!error && !profile && <div className="text-white/50 py-6 text-center">Loading profile…</div>}
 
             {profile && <>
-                {isOwnProfile
-                    ? <RenameField profile={profile} onRenamed={setProfile} />
-                    : <div className="text-3xl font-bold text-orange-500">{profile.displayName}</div>}
+                {isOwnProfile && profile.deletionAt === null && <RenameField profile={profile} onRenamed={setProfile} />}
+                {isOwnProfile && profile.deletionAt !== null && <>
+                    <div className="text-3xl font-bold text-orange-500">{profile.displayName}</div>
+                    <AccountClaimNotice deletionAt={profile.deletionAt} />
+                </>}
+                {!isOwnProfile && <div className="text-3xl font-bold text-orange-500">{profile.displayName}</div>}
 
                 <div className="flex flex-col overflow-y-auto gap-6">
                     <div>
@@ -72,6 +77,26 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
                 Back
             </button>
         </div>
+    </div>;
+};
+
+//Shown on your own profile only while it's still anonymous (deletionAt !== null) - explains why
+//and offers the one action that fixes it. No extra confirm step here, unlike AccountSection's
+//sign-in button elsewhere - opening your own profile and hitting "Connect GitHub" is already a
+//deliberate enough path.
+const AccountClaimNotice = ({deletionAt} : {deletionAt : string}) => {
+    const daysLeft = Math.max(1, Math.ceil((new Date(deletionAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+    return <div className="flex flex-col gap-2 border border-orange-500/30 rounded-xl bg-slate-800/50 px-4 py-3">
+        <div className="text-sm text-white/80">
+            This account is temporary and will be deleted in {daysLeft} day{daysLeft === 1 ? "" : "s"} unless you
+            claim it by linking a login.
+        </div>
+        <button
+            className="self-start bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-orange-500 text-sm cursor-pointer"
+            onClick={() => SignInWithGitHub()}
+        >
+            Connect GitHub
+        </button>
     </div>;
 };
 

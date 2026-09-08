@@ -4,6 +4,7 @@ import type {PersonalBest, PlayerProfile} from "nova-shared/profile";
 import {pool} from "./Db";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ReadBody} from "./Http";
+import {ANONYMOUS_ACCOUNT_GRACE_PERIOD_DAYS} from "./AccountLifetime";
 
 const MAX_DISPLAY_NAME_LENGTH = 40;
 //A real browser registers once ever (see PlayerIdentity.ts) - this just caps a script hammering
@@ -66,12 +67,16 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
         return;
     }
 
-    const user = await pool.query("SELECT display_name FROM users WHERE id = $1", [playerId]);
+    const user = await pool.query("SELECT display_name, claimed_at, created_at FROM users WHERE id = $1", [playerId]);
     if (user.rowCount === 0) {
         res.writeHead(404);
         res.end();
         return;
     }
+
+    const deletionAt = user.rows[0].claimed_at
+        ? null
+        : new Date(user.rows[0].created_at.getTime() + ANONYMOUS_ACCOUNT_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
     const levels = await pool.query(
         `SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
@@ -109,6 +114,7 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
             levelName: row.level_name,
             timeSeconds: Number(row.time_seconds),
         })),
+        deletionAt,
     };
 
     res.writeHead(200, {"Content-Type": "application/json"});

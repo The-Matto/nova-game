@@ -1,7 +1,13 @@
 import {useEffect, useState} from "react";
 import type {AuthMeResponse} from "nova-shared/auth";
+import type {PlayerProfile} from "nova-shared/profile";
 import {EnsureRegistered, PlayerIdentity, RefreshAuthState, SignInWithGitHub, SignOutOfGitHub} from "../../../Three/Utility/PlayerIdentity";
 import {ProfileViewer} from "./ProfileViewer";
+
+//Rounded up so "less than a day left" still reads as 1, not 0 - 0 would look like it's already
+//too late.
+const DaysUntil = (isoDate : string) : number =>
+    Math.max(1, Math.ceil((new Date(isoDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
 
 //GitHub silently skips its own consent screen for an already-authorized app (no equivalent of
 //Google's prompt=consent to force it back) - this stands in for that missing "are you sure"
@@ -86,6 +92,7 @@ export const AccountSection = () => {
     const [showSignInConfirm, setShowSignInConfirm] = useState(false);
     const [profilePlayerId, setProfilePlayerId] = useState<string | null>(null);
     const [showWelcomePrompt, setShowWelcomePrompt] = useState(false);
+    const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
     useEffect(() => {
         RefreshAuthState().finally(() => {
@@ -100,6 +107,18 @@ export const AccountSection = () => {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('welcome');
                 window.history.replaceState({}, '', url);
+            }
+
+            //Only anonymous accounts have a deletion deadline - a claimed one already came back
+            //with loggedIn true above, no need to ask.
+            if (!PlayerIdentity.loggedIn) {
+                EnsureRegistered()
+                    .then(id => fetch(`/api/players/profile?playerId=${encodeURIComponent(id)}`))
+                    .then(res => res.ok ? res.json() : Promise.reject())
+                    .then((profile : PlayerProfile) => {
+                        if (profile.deletionAt) setDaysLeft(DaysUntil(profile.deletionAt));
+                    })
+                    .catch(() => {/* Not critical - the corner hint just won't show. */});
             }
         });
     }, []);
@@ -127,6 +146,9 @@ export const AccountSection = () => {
                 </>
                 : <>
                     <span>Playing as <button className="underline cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
+                    {daysLeft !== null && (
+                        <span className="text-orange-500/60">{daysLeft} day{daysLeft === 1 ? "" : "s"} left to claim account</span>
+                    )}
                     <button
                         className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"
                         onClick={() => setShowSignInConfirm(true)}
