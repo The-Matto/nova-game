@@ -80,7 +80,9 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
 
     //Most recent 5 - a profile page, not the full level browser.
     const levels = await pool.query(
-        `SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
+        `SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url,
+             l.description,
+             COALESCE((SELECT array_agg(tag ORDER BY tag) FROM level_tags WHERE level_id = l.id), '{}') AS tags
          FROM levels l
          LEFT JOIN users u ON u.id = l.author_id
          WHERE l.author_id = $1 AND l.path IS NOT NULL
@@ -116,6 +118,8 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
             uploadedAt: row.created_at.toISOString(),
             path: row.path,
             thumbnailUrl: row.thumbnail_url ?? undefined,
+            tags: row.tags ?? [],
+            description: row.description ?? "",
         })),
         personalBests: bests.rows.map((row) : PersonalBest => ({
             levelId: row.level_id,

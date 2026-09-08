@@ -1,7 +1,19 @@
 import {useEffect, useState} from "react";
 import type {LevelSummary} from "nova-shared/level-listing";
+import {LEVEL_TAGS} from "nova-shared/level-tags";
+import type {LevelTag} from "nova-shared/level-tags";
 import {LevelLeaderboardPreview} from "./LevelLeaderboardPreview";
 import {AccountSection} from "./AccountSection";
+
+//Small pill used both for a level's own tags and the filter row - same look, different context.
+const TagPill = ({tag, active, onClick} : {tag : string, active? : boolean, onClick? : () => void}) => {
+    const className = `text-xs px-2 py-0.5 rounded-full ${
+        active ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70"
+    } ${onClick ? "cursor-pointer hover:text-orange-500" : ""}`;
+    return onClick
+        ? <button onClick={onClick} className={className}>{tag}</button>
+        : <span className={className}>{tag}</span>;
+};
 
 //Star rating rendered as filled/empty glyphs plus the raw number - good enough without needing
 //an icon font.
@@ -18,7 +30,7 @@ const RatingStars = ({rating} : {rating : number}) => {
 //something.
 const PAGE_SIZE = 10;
 
-//Shown after clicking Play - a Happy Wheels-style list of community levels, fetched from the
+//Shown after clicking Play - list of community levels, fetched from the
 //backend's REST API. Only "Test World" exists for now (see LevelsApi.ts on the server), but the
 //list itself is already real, not a placeholder.
 export const LevelBrowser = ({onSelectLevel, onBack} : {
@@ -31,7 +43,13 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     //Accordion - only one level's leaderboard preview is expanded at a time.
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [search, setSearch] = useState("");
+    const [selectedTags, setSelectedTags] = useState<LevelTag[]>([]);
     const [page, setPage] = useState(0);
+
+    const toggleTag = (tag : LevelTag) => {
+        setSelectedTags(current => current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]);
+        setPage(0);
+    };
 
     useEffect(() => {
         fetch('/api/levels')
@@ -44,7 +62,11 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     }, []);
 
     const query = search.trim().toLowerCase();
-    const filteredLevels = levels?.filter(level => level.name.toLowerCase().includes(query)) ?? null;
+    //Tag filter is OR - a level matches if it has any of the selected tags, not all of them.
+    const filteredLevels = levels?.filter(level =>
+        level.name.toLowerCase().includes(query)
+        && (selectedTags.length === 0 || selectedTags.some(tag => level.tags.includes(tag)))
+    ) ?? null;
     const pageCount = filteredLevels ? Math.max(1, Math.ceil(filteredLevels.length / PAGE_SIZE)) : 1;
     //Clamped rather than reset outright - keeps you on a sensible page if a search shrinks the
     //result count out from under the current one, instead of always snapping back to page 1.
@@ -65,12 +87,18 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                 />
             </div>
 
+            <div className="flex flex-wrap gap-1.5">
+                {LEVEL_TAGS.map(tag => (
+                    <TagPill key={tag} tag={tag} active={selectedTags.includes(tag)} onClick={() => toggleTag(tag)} />
+                ))}
+            </div>
+
             <div className="flex flex-col overflow-y-auto">
                 {error && <div className="text-red-400 py-6 text-center">{error}</div>}
                 {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
                 {!error && levels?.length === 0 && <div className="text-white/50 py-6 text-center">No levels yet.</div>}
                 {!error && levels && levels.length > 0 && filteredLevels?.length === 0 && (
-                    <div className="text-white/50 py-6 text-center">No levels match "{search.trim()}".</div>
+                    <div className="text-white/50 py-6 text-center">No levels match the current search/tags.</div>
                 )}
 
                 {pagedLevels?.map(level => {
@@ -83,7 +111,12 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                             {level.thumbnailUrl
                                 ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
                                 : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
-                            <div className="flex-1 min-w-0 text-xl text-white font-semibold truncate">{level.name}</div>
+                            <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                <div className="text-xl text-white font-semibold truncate">{level.name}</div>
+                                {level.tags.length > 0 && <div className="flex flex-wrap gap-1">
+                                    {level.tags.map(tag => <TagPill key={tag} tag={tag} />)}
+                                </div>}
+                            </div>
                             <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
                             <div className="w-32"><RatingStars rating={level.rating} /></div>
                             <div className="w-24 text-white/50 text-sm text-right">
@@ -96,6 +129,7 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                                 ? <img src={level.thumbnailUrl} alt="" className="w-64 h-36 object-cover rounded-lg bg-slate-900 shrink-0" />
                                 : <div className="w-64 h-36 rounded-lg bg-slate-900 shrink-0" />}
                             <div className="flex-1 min-w-0">
+                                {level.description && <div className="text-sm text-white/70 mb-3">{level.description}</div>}
                                 <LevelLeaderboardPreview levelId={level.id} />
                             </div>
                             <button

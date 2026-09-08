@@ -1,3 +1,5 @@
+import type {LevelTag} from "./level-tags";
+
 //Metadata for one entry in the level browser (see LevelBrowser.tsx / LevelsApi.ts). `path` is
 //where the client fetches the actual level JSON from - either a static file under
 //nova-game-client/public (the seeded demo levels) or a full R2 public URL (uploaded levels, see
@@ -11,6 +13,9 @@ export interface LevelSummary {
     path : string;
     //Optional - a level with none shown a placeholder in the browser instead.
     thumbnailUrl? : string;
+    tags : LevelTag[];
+    //Freeform, author-written - empty string if none was given at upload.
+    description : string;
 }
 
 //Body of a POST /api/levels - uploads a level built in the editor. The server stores levelData
@@ -22,6 +27,10 @@ export interface UploadLevelRequest {
     levelData : unknown;
     //A data URL (e.g. "data:image/jpeg;base64,...") - see EditorPalettePanel's canvas capture.
     thumbnailDataUrl : string;
+    //From the fixed LEVEL_TAGS list - the server rejects anything else. May be empty.
+    tags : LevelTag[];
+    //May be empty - not every level needs one.
+    description : string;
 }
 
 //Body of a POST /api/levels/rating - 1-5, upserted per (levelId, playerId) rather than
