@@ -108,6 +108,7 @@ export const EditorInspectorPanel = () => {
                                 min={options.min}
                                 max={options.max}
                                 isInteger={options.isInteger}
+                                sensitivity={options.sensitivity}
                                 className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
                             />
                         ) : isHexColor(value) ? (

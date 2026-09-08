@@ -21,7 +21,10 @@ export class NVPostProcessVolume extends NVActor {
     @EditableProperty()
     public overrideSkyColor : string = '#2b1055';
 
-    @EditableProperty({min: 0})
+    //Matches EditorWorldSettingsPanel's own Fog Distance slider's sensitivity - without this it
+    //defaults to DragNumberInput's much finer 0.1/px, making the same drag distance move this
+    //value ~10x less than the base setting's slider, despite being the exact same kind of value.
+    @EditableProperty({min: 0, sensitivity: 1})
     public overrideFogDistance : number = 40;
 
     constructor(descripter : SpawnDescriptor) {
@@ -62,6 +65,15 @@ export class NVPostProcessVolume extends NVActor {
     public OnPlayerRespawned() : void {
         if (this.playerWasInside) this.RevertOverride();
         this.playerWasInside = false;
+    }
+
+    //Fired by the inspector panel on every edit (see NVActor.ApplyEditableProperties/
+    //EditorInspectorPanel) - re-applies immediately if the override's already active, so tweaking
+    //the color/fog distance while standing inside the volume updates the world live instead of
+    //only taking effect on the next enter.
+    public OnEditablePropertyChanged(key : string) : void {
+        super.OnEditablePropertyChanged(key);
+        if (this.playerWasInside) this.ApplyOverride();
     }
 
     Tick(deltaTime : number) {

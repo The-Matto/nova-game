@@ -10,6 +10,11 @@ export interface EditablePropertyOptions {
     choices? : string[];
     //Rounds to a whole number (drag, type, and display) - see DragNumberInput.
     isInteger? : boolean;
+    //Value change per pixel dragged - see DragNumberInput. Defaults to its own 0.1, which is far
+    //too fine for a field whose useful range is in the hundreds/thousands (e.g. a fog distance) -
+    //set this to match how a hand-rolled slider for the same kind of value feels elsewhere (e.g.
+    //EditorWorldSettingsPanel's own Fog Distance).
+    sensitivity? : number;
 }
 
 //Marks a field as editable in the inspector panel while selected - same pattern as
