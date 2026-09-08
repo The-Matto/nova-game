@@ -4,11 +4,14 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {NVScene} from "../NVScene.ts";
+import {MainCamera} from "../Camera.ts";
 
 //A trigger volume, not solid geometry - swaps the level's sky color/fog distance for custom ones
 //while the player's inside it, reverting to the level's own settings on exit. Doesn't touch
 //NVScene.worldSettings itself (only the live scene.background/fog), so the level's real settings
-//- and what SerializeLevel saves - are never clobbered by walking through one of these.
+//- and what SerializeLevel saves - are never clobbered by walking through one of these. Also
+//previews live in editor mode (see Tick) by tracking the free-fly camera instead of a player
+//collider, so an author can just fly into it to see how it'll look.
 @RegisterClass("NVPostProcessVolume")
 export class NVPostProcessVolume extends NVActor {
 
@@ -41,6 +44,13 @@ export class NVPostProcessVolume extends NVActor {
         this.RegisterCollision();
     }
 
+    //Only fires for real gameplay, never in editor mode (see NVActor.TryBeginPlay) - the box
+    //itself is an editor-only visual aid, not something the player should see or walk "into".
+    BeginPlay() {
+        super.BeginPlay();
+        this.scene.visible = false;
+    }
+
     //Keeps `bounds` current after an editor move - not solid, so this never touches worldOctree,
     //but NVScene.RebuildWorldOctree() still reaches every actor after a gizmo drag.
     public RegisterCollision() {
@@ -57,22 +67,24 @@ export class NVPostProcessVolume extends NVActor {
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
-        //Trigger volumes are gameplay-only - editor mode is for inspecting/moving around the
-        //level, not playing it.
-        if (EditorState.isInEditor) return;
+        let isInside : boolean;
+        if (EditorState.isInEditor) {
+            //No player collider yet in editor mode - just the free-fly camera, which both pawn
+            //types share (see Pawn.ts), so this works the same whichever's currently possessed.
+            isInside = this.bounds.containsPoint(MainCamera.GetCamera().position);
+        } else {
+            const playerCollider = PlayerStatics.PlayerCharacter?.GetPhysicsComp().playerCollider;
+            if (!playerCollider) return;
 
-        const playerCollider = PlayerStatics.PlayerCharacter?.GetPhysicsComp().playerCollider;
-        if (!playerCollider) return;
+            //Check both ends of the capsule (roughly feet and head) rather than one point, so the
+            //trigger is forgiving about exactly how the player is standing in it.
+            isInside = this.bounds.containsPoint(playerCollider.start) || this.bounds.containsPoint(playerCollider.end);
+        }
 
-        //Check both ends of the capsule (roughly feet and head) rather than one point, so the
-        //trigger is forgiving about exactly how the player is standing in it.
-        const playerIsInside = this.bounds.containsPoint(playerCollider.start)
-            || this.bounds.containsPoint(playerCollider.end);
+        if (isInside && !this.playerWasInside) this.ApplyOverride();
+        else if (!isInside && this.playerWasInside) this.RevertOverride();
 
-        if (playerIsInside && !this.playerWasInside) this.ApplyOverride();
-        else if (!playerIsInside && this.playerWasInside) this.RevertOverride();
-
-        this.playerWasInside = playerIsInside;
+        this.playerWasInside = isInside;
     }
 
     private ApplyOverride() {
