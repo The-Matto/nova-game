@@ -8,6 +8,9 @@ import {NVScene} from "../NVScene.ts";
 const PLANE_SIZE = 4000;
 //Tiles the texture across that huge span instead of stretching one image over the whole thing.
 const TEXTURE_REPEAT = 200;
+//UV units/second the texture scrolls by, both axes - see Tick. Reads as slowly flowing lava
+//instead of a static image.
+const PAN_SPEED = 1;
 
 //Drop the real art at public/T_Lava.png - loads as a plain white plane until it's there, same as
 //any other missing texture in this project.
@@ -47,5 +50,10 @@ export class NVKillYVisualizer extends NVActor {
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
         this.scene.position.y = NVScene.worldSettings.killY;
+
+        //Wrapped rather than left to grow unbounded - RepeatWrapping would render the same
+        //either way, this just keeps the float from drifting over a long session.
+        LAVA_TEXTURE.offset.x = (LAVA_TEXTURE.offset.x + deltaTime * PAN_SPEED) % 1;
+        LAVA_TEXTURE.offset.y = (LAVA_TEXTURE.offset.y + deltaTime * PAN_SPEED) % 1;
     }
 }
