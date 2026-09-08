@@ -40,4 +40,11 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             {label: "Post Process Volume", class: "NVPostProcessVolume", scale: {x: 6, y: 4, z: 6}},
         ],
     },
+    {
+        label: "Powerups",
+        items: [
+            //Smaller than a unit cube by default - a pickup, not a block.
+            {label: "Powerup Pickup", class: "NVPowerupPickup", scale: {x: 0.6, y: 0.6, z: 0.6}},
+        ],
+    },
 ];

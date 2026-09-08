@@ -38,6 +38,11 @@ export class NVPlayerPhysics extends NVComponent {
     //keep moving/falling behind the Level Complete screen.
     isLevelComplete : boolean = false;
 
+    //Set while a temporary gravity powerup is active (see ApplyGravityOverride/NVPowerupPickup) -
+    //reverts on its own once the timer runs out, or immediately on respawn.
+    private baseGravity : number = this.GRAVITY;
+    private gravityOverrideRemaining : number = 0;
+
     //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
 
@@ -63,6 +68,23 @@ export class NVPlayerPhysics extends NVComponent {
 
     public SetWishDirection(direction : Vector3){
         this.wishDirection.copy(direction);
+    }
+
+    //Called by NVPowerupPickup - overrides GRAVITY for `duration` seconds, then reverts on its
+    //own (see TickComponent). A second pickup while one's already active just extends/replaces
+    //it rather than stacking - baseGravity is only (re)captured when nothing's currently active,
+    //so it can't get overwritten by the temporary value itself.
+    public ApplyGravityOverride(value : number, duration : number) {
+        if (this.gravityOverrideRemaining <= 0) this.baseGravity = this.GRAVITY;
+        this.GRAVITY = value;
+        this.gravityOverrideRemaining = duration;
+    }
+
+    private TickGravityOverride(deltaTime : number) {
+        if (this.gravityOverrideRemaining <= 0) return;
+
+        this.gravityOverrideRemaining -= deltaTime;
+        if (this.gravityOverrideRemaining <= 0) this.GRAVITY = this.baseGravity;
     }
 
     //Moves the collider and the KILL_Y respawn point - NVPawn.Init calls this once on spawn.
@@ -98,6 +120,7 @@ export class NVPlayerPhysics extends NVComponent {
 
         this.timeSinceGrounded += deltaTime;
         this.applyMovementInput(deltaTime);
+        this.TickGravityOverride(deltaTime);
 
         if ( !this.playerOnFloor && !this.isFreeFlying) {
             this.playerVelocity.y -= this.GRAVITY * deltaTime;
@@ -139,6 +162,12 @@ export class NVPlayerPhysics extends NVComponent {
         const offset = this.spawnPoint.clone().sub(this.playerCollider.end);
         this.playerCollider.translate(offset);
         this.playerVelocity.set(0, 0, 0);
+
+        //A powerup mid-effect shouldn't carry over into a fresh attempt.
+        if (this.gravityOverrideRemaining > 0) {
+            this.GRAVITY = this.baseGravity;
+            this.gravityOverrideRemaining = 0;
+        }
 
         //Normally synced from the collider at the end of updatePlayer() - but that's skipped
         //entirely while frozen (see TickComponent), which StartCountdown() does right after this

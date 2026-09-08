@@ -16,4 +16,5 @@ import './Actors/CannonActor.ts';
 import './Actors/DoorActor.ts';
 import './Actors/PostProcessVolume.ts';
 import './Actors/KillYVisualizer.ts';
+import './Actors/PowerupPickup.ts';
 
