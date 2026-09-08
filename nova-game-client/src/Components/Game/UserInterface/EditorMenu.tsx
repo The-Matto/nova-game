@@ -24,7 +24,9 @@ export const EditorMenu = () => {
     //pointer-events-none - otherwise the empty space below the shorter card would still swallow
     //clicks meant for the game view. Each card opts back in via pointer-events-auto.
     return <>
-        <div className="absolute top-4 left-4 z-30 pointer-events-none">
+        {/* top-12, not top-4 like the right side - HomeLink sits at top-2 left-2 and would
+        otherwise overlap this panel's header. */}
+        <div className="absolute top-12 left-4 z-30 pointer-events-none">
             <EditorWorldSettingsPanel />
         </div>
         <div className="absolute top-4 right-4 z-30 flex flex-row items-start gap-3 pointer-events-none">

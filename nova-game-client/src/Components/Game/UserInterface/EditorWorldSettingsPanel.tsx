@@ -3,21 +3,18 @@ import {NVScene} from "../../../Three/NVScene";
 import {Game} from "../../../Three/Game";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {DragNumberInput} from "../../UI/DragNumberInput";
-import type {LevelData} from "../../../Three/ClassDescripter";
+import {EditorLevelStorageModal} from "./EditorLevelStorageModal";
 
 //Sits at the far left (see EditorMenu) - level-wide settings (as opposed to any one actor's, see
-//EditorInspectorPanel) plus save/load/upload, moved here from the spawn-actor menu so that one's
-//just actors.
+//EditorInspectorPanel) plus save/load (browser storage, see EditorLevelStorageModal) and upload,
+//moved here from the spawn-actor menu so that one's just actors.
 export const EditorWorldSettingsPanel = () => {
 
     const [skyColor, setSkyColor] = useState(NVScene.worldSettings.skyColor);
     const [killY, setKillY] = useState(NVScene.worldSettings.killY);
     const [fogDistance, setFogDistance] = useState(NVScene.worldSettings.fogDistance);
 
-    const [copied, setCopied] = useState(false);
-    const [showImport, setShowImport] = useState(false);
-    const [importText, setImportText] = useState("");
-    const [importError, setImportError] = useState<string | null>(null);
+    const [showStorageModal, setShowStorageModal] = useState(false);
     const [showUpload, setShowUpload] = useState(false);
     const [uploadName, setUploadName] = useState("");
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
@@ -27,22 +24,6 @@ export const EditorWorldSettingsPanel = () => {
     //inputs, not the source of truth.
     const applySettings = (next : Partial<typeof NVScene.worldSettings>) => {
         NVScene.ApplyWorldSettings({...NVScene.worldSettings, ...next});
-    };
-
-    //JSON.stringify replacer - rounds every number to 3 decimal places, so a gizmo-dragged value
-    //like 5.32523346241 gets stored as 5.325 instead of full floating-point noise.
-    const roundNumbers = (_key : string, value : unknown) =>
-        typeof value === 'number' ? Math.round(value * 1000) / 1000 : value;
-
-    const exportLevel = async () => {
-        const json = JSON.stringify(NVScene.SerializeLevel(), roundNumbers, 2);
-        try {
-            await navigator.clipboard.writeText(json);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-        } catch {
-            console.error("Failed to copy level JSON to clipboard");
-        }
     };
 
     //Sends the current level (plus a screenshot of the editor view as its thumbnail) to the
@@ -73,27 +54,13 @@ export const EditorWorldSettingsPanel = () => {
         }
     };
 
-    const importLevel = () => {
-        let data : LevelData;
-        try {
-            data = JSON.parse(importText);
-        } catch {
-            setImportError("That's not valid JSON.");
-            return;
-        }
-
-        if (!Array.isArray(data.actorsToSpawn)) {
-            setImportError('Missing an "actorsToSpawn" array.');
-            return;
-        }
-
-        NVScene.LoadFromSnapshot(data);
+    //After loading a saved/imported level, the panel's own controls need to catch up to whatever
+    //world settings came with it.
+    const onLevelLoaded = () => {
         setSkyColor(NVScene.worldSettings.skyColor);
         setKillY(NVScene.worldSettings.killY);
         setFogDistance(NVScene.worldSettings.fogDistance);
-        setShowImport(false);
-        setImportText("");
-        setImportError(null);
+        setShowStorageModal(false);
     };
 
     return <div className="pointer-events-auto w-40 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
@@ -132,18 +99,9 @@ export const EditorWorldSettingsPanel = () => {
         <div className="flex flex-col gap-2 mb-3">
             <button
                 className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={exportLevel}
+                onClick={() => setShowStorageModal(true)}
             >
-                {copied ? "Copied!" : "Export"}
-            </button>
-            <button
-                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={() => {
-                    setShowImport(v => !v);
-                    setImportError(null);
-                }}
-            >
-                Import
+                Save / Load
             </button>
             <button
                 className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
@@ -176,23 +134,8 @@ export const EditorWorldSettingsPanel = () => {
             </div>
         )}
 
-        {showImport && (
-            <div className="mb-3 flex flex-col gap-2">
-                <textarea
-                    value={importText}
-                    onChange={e => setImportText(e.target.value)}
-                    placeholder="Paste level JSON..."
-                    rows={5}
-                    className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm resize-none"
-                />
-                {importError && <div className="text-sm text-red-400">{importError}</div>}
-                <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                    onClick={importLevel}
-                >
-                    Load
-                </button>
-            </div>
+        {showStorageModal && (
+            <EditorLevelStorageModal onClose={onLevelLoaded} />
         )}
     </div>;
 };
