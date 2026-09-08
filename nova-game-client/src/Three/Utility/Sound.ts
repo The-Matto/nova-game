@@ -1,3 +1,5 @@
+import {PlayerSettings} from "./PlayerGlobals";
+
 const SOUND_PATHS = {
     fireWeapon: '/audio/fire-weapon.wav',
     uiClick: '/audio/ui-click.wav',
@@ -28,7 +30,7 @@ export function PlaySound(name : SoundName, volume : number = 1) : void {
     }
 
     const instance = base.cloneNode() as HTMLAudioElement;
-    instance.volume = volume * GLOBAL_VOLUME_SCALE;
+    instance.volume = volume * GLOBAL_VOLUME_SCALE * (PlayerSettings.soundVolume / 100);
     //Browsers block audio before any user gesture on the page - not worth surfacing if one of
     //these four ever somehow fires before that.
     instance.play().catch(() => {});

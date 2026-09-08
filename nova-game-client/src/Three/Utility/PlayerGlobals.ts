@@ -21,6 +21,10 @@ export const PlayerSettings = {
 
     //Max camera roll (degrees) while strafing - see NVWeapon.Tick.
     cameraTiltDegrees: 2.5,
+
+    //0-100 - read live by PlaySound (Sound.ts) as a straight percentage multiplier, on top of
+    //that module's own fixed GLOBAL_VOLUME_SCALE.
+    soundVolume: 100,
 }
 
 const PLAYER_SETTINGS_STORAGE_KEY = 'nova-game:player-settings';

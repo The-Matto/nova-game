@@ -32,6 +32,7 @@ export const OptionsMenu = ({onBack} : { onBack : () => void }) => {
     const [sensitivityX, setSensitivityX] = useState(PlayerSettings.mouseSensitivityX);
     const [sensitivityY, setSensitivityY] = useState(PlayerSettings.mouseSensitivityY);
     const [cameraTilt, setCameraTilt] = useState(PlayerSettings.cameraTiltDegrees);
+    const [soundVolume, setSoundVolume] = useState(PlayerSettings.soundVolume);
 
     return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
@@ -54,6 +55,15 @@ export const OptionsMenu = ({onBack} : { onBack : () => void }) => {
                     min={0}
                     max={10}
                     suffix="°"
+                />
+                <SettingSlider
+                    label="Sound Volume"
+                    value={soundVolume}
+                    onChange={v => { PlayerSettings.soundVolume = v; setSoundVolume(v); SavePlayerSettings(); }}
+                    min={0}
+                    max={100}
+                    step={5}
+                    suffix="%"
                 />
             </div>
             <button
