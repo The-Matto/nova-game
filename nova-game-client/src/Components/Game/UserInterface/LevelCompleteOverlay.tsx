@@ -5,6 +5,7 @@ import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
 import {FormatLevelTime, LevelTimer} from "../../../Three/Utility/LevelTimer";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {LeaderboardPanel} from "./LeaderboardPanel";
+import {LevelRatingWidget} from "./LevelRatingWidget";
 import type {LeaderboardResponse} from "nova-shared/leaderboard";
 
 //Shown when the player reaches the goal volume with all objectives complete.
@@ -76,6 +77,9 @@ export const LevelCompleteOverlay = () => {
                     {FormatLevelTime(LevelTimer.elapsedTime)}
                 </div>
                 <div className="text-5xl font-bold text-orange-500">Level Complete!</div>
+                {GameMode.appMode !== "createLevel" && (
+                    <LevelRatingWidget levelId={LevelSelection.selectedLevelId} />
+                )}
                 <button
                     className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
                     onClick={retry}

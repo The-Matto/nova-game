@@ -23,3 +23,17 @@ export interface UploadLevelRequest {
     //A data URL (e.g. "data:image/jpeg;base64,...") - see EditorPalettePanel's canvas capture.
     thumbnailDataUrl : string;
 }
+
+//Body of a POST /api/levels/rating - 1-5, upserted per (levelId, playerId) rather than
+//accumulated, so re-rating updates a player's existing score instead of skewing the average.
+export interface RateLevelRequest {
+    levelId : string;
+    playerId : string;
+    rating : number;
+}
+
+//Response of the same endpoint - the level's freshly-recomputed average, so the caller can show
+//it immediately without a separate GET.
+export interface RateLevelResponse {
+    rating : number;
+}
