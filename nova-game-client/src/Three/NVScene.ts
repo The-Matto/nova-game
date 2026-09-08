@@ -12,7 +12,7 @@ import {EditorState, LevelSelection} from "./Utility/PlayerGlobals.ts";
 import {GameEvents} from "./Utility/GameEvents.ts";
 
 //Matches what every level used before this was configurable.
-export const DEFAULT_WORLD_SETTINGS : WorldSettings = {skyColor: "#88ccee", killY: -50, fogDistance: 100};
+export const DEFAULT_WORLD_SETTINGS : WorldSettings = {skyColor: "#88ccee", killY: -50, fogDistance: 100, lavaRiseSpeed: 0};
 
 //Editor-only ceiling on a single level's actor count (see EditorSpawning/EditorSelection, which
 //are the only spawn paths that check it - gameplay-spawned actors like projectiles aren't gated).
@@ -111,9 +111,12 @@ export class NVScene {
     //called both on initial load and live from EditorWorldSettingsPanel as the editor drags a
     //value, same "mutate the live instance directly" pattern as EditorInspectorPanel.
     public static ApplyWorldSettings(settings : WorldSettings){
-        NVScene.worldSettings = settings;
-        NVScene.scene.background = new THREE.Color(settings.skyColor);
-        NVScene.scene.fog = new THREE.Fog(settings.skyColor, 0, settings.fogDistance);
+        //Merged over the defaults rather than trusted as complete - a level saved before a
+        //WorldSettings field existed (e.g. lavaRiseSpeed) still has an object here, just missing
+        //that one key, so a bare assignment would leave it undefined instead of falling back.
+        NVScene.worldSettings = {...DEFAULT_WORLD_SETTINGS, ...settings};
+        NVScene.scene.background = new THREE.Color(NVScene.worldSettings.skyColor);
+        NVScene.scene.fog = new THREE.Fog(NVScene.worldSettings.skyColor, 0, NVScene.worldSettings.fogDistance);
     }
 
     //Spawns every actor described by `data` - shared by SceneBuilder (level JSON fetched from

@@ -16,6 +16,7 @@ export const EditorWorldSettingsPanel = () => {
     const [skyColor, setSkyColor] = useState(NVScene.worldSettings.skyColor);
     const [killY, setKillY] = useState(NVScene.worldSettings.killY);
     const [fogDistance, setFogDistance] = useState(NVScene.worldSettings.fogDistance);
+    const [lavaRiseSpeed, setLavaRiseSpeed] = useState(NVScene.worldSettings.lavaRiseSpeed);
 
     const [showStorageModal, setShowStorageModal] = useState(false);
     //Set (not just a boolean) so the captured thumbnail is available to render as soon as the
@@ -48,6 +49,7 @@ export const EditorWorldSettingsPanel = () => {
         setSkyColor(NVScene.worldSettings.skyColor);
         setKillY(NVScene.worldSettings.killY);
         setFogDistance(NVScene.worldSettings.fogDistance);
+        setLavaRiseSpeed(NVScene.worldSettings.lavaRiseSpeed);
         setShowStorageModal(false);
     };
 
@@ -80,6 +82,17 @@ export const EditorWorldSettingsPanel = () => {
                     min={1}
                     max={100}
                     sensitivity={1}
+                    className="w-16 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
+                />
+            </label>
+            <label className="flex items-center justify-between text-xs">
+                <span>Lava Rise Speed</span>
+                <DragNumberInput
+                    value={lavaRiseSpeed}
+                    onChange={v => { setLavaRiseSpeed(v); applySettings({lavaRiseSpeed: v}); }}
+                    min={0}
+                    max={5}
+                    sensitivity={0.05}
                     className="w-16 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
                 />
             </label>

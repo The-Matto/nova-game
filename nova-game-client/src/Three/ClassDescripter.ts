@@ -21,6 +21,9 @@ export type WorldSettings = {
     //UE-style "Kill Z" naming, but Y is vertical here - fall below this and respawn.
     killY: number,
     fogDistance: number,
+    //Units/second killY (and the lava plane, see NVKillYVisualizer) rises during real gameplay -
+    //0 disables it, matching every level saved before this existed.
+    lavaRiseSpeed: number,
 };
 
 //Shape of a level JSON file (see public/*.json) and of NVScene.SerializeLevel()'s in-memory

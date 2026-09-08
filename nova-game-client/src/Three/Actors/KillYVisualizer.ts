@@ -2,6 +2,7 @@ import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
+import {EditorState, IsGameplayFrozen} from "../Utility/PlayerGlobals";
 
 //Huge rather than truly infinite, but comfortably bigger than CameraSettings.farClip (1000) in
 //every direction from anywhere near the level's origin - reads as infinite in practice.
@@ -24,6 +25,13 @@ LAVA_TEXTURE.repeat.set(TEXTURE_REPEAT, TEXTURE_REPEAT);
 @RegisterClass("NVKillYVisualizer")
 export class NVKillYVisualizer extends NVActor {
 
+    //The level's own killY, captured fresh whenever a real gameplay session starts (see Tick) -
+    //worldSettings.killY itself gets bumped upward live by risenAmount below, so this is what
+    //that's measured from, and what a retry resets back to.
+    private baseKillY : number | null = null;
+    private risenAmount : number = 0;
+    private wasInEditor : boolean = true;
+
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
 
@@ -45,10 +53,41 @@ export class NVKillYVisualizer extends NVActor {
         this.SetWorldLocation(descripter.location);
     }
 
+    //Undoes any in-progress rise, back to this run's starting killY - same "deterministic hazard
+    //state per attempt" reasoning as every other timed hazard (see NVSpikeActor/NVCannonActor).
+    public OnPlayerRespawned() : void {
+        this.risenAmount = 0;
+        if (this.baseKillY !== null) NVScene.worldSettings.killY = this.baseKillY;
+    }
+
     //Tracks worldSettings.killY live - follows a level's own value on load, and any live edit
-    //from EditorWorldSettingsPanel's Kill Height slider, with no extra wiring needed.
+    //from EditorWorldSettingsPanel's Kill Height slider, with no extra wiring needed. Also drives
+    //the rise itself (worldSettings.lavaRiseSpeed) during real gameplay only - editor mode only
+    //previews wherever killY currently sits, it never advances it (that'd leave a stale, ever-
+    //climbing value an author could accidentally Save mid-preview).
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
+
+        if (EditorState.isInEditor) {
+            this.wasInEditor = true;
+        } else {
+            //Just-entered real gameplay (fresh PIE session or the first frame of a straight-to-
+            //play session) - (re)baseline from whatever killY the level actually loaded with.
+            if (this.wasInEditor) {
+                this.baseKillY = NVScene.worldSettings.killY;
+                this.risenAmount = 0;
+            }
+            this.wasInEditor = false;
+
+            //Same "the whole world stops while a menu's up" reasoning as every other timed
+            //hazard (see NVSpikeActor/NVCannonActor) - dead/paused/counting-down/level-complete
+            //shouldn't let the lava keep climbing behind the scenes.
+            if (!IsGameplayFrozen() && NVScene.worldSettings.lavaRiseSpeed > 0 && this.baseKillY !== null) {
+                this.risenAmount += deltaTime * NVScene.worldSettings.lavaRiseSpeed;
+                NVScene.worldSettings.killY = this.baseKillY + this.risenAmount;
+            }
+        }
+
         this.scene.position.y = NVScene.worldSettings.killY;
 
         //Wrapped rather than left to grow unbounded - RepeatWrapping would render the same
