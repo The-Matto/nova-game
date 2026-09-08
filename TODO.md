@@ -16,7 +16,9 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Level save: serialize editor state to the level JSON format (Export/Import).
 - [x] Level upload: an Upload button sends the level JSON + a captured screenshot thumbnail to
       the backend, which stores both in Cloudflare R2 and creates the `levels` row.
-- [ ] Level browser UI: list levels from the backend, load one into the player. Search still TODO.
+- [x] Level browser UI: list levels from the backend, load one into the player. Search-by-name
+      and pagination, both client-side for now - would want a real `?search=&page=` API instead
+      once there are enough levels for "fetch everything up front" to actually cost something.
 - [ ] Undo/redo in the editor.
 
 ## Backend
@@ -40,9 +42,10 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Anonymous account cleanup — accounts that never link a real login (`users.claimed_at` still
       null) get deleted after 7 days (`CleanupAnonymousUsers.ts`), cascading their leaderboard
       entries and nulling out `levels.author_id` instead of deleting their uploaded levels too.
-- [ ] Real accounts (OAuth) — the planned upgrade from the current anonymous-but-real identity
-      model. Would also let `claimed_at` actually get set, rather than only seed users being
-      exempt from the anonymous-account cleanup above.
+- [x] Real accounts — GitHub OAuth (`AuthApi.ts`, session cookie backed by Redis). Links to the
+      existing anonymous `users.id` rather than replacing it, so history carries over; leaderboard
+      submission and level upload both prefer the session's own id over a client-supplied one when
+      logged in, closing the impersonation gap that existed with anonymous-only identity.
 
 ## Security / hardening
 

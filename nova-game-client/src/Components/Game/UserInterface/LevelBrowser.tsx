@@ -13,6 +13,11 @@ const RatingStars = ({rating} : {rating : number}) => {
     </span>;
 };
 
+//Client-side only for now - fine at the current level count, would want a real ?search=&page=
+//API instead once there are enough levels for "fetch everything up front" to actually cost
+//something.
+const PAGE_SIZE = 6;
+
 //Shown after clicking Play - a Happy Wheels-style list of community levels, fetched from the
 //backend's REST API. Only "Test World" exists for now (see LevelsApi.ts on the server), but the
 //list itself is already real, not a placeholder.
@@ -25,6 +30,8 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     const [error, setError] = useState<string | null>(null);
     //Accordion - only one level's leaderboard preview is expanded at a time.
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(0);
 
     useEffect(() => {
         fetch('/api/levels')
@@ -36,17 +43,37 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
             .catch(() => setError("Couldn't reach the level server - is it running?"));
     }, []);
 
+    const query = search.trim().toLowerCase();
+    const filteredLevels = levels?.filter(level => level.name.toLowerCase().includes(query)) ?? null;
+    const pageCount = filteredLevels ? Math.max(1, Math.ceil(filteredLevels.length / PAGE_SIZE)) : 1;
+    //Clamped rather than reset outright - keeps you on a sensible page if a search shrinks the
+    //result count out from under the current one, instead of always snapping back to page 1.
+    const clampedPage = Math.min(page, pageCount - 1);
+    const pagedLevels = filteredLevels?.slice(clampedPage * PAGE_SIZE, (clampedPage + 1) * PAGE_SIZE) ?? null;
+
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
         <AccountSection />
         <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-4xl max-h-[80vh]">
-            <div className="text-3xl font-bold text-orange-500">Select Level</div>
+            <div className="flex items-center gap-4">
+                <div className="text-3xl font-bold text-orange-500">Select Level</div>
+                <input
+                    type="text"
+                    value={search}
+                    onChange={e => { setSearch(e.target.value); setPage(0); }}
+                    placeholder="Search by name..."
+                    className="flex-1 bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+                />
+            </div>
 
             <div className="flex flex-col overflow-y-auto">
                 {error && <div className="text-red-400 py-6 text-center">{error}</div>}
                 {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
                 {!error && levels?.length === 0 && <div className="text-white/50 py-6 text-center">No levels yet.</div>}
+                {!error && levels && levels.length > 0 && filteredLevels?.length === 0 && (
+                    <div className="text-white/50 py-6 text-center">No levels match "{search.trim()}".</div>
+                )}
 
-                {levels?.map(level => {
+                {pagedLevels?.map(level => {
                     const isExpanded = expandedId === level.id;
                     return <div key={level.id} className="rounded-xl overflow-hidden">
                         <button
@@ -81,6 +108,26 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                     </div>;
                 })}
             </div>
+
+            {pageCount > 1 && (
+                <div className="flex items-center justify-center gap-4 text-orange-500">
+                    <button
+                        className="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-default rounded-lg px-3 py-1.5 text-sm cursor-pointer"
+                        onClick={() => setPage(clampedPage - 1)}
+                        disabled={clampedPage === 0}
+                    >
+                        ← Prev
+                    </button>
+                    <div className="text-sm text-white/50">Page {clampedPage + 1} of {pageCount}</div>
+                    <button
+                        className="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-default rounded-lg px-3 py-1.5 text-sm cursor-pointer"
+                        onClick={() => setPage(clampedPage + 1)}
+                        disabled={clampedPage >= pageCount - 1}
+                    >
+                        Next →
+                    </button>
+                </div>
+            )}
 
             <button
                 className="self-start bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
