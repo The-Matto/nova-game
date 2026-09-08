@@ -2,6 +2,7 @@ import {useState} from "react";
 import {CursorState, EditorState, GameMode, LevelSelection} from "../../../Three/Utility/PlayerGlobals";
 import {OptionsMenu} from "./OptionsMenu";
 import {LevelBrowser} from "./LevelBrowser";
+import {AccountSection} from "./AccountSection";
 import type {LevelSummary} from "nova-shared/level-listing";
 
 //Shown before the game exists at all - Canvas/Game only mount once a choice is made here (see
@@ -39,6 +40,7 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
     }
 
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
+        <AccountSection />
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-16 py-12">
             <div className="text-6xl font-bold text-orange-500 mb-4">Nova Game</div>
             <button
