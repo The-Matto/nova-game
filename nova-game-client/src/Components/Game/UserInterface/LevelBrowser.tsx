@@ -26,9 +26,9 @@ const RatingStars = ({rating} : {rating : number}) => {
     </span>;
 };
 
-//Only shown on a level the current player authored - a ⋮ button opening a small menu with Edit
-//and Delete options. Delete is gated behind an inline confirm since (unlike
-//EditorLevelStorageModal's local saves) this permanently deletes real, shared backend data.
+//Only shown on a level the current player authored, once its row is expanded (collapsed rows sit
+//too close together for the dropdown to fit without getting clipped) - a ⋮ button opening Edit/
+//Delete. Delete is gated behind an inline confirm, unlike EditorLevelStorageModal's local saves.
 const LevelOwnerMenu = ({onEdit, onConfirmDelete} : {onEdit : () => void, onConfirmDelete : () => Promise<void>}) => {
     const [open, setOpen] = useState(false);
     const [confirming, setConfirming] = useState(false);
@@ -245,7 +245,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                         <div className="relative">
                             <button
                                 onClick={() => setExpandedId(isExpanded ? null : level.id)}
-                                className={`w-full flex items-center gap-4 px-4 py-3 text-left cursor-pointer ${isOwnLevel ? "pr-12" : ""} ${isExpanded ? "bg-orange-500/15" : "hover:bg-slate-800"}`}
+                                className={`w-full flex items-center gap-4 px-4 py-3 text-left cursor-pointer ${isOwnLevel && isExpanded ? "pr-12" : ""} ${isExpanded ? "bg-orange-500/15" : "hover:bg-slate-800"}`}
                             >
                                 {level.thumbnailUrl
                                     ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
@@ -266,7 +266,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                                 </div>
                             </button>
 
-                            {isOwnLevel && (
+                            {isOwnLevel && isExpanded && (
                                 <div className="absolute top-1/2 -translate-y-1/2 right-3">
                                     <LevelOwnerMenu onEdit={() => onEditLevel(level)} onConfirmDelete={() => deleteLevel(level.id)} />
                                 </div>
