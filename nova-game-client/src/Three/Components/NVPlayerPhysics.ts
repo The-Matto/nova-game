@@ -105,6 +105,15 @@ export class NVPlayerPhysics extends NVComponent {
         if (this.walkSpeedOverrideRemaining <= 0) this.walkSpeed = this.baseWalkSpeed;
     }
 
+    //For ActiveAbilityDisplay (HUD) - 0 means no gravity/speed powerup is currently active.
+    public get gravityBoostSecondsRemaining() : number {
+        return Math.max(0, this.gravityOverrideRemaining);
+    }
+
+    public get speedBoostSecondsRemaining() : number {
+        return Math.max(0, this.walkSpeedOverrideRemaining);
+    }
+
     //Moves the collider and the KILL_Y respawn point - NVPawn.Init calls this once on spawn.
     public SetSpawnLocation(location : THREE.Vector3){
         const segment = this.playerCollider.end.clone().sub(this.playerCollider.start);

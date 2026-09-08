@@ -5,6 +5,7 @@ import {Crosshair} from "./Crosshair";
 import {TimerDisplay} from "./TimerDisplay";
 import {TargetsRemaining} from "./TargetsRemaining";
 import {CountdownDisplay} from "./CountdownDisplay";
+import {ActiveAbilityDisplay} from "./ActiveAbilityDisplay";
 
 //In-game HUD - crosshair, timer, targets remaining, the pre-run countdown, and a home for future
 //elements like ammo/health. Hidden in editor mode and behind any menu (UIState.isModalOpen isn't
@@ -36,5 +37,6 @@ export const HUD = () => {
         <TimerDisplay />
         <TargetsRemaining />
         <CountdownDisplay />
+        <ActiveAbilityDisplay />
     </div>;
 };

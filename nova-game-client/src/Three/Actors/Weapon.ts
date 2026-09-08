@@ -96,6 +96,11 @@ export class NVWeapon extends NVActor {
         return this.fireRateOverrideRemaining > 0;
     }
 
+    //For ActiveAbilityDisplay (HUD) - 0 means no fast-fire powerup is currently active.
+    public get fastFireSecondsRemaining() : number {
+        return Math.max(0, this.fireRateOverrideRemaining);
+    }
+
     //Leans the viewmodel (and, more subtly, the camera itself) into whichever way the player's
     //moving - strafing rolls it, moving forward/back pitches it - just a cosmetic read on player
     //velocity, not physically driven.
