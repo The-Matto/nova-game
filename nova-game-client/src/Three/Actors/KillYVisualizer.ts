@@ -9,6 +9,13 @@ import {EditorState, IsGameplayFrozen} from "../Utility/PlayerGlobals";
 const PLANE_SIZE = 4000;
 //Tiles the texture across that huge span instead of stretching one image over the whole thing.
 const TEXTURE_REPEAT = 200;
+//How far below killY the plane actually renders - NVPlayerPhysics.checkKillY only fires once the
+//camera has already dropped *below* killY (not just level with it), and a fast fall can overshoot
+//that by a frame's worth of velocity before death freezes it there. Without this gap the camera
+//would already be below the plane's surface at that exact moment, revealing its underside for a
+//frame - offsetting the visual downward leaves a buffer so death always reads as "hit the lava",
+//never "fell through it".
+const VISUAL_Y_OFFSET = 3;
 //UV units/second the texture scrolls by, both axes - see Tick. Reads as slowly flowing lava
 //instead of a static image.
 const PAN_SPEED = .3;
@@ -19,9 +26,10 @@ const LAVA_TEXTURE = new THREE.TextureLoader().load('/T_Lava.png');
 LAVA_TEXTURE.wrapS = LAVA_TEXTURE.wrapT = THREE.RepeatWrapping;
 LAVA_TEXTURE.repeat.set(TEXTURE_REPEAT, TEXTURE_REPEAT);
 
-//One persistent instance, spawned by NVScene's constructor - a flat lava plane always sitting at
-//Y = the level's current killY, so falling below it reads as "into the lava" rather than an
-//invisible boundary. Visible in both editor and real gameplay; purely visual, not solid.
+//One persistent instance, spawned by NVScene's constructor - a flat lava plane always sitting
+//just below the level's current killY (see VISUAL_Y_OFFSET), so falling below it reads as "into
+//the lava" rather than an invisible boundary. Visible in both editor and real gameplay; purely
+//visual, not solid.
 @RegisterClass("NVKillYVisualizer")
 export class NVKillYVisualizer extends NVActor {
 
@@ -88,7 +96,7 @@ export class NVKillYVisualizer extends NVActor {
             }
         }
 
-        this.scene.position.y = NVScene.worldSettings.killY;
+        this.scene.position.y = NVScene.worldSettings.killY - VISUAL_Y_OFFSET;
 
         //Wrapped rather than left to grow unbounded - RepeatWrapping would render the same
         //either way, this just keeps the float from drifting over a long session.
