@@ -3,6 +3,7 @@ import {CreateSocketListener} from "./Sockets";
 import {HandleLevelsRequest} from "./LevelsApi";
 import {HandleLeaderboardRequest} from "./LeaderboardApi";
 import {HandlePlayersRequest} from "./PlayersApi";
+import {HandleAuthRequest} from "./AuthApi";
 
 console.log("Launching Server");
 
@@ -11,6 +12,7 @@ const httpServer = createServer(async (req, res) => {
         if (await HandleLevelsRequest(req, res)) return;
         if (await HandlePlayersRequest(req, res)) return;
         if (await HandleLeaderboardRequest(req, res)) return;
+        if (await HandleAuthRequest(req, res)) return;
         res.writeHead(404);
         res.end();
     } catch (err) {

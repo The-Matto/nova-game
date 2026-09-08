@@ -1,5 +1,6 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {PlayerSettings, SavePlayerSettings} from "../../../Three/Utility/PlayerGlobals";
+import {PlayerIdentity, RefreshAuthState, SignInWithGitHub, SignOutOfGitHub} from "../../../Three/Utility/PlayerIdentity";
 
 //A generic labeled slider - mutates a PlayerSettings field directly (read live wherever that
 //setting's used, e.g. every mousemove or every NVWeapon.Tick), so a drag takes effect
@@ -27,6 +28,50 @@ const SettingSlider = ({label, value, onChange, min = 1, max = 15, step = 0.5, s
     </label>
 );
 
+//PlayerIdentity itself isn't reactive - this pulls a fresh snapshot on mount (there's no active
+//session state before then) and re-renders locally after sign-in/out rather than relying on
+//PlayerIdentity's fields changing to trigger it.
+const AccountSection = () => {
+    const [loggedIn, setLoggedIn] = useState(PlayerIdentity.loggedIn);
+    const [name, setName] = useState(PlayerIdentity.name);
+    const [email, setEmail] = useState(PlayerIdentity.email);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        RefreshAuthState().finally(() => {
+            setLoggedIn(PlayerIdentity.loggedIn);
+            setName(PlayerIdentity.name);
+            setEmail(PlayerIdentity.email);
+            setLoading(false);
+        });
+    }, []);
+
+    if (loading) return null;
+
+    return <div className="flex flex-col gap-2 w-64 text-orange-500">
+        {loggedIn
+            ? <>
+                <span>Signed in as {name}{email ? ` (${email})` : ""}</span>
+                <button
+                    className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl cursor-pointer"
+                    onClick={() => SignOutOfGitHub().then(() => setLoggedIn(false))}
+                >
+                    Sign out
+                </button>
+            </>
+            : <>
+                <span>Playing as {name}</span>
+                <button
+                    className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl cursor-pointer"
+                    onClick={() => SignInWithGitHub()}
+                >
+                    Sign in with GitHub
+                </button>
+            </>
+        }
+    </div>;
+};
+
 export const OptionsMenu = ({onBack} : { onBack : () => void }) => {
 
     const [sensitivityX, setSensitivityX] = useState(PlayerSettings.mouseSensitivityX);
@@ -36,6 +81,7 @@ export const OptionsMenu = ({onBack} : { onBack : () => void }) => {
     return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
             <div className="text-4xl font-bold text-orange-500">Options</div>
+            <AccountSection />
             <div className="flex flex-col gap-4 w-64">
                 <SettingSlider
                     label="Mouse Sensitivity X"
