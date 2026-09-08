@@ -6,12 +6,13 @@ import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 
 //The full set of abilities this pickup can grant - add a new one here, give it its own
 //`isXAbility` getter + editCondition-gated properties below, and a new case in ApplyAbility.
-const POWERUP_TYPES = ['Gravity'] as const;
+const POWERUP_TYPES = ['Gravity', 'Speed'] as const;
 type PowerupType = typeof POWERUP_TYPES[number];
 
 //One glow color per type, so different pickups read apart at a glance before you even touch one.
 const POWERUP_COLORS : Record<PowerupType, string> = {
     Gravity: '#7c5cff',
+    Speed: '#3de0ff',
 };
 
 const BOB_HEIGHT = 0.15;
@@ -45,11 +46,20 @@ export class NVPowerupPickup extends NVActor {
     @EditableProperty({min: 0, editCondition: 'isGravityAbility'})
     public gravityValue : number = 4;
 
-    //Not @EditableProperty itself - just a computed check other properties' editCondition can
-    //point at (see EditablePropertyOptions/GetEditableProperties). Public so it's not flagged as
-    //an unused private member - it's only ever read reflectively, by key, from there.
+    //Speed ability - see NVPlayerPhysics.ApplyWalkSpeedOverride. Default matches the player's own
+    //normal walk speed, same reasoning as gravityValue's default above.
+    @EditableProperty({min: 0, editCondition: 'isSpeedAbility'})
+    public speedValue : number = 10;
+
+    //Not @EditableProperty themselves - just computed checks other properties' editCondition can
+    //point at (see EditablePropertyOptions/GetEditableProperties). Public so they're not flagged
+    //as unused private members - they're only ever read reflectively, by key, from there.
     public get isGravityAbility() : boolean {
         return this.powerupType === 'Gravity';
+    }
+
+    public get isSpeedAbility() : boolean {
+        return this.powerupType === 'Speed';
     }
 
     constructor(descripter : SpawnDescriptor) {
@@ -143,6 +153,9 @@ export class NVPowerupPickup extends NVActor {
         switch (this.powerupType) {
             case 'Gravity':
                 physics.ApplyGravityOverride(this.gravityValue, this.abilityDuration);
+                break;
+            case 'Speed':
+                physics.ApplyWalkSpeedOverride(this.speedValue, this.abilityDuration);
                 break;
         }
     }

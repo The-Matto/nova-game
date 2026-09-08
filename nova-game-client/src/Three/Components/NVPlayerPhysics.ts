@@ -43,6 +43,10 @@ export class NVPlayerPhysics extends NVComponent {
     private baseGravity : number = this.GRAVITY;
     private gravityOverrideRemaining : number = 0;
 
+    //Same pattern as the gravity override above, for a temporary speed powerup.
+    private baseWalkSpeed : number = this.walkSpeed;
+    private walkSpeedOverrideRemaining : number = 0;
+
     //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
 
@@ -87,6 +91,20 @@ export class NVPlayerPhysics extends NVComponent {
         if (this.gravityOverrideRemaining <= 0) this.GRAVITY = this.baseGravity;
     }
 
+    //Same pattern as ApplyGravityOverride, for walkSpeed - see NVPowerupPickup.
+    public ApplyWalkSpeedOverride(value : number, duration : number) {
+        if (this.walkSpeedOverrideRemaining <= 0) this.baseWalkSpeed = this.walkSpeed;
+        this.walkSpeed = value;
+        this.walkSpeedOverrideRemaining = duration;
+    }
+
+    private TickWalkSpeedOverride(deltaTime : number) {
+        if (this.walkSpeedOverrideRemaining <= 0) return;
+
+        this.walkSpeedOverrideRemaining -= deltaTime;
+        if (this.walkSpeedOverrideRemaining <= 0) this.walkSpeed = this.baseWalkSpeed;
+    }
+
     //Moves the collider and the KILL_Y respawn point - NVPawn.Init calls this once on spawn.
     public SetSpawnLocation(location : THREE.Vector3){
         const segment = this.playerCollider.end.clone().sub(this.playerCollider.start);
@@ -121,6 +139,7 @@ export class NVPlayerPhysics extends NVComponent {
         this.timeSinceGrounded += deltaTime;
         this.applyMovementInput(deltaTime);
         this.TickGravityOverride(deltaTime);
+        this.TickWalkSpeedOverride(deltaTime);
 
         if ( !this.playerOnFloor && !this.isFreeFlying) {
             this.playerVelocity.y -= this.GRAVITY * deltaTime;
@@ -167,6 +186,10 @@ export class NVPlayerPhysics extends NVComponent {
         if (this.gravityOverrideRemaining > 0) {
             this.GRAVITY = this.baseGravity;
             this.gravityOverrideRemaining = 0;
+        }
+        if (this.walkSpeedOverrideRemaining > 0) {
+            this.walkSpeed = this.baseWalkSpeed;
+            this.walkSpeedOverrideRemaining = 0;
         }
 
         //Normally synced from the collider at the end of updatePlayer() - but that's skipped
