@@ -51,6 +51,14 @@ export class NVScene {
 
         NVScene.worldOctree = new Octree();
 
+        //Persistent (survives level reloads) - always tracks the current killY, see
+        //NVKillYVisualizer.Tick. Not level content, so it's not spawned from level JSON.
+        NVScene.SpawnActor({
+            class: "NVKillYVisualizer",
+            location: new THREE.Vector3(0, NVScene.worldSettings.killY, 0),
+            scale: new THREE.Vector3(1, 1, 1),
+        }, true);
+
         NVScene.initialLoadPromise = NVScene.LoadLevel(LevelSelection.selectedLevelPath);
 
 
