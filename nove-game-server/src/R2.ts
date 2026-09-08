@@ -1,4 +1,4 @@
-import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import {DeleteObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 
 const REQUIRED_ENV = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET_NAME", "R2_PUBLIC_URL_BASE"] as const;
 
@@ -37,4 +37,11 @@ export async function UploadToR2(key : string, body : Buffer, contentType : stri
     const {client, bucket, publicUrlBase} = GetState();
     await client.send(new PutObjectCommand({Bucket: bucket, Key: key, Body: body, ContentType: contentType}));
     return `${publicUrlBase}/${key}`;
+}
+
+//A nonexistent key is a no-op, not an error - safe to call speculatively (see LevelsApi.ts's
+//delete handler, which doesn't always know the exact thumbnail extension up front).
+export async function DeleteFromR2(key : string) : Promise<void> {
+    const {client, bucket} = GetState();
+    await client.send(new DeleteObjectCommand({Bucket: bucket, Key: key}));
 }

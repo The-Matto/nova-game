@@ -26,6 +26,73 @@ const RatingStars = ({rating} : {rating : number}) => {
     </span>;
 };
 
+//Only shown on a level the current player authored - a ⋮ button opening a small menu with a
+//Delete option, gated behind an inline confirm since (unlike EditorLevelStorageModal's local
+//saves) this permanently deletes real, shared backend data.
+const LevelOwnerMenu = ({onConfirmDelete} : {onConfirmDelete : () => Promise<void>}) => {
+    const [open, setOpen] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState(false);
+
+    const close = () => { setOpen(false); setConfirming(false); setError(false); };
+
+    const doDelete = async () => {
+        setDeleting(true);
+        try {
+            await onConfirmDelete();
+        } catch {
+            setDeleting(false);
+            setError(true);
+            return;
+        }
+        close();
+    };
+
+    return <div className="relative">
+        <button
+            onClick={() => (open ? close() : setOpen(true))}
+            className="w-7 h-7 flex items-center justify-center rounded-md bg-slate-950/70 hover:bg-slate-800 text-white text-sm cursor-pointer"
+        >
+            ⋮
+        </button>
+
+        {open && (
+            <div className="absolute top-8 right-0 bg-slate-800 rounded-lg overflow-hidden text-xs z-20 w-40 shadow-lg">
+                {!confirming ? (
+                    <button
+                        className="block w-full px-3 py-2 text-left text-red-400 hover:bg-slate-700 cursor-pointer"
+                        onClick={() => setConfirming(true)}
+                    >
+                        Delete Level
+                    </button>
+                ) : (
+                    <div className="px-3 py-2 flex flex-col gap-2">
+                        <div className="text-white/80">Delete permanently?</div>
+                        {error && <div className="text-red-400">Couldn't delete - try again.</div>}
+                        <div className="flex gap-2">
+                            <button
+                                className="flex-1 bg-red-700 hover:bg-red-600 rounded px-2 py-1 text-white cursor-pointer disabled:opacity-50"
+                                onClick={doDelete}
+                                disabled={deleting}
+                            >
+                                {deleting ? "…" : "Delete"}
+                            </button>
+                            <button
+                                className="flex-1 bg-slate-700 hover:bg-slate-600 rounded px-2 py-1 text-white/70 cursor-pointer"
+                                onClick={close}
+                                disabled={deleting}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        )}
+    </div>;
+};
+
 //Client-side only for now - fine at the current level count, would want a real ?search=&page=
 //API instead once there are enough levels for "fetch everything up front" to actually cost
 //something.
@@ -69,6 +136,17 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     const toggleSort = (mode : SortMode) => {
         setSortMode(current => current === mode ? 'default' : mode);
         setPage(0);
+    };
+
+    const deleteLevel = async (levelId : string) => {
+        if (!playerId) throw new Error("Not registered yet");
+        const res = await fetch('/api/levels', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({levelId, playerId}),
+        });
+        if (!res.ok) throw new Error(`Server responded ${res.status}`);
+        setLevels(current => current?.filter(l => l.id !== levelId) ?? null);
     };
 
     useEffect(() => {
@@ -153,29 +231,38 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
 
                 {pagedLevels?.map(level => {
                     const isExpanded = expandedId === level.id;
+                    const isOwnLevel = playerId !== null && level.authorId === playerId;
                     return <div key={level.id} className="rounded-xl overflow-hidden">
-                        <button
-                            onClick={() => setExpandedId(isExpanded ? null : level.id)}
-                            className={`w-full flex items-center gap-4 px-4 py-3 text-left cursor-pointer ${isExpanded ? "bg-orange-500/15" : "hover:bg-slate-800"}`}
-                        >
-                            {level.thumbnailUrl
-                                ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
-                                : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
-                            <div className="flex-1 min-w-0 flex flex-col gap-1">
-                                <div className="text-xl text-white font-semibold truncate">{level.name}</div>
-                                {level.tags.length > 0 && <div className="flex flex-wrap gap-1">
-                                    {level.tags.map(tag => <TagPill key={tag} tag={tag} />)}
-                                </div>}
-                            </div>
-                            <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
-                            <div className="w-32"><RatingStars rating={level.rating} /></div>
-                            <div className="w-20 text-orange-500/70 text-sm">
-                                {level.weeklyPlays > 0 && `🔥 ${level.weeklyPlays}`}
-                            </div>
-                            <div className="w-24 text-white/50 text-sm text-right">
-                                {new Date(level.uploadedAt).toLocaleDateString()}
-                            </div>
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setExpandedId(isExpanded ? null : level.id)}
+                                className={`w-full flex items-center gap-4 px-4 py-3 text-left cursor-pointer ${isOwnLevel ? "pr-12" : ""} ${isExpanded ? "bg-orange-500/15" : "hover:bg-slate-800"}`}
+                            >
+                                {level.thumbnailUrl
+                                    ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
+                                    : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
+                                <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                    <div className="text-xl text-white font-semibold truncate">{level.name}</div>
+                                    {level.tags.length > 0 && <div className="flex flex-wrap gap-1">
+                                        {level.tags.map(tag => <TagPill key={tag} tag={tag} />)}
+                                    </div>}
+                                </div>
+                                <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
+                                <div className="w-32"><RatingStars rating={level.rating} /></div>
+                                <div className="w-20 text-orange-500/70 text-sm">
+                                    {level.weeklyPlays > 0 && `🔥 ${level.weeklyPlays}`}
+                                </div>
+                                <div className="w-24 text-white/50 text-sm text-right">
+                                    {new Date(level.uploadedAt).toLocaleDateString()}
+                                </div>
+                            </button>
+
+                            {isOwnLevel && (
+                                <div className="absolute top-1/2 -translate-y-1/2 right-3">
+                                    <LevelOwnerMenu onConfirmDelete={() => deleteLevel(level.id)} />
+                                </div>
+                            )}
+                        </div>
 
                         {isExpanded && <div className="flex gap-6 px-6 pb-6 pt-2 bg-slate-800/50">
                             {level.thumbnailUrl

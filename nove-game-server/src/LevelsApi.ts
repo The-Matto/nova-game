@@ -1,12 +1,12 @@
 import type {IncomingMessage, ServerResponse} from "http";
 import {randomUUID} from "crypto";
-import type {LevelSummary, RateLevelRequest, RecordLevelPlayRequest, UploadLevelRequest} from "nova-shared/level-listing";
+import type {DeleteLevelRequest, LevelSummary, RateLevelRequest, RecordLevelPlayRequest, UploadLevelRequest} from "nova-shared/level-listing";
 import {IsLevelTag} from "nova-shared/level-tags";
 import {pool} from "./Db";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ResolveEffectivePlayerId} from "./Session";
 import {ReadBody} from "./Http";
-import {UploadToR2} from "./R2";
+import {DeleteFromR2, UploadToR2} from "./R2";
 import {GetWeeklyPlays, RecordLevelPlay} from "./WeeklyPlays";
 
 const MAX_NAME_LENGTH = 80;
@@ -21,6 +21,9 @@ const RATING_RATE_LIMIT_WINDOW_SECONDS = 60;
 //Generous like rating - every "Play" click hits this once, which is the expected common case.
 const PLAY_RATE_LIMIT = 30;
 const PLAY_RATE_LIMIT_WINDOW_SECONDS = 60;
+//Tight like upload - a permanent, destructive action isn't something a real player does often.
+const DELETE_RATE_LIMIT = 5;
+const DELETE_RATE_LIMIT_WINDOW_SECONDS = 60;
 const MAX_LEVEL_DATA_BYTES = 2 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024;
 const THUMBNAIL_DATA_URL = /^data:(image\/(?:jpeg|png));base64,(.+)$/;
@@ -42,6 +45,10 @@ function IsValidRating(value : any) : value is RateLevelRequest {
 
 function IsValidPlay(value : any) : value is RecordLevelPlayRequest {
     return typeof value?.levelId === "string" && value.levelId.length > 0;
+}
+
+function IsValidDelete(value : any) : value is DeleteLevelRequest {
+    return typeof value?.levelId === "string" && typeof value?.playerId === "string";
 }
 
 function RowToSummary(row : any) : LevelSummary {
@@ -243,6 +250,56 @@ async function HandleRecordPlay(req : IncomingMessage, res : ServerResponse) : P
     res.end();
 }
 
+//Only the level's own author can delete it - the DELETE...WHERE author_id = $2 below is the
+//actual enforcement (atomic with fetching what to clean up from R2), not just a check beforehand.
+async function HandleDeleteLevel(req : IncomingMessage, res : ServerResponse) : Promise<void> {
+    if (await IsRateLimited(GetClientIp(req), "delete-level", DELETE_RATE_LIMIT, DELETE_RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
+
+    let parsed : unknown;
+    try {
+        parsed = JSON.parse(await ReadBody(req));
+    } catch {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+    if (!IsValidDelete(parsed)) {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+
+    //A logged-in session always wins over whatever playerId the body claims - same reasoning as
+    //upload/rating/leaderboard submission.
+    const playerId = await ResolveEffectivePlayerId(req, parsed.playerId);
+
+    const result = await pool.query(
+        "DELETE FROM levels WHERE id = $1 AND author_id = $2 RETURNING thumbnail_url",
+        [parsed.levelId, playerId],
+    );
+    if (result.rowCount === 0) {
+        //Covers both "no such level" and "not yours" - not worth distinguishing for the client.
+        res.writeHead(403);
+        res.end();
+        return;
+    }
+
+    //Best-effort - the DB row (the real source of truth for what's browsable) is already gone,
+    //so a stray R2 object left behind is a storage leak, not a correctness problem.
+    const thumbnailExtension = (result.rows[0].thumbnail_url as string | null)?.match(/\.(\w+)$/)?.[1];
+    await Promise.all([
+        DeleteFromR2(`levels/${parsed.levelId}/level.json`).catch(() => {}),
+        thumbnailExtension ? DeleteFromR2(`levels/${parsed.levelId}/thumbnail.${thumbnailExtension}`).catch(() => {}) : Promise.resolve(),
+    ]);
+
+    res.writeHead(204);
+    res.end();
+}
+
 //Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
 export async function HandleLevelsRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
     const url = new URL(req.url ?? "", "http://localhost");
@@ -261,6 +318,10 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
     }
     if (url.pathname === "/api/levels/play" && req.method === "POST") {
         await HandleRecordPlay(req, res);
+        return true;
+    }
+    if (url.pathname === "/api/levels" && req.method === "DELETE") {
+        await HandleDeleteLevel(req, res);
         return true;
     }
 

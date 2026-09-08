@@ -60,3 +60,10 @@ export interface RateLevelResponse {
 export interface RecordLevelPlayRequest {
     levelId : string;
 }
+
+//Body of a DELETE /api/levels - only the level's own author can delete it (checked server-side
+//against authorId, not just trusted from here - same spoofing protection as upload/rating).
+export interface DeleteLevelRequest {
+    levelId : string;
+    playerId : string;
+}
