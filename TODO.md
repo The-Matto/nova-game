@@ -16,9 +16,8 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Level save: serialize editor state to the level JSON format (Export/Import).
 - [x] Level upload: an Upload button sends the level JSON + a captured screenshot thumbnail to
       the backend, which stores both in Cloudflare R2 and creates the `levels` row.
-- [x] Level browser UI: list levels from the backend, load one into the player. Search-by-name
-      and pagination, both client-side for now - would want a real `?search=&page=` API instead
-      once there are enough levels for "fetch everything up front" to actually cost something.
+- [x] Level browser UI: list levels from the backend, load one into the player, with search-by-
+      name and pagination (both client-side for now - see the Backend item below).
 - [ ] Undo/redo in the editor.
 
 ## Backend
@@ -31,6 +30,9 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Leaderboard durability: `GET`/`POST /api/leaderboard` query real Postgres now (ranked,
       deduped per-player).
 - [x] Level list/fetch API — `GET /api/levels` queries the real `levels` table.
+- [ ] `GET /api/levels` gains real `?search=&page=` params, with search/pagination moved
+      server-side (Postgres `ILIKE`/`LIMIT`/`OFFSET`) instead of the level browser fetching every
+      level and doing both client-side, which stops scaling once there are enough levels to matter.
 - [x] Level save/upload API — `POST /api/levels` stores the level JSON + thumbnail in Cloudflare
       R2 (`R2.ts`, keyed by level id) and creates the `levels` row.
 - [x] Leaderboard service backed by Redis — a sorted set per level caches the ranking in front of
