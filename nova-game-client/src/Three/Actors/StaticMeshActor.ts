@@ -22,9 +22,13 @@ export class NVStaticMeshActor extends NVActor{
     @EditableProperty({choices: SHAPE_CHOICES})
     public shape : string = 'cube';
 
+    @EditableProperty()
+    public color : string = '#c79b9b';
+
     //Only set for the primitive-mesh path below (null for a loaded model) - lets
-    //OnEditablePropertyChanged swap the geometry when `shape` changes.
+    //OnEditablePropertyChanged swap the geometry/material when shape/color change.
     private mesh : THREE.Mesh | null = null;
+    private material : THREE.MeshStandardMaterial | null = null;
 
     Tick(_deltaTime: number) {
         super.Tick(_deltaTime);
@@ -50,16 +54,20 @@ export class NVStaticMeshActor extends NVActor{
 
     }
 
-    //"properties": { "color": "#rrggbb" } overrides the default per-actor.
     private BuildPrimitiveMesh(descripter : SpawnDescriptor) {
-        const color = (descripter.properties?.color as string) ?? '#c79b9b';
-        const material = new THREE.MeshStandardMaterial({color});
-        this.mesh = new THREE.Mesh(NVStaticMeshActor.CreateGeometry(this.shape, descripter.scale), material);
+        this.material = new THREE.MeshStandardMaterial({color: this.color});
+        this.mesh = new THREE.Mesh(NVStaticMeshActor.CreateGeometry(this.shape, descripter.scale), this.material);
         this.scene = this.mesh;
     }
 
     public OnEditablePropertyChanged(key : string) {
-        if (key !== 'shape' || !this.mesh) return;
+        if (!this.mesh) return;
+
+        if (key === 'color') {
+            this.material?.color.set(this.color);
+            return;
+        }
+        if (key !== 'shape') return;
 
         //spawnDescriptor.scale, not scene.scale - the latter is a live gizmo multiplier layered
         //on top of the baked geometry (see NVActor.ToSpawnDescriptor), not the baked size itself.
