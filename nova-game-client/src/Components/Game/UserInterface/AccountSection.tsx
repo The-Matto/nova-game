@@ -25,7 +25,7 @@ export const AccountSection = () => {
                 <span>Signed in as {name}</span>
                 <button
                     className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"
-                    onClick={() => SignOutOfGitHub().then(() => setLoggedIn(false))}
+                    onClick={() => SignOutOfGitHub().then(() => { setLoggedIn(false); setName(PlayerIdentity.name); })}
                 >
                     Sign out
                 </button>

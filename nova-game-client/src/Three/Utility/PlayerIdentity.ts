@@ -4,6 +4,10 @@ import type {AuthMeResponse} from "nova-shared/auth";
 const NAME_STORAGE_KEY = 'nova-game:player-name';
 const ID_STORAGE_KEY = 'nova-game:player-id';
 
+function GenerateRandomName() : string {
+    return `Player${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 //A stable per-browser display name, generated once and remembered locally - same idea as
 //PlayerSettings' persistence. Shown instantly, with no network dependency.
 function LoadOrCreateName() : string {
@@ -14,7 +18,7 @@ function LoadOrCreateName() : string {
         //Ignore - fall through to a fresh name.
     }
 
-    const name = `Player${Math.floor(1000 + Math.random() * 9000)}`;
+    const name = GenerateRandomName();
     try {
         localStorage.setItem(NAME_STORAGE_KEY, name);
     } catch {
@@ -106,10 +110,26 @@ export async function SignInWithGitHub() : Promise<void> {
     window.location.href = `/api/auth/github/login?playerId=${encodeURIComponent(id)}`;
 }
 
-//Doesn't touch id/name - those stay valid (still the same linked account) even signed out, only
-//loggedIn/email revert since there's no active session to prove it anymore.
+//A full reset, not just clearing the session - otherwise this browser would keep acting as the
+//linked account (same id, same name) even though it no longer has a session proving that. Mints
+//a brand new anonymous identity, same as a first-ever visit; signing back in still resolves back
+//to the real linked account (that link is permanent server-side), nothing is lost by this.
 export async function SignOutOfGitHub() : Promise<void> {
     await fetch('/api/auth/logout', {method: 'POST'});
+
+    const freshName = GenerateRandomName();
+    PlayerIdentity.id = null;
+    PlayerIdentity.name = freshName;
     PlayerIdentity.loggedIn = false;
     PlayerIdentity.email = undefined;
+    registerPromise = null;
+
+    try {
+        localStorage.setItem(NAME_STORAGE_KEY, freshName);
+        localStorage.removeItem(ID_STORAGE_KEY);
+    } catch {
+        //Ignore - not critical if this fails.
+    }
+
+    await EnsureRegistered();
 }
