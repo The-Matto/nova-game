@@ -81,7 +81,7 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
     //Most recent 5 - a profile page, not the full level browser.
     const levels = await pool.query(
         `SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url,
-             l.description,
+             l.description, l.total_plays,
              COALESCE((SELECT array_agg(tag ORDER BY tag) FROM level_tags WHERE level_id = l.id), '{}') AS tags
          FROM levels l
          LEFT JOIN users u ON u.id = l.author_id
@@ -125,6 +125,7 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
             //Not computed here - a profile's own-levels list isn't sorted/shown by popularity,
             //so it's not worth an extra Redis round trip on every profile view (see LevelsApi.ts).
             weeklyPlays: 0,
+            totalPlays: Number(row.total_plays ?? 0),
         })),
         personalBests: bests.rows.map((row) : PersonalBest => ({
             levelId: row.level_id,

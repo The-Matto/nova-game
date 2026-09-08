@@ -106,10 +106,11 @@ const LevelOwnerMenu = ({onEdit, onConfirmDelete} : {onEdit : () => void, onConf
 //something.
 const PAGE_SIZE = 10;
 
-type SortMode = 'default' | 'popular' | 'new';
+type SortMode = 'default' | 'popular' | 'new' | 'mostPlayed';
 
 const SORT_OPTIONS : {mode : SortMode, label : string}[] = [
     {mode: 'popular', label: '🔥 Popular this week'},
+    {mode: 'mostPlayed', label: '🎮 Most Played'},
     {mode: 'new', label: '🆕 New'},
 ];
 
@@ -177,6 +178,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
     ) ?? null;
     const sortedLevels = filteredLevels && [...filteredLevels].sort((a, b) => {
         if (sortMode === 'popular') return b.weeklyPlays - a.weeklyPlays;
+        if (sortMode === 'mostPlayed') return b.totalPlays - a.totalPlays;
         if (sortMode === 'new') return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
         return 0;
     });
@@ -258,8 +260,9 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                                 </div>
                                 <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
                                 <div className="w-32"><RatingStars rating={level.rating} /></div>
-                                <div className="w-20 text-orange-500/70 text-sm">
-                                    {level.weeklyPlays > 0 && `🔥 ${level.weeklyPlays}`}
+                                <div className="w-24 text-orange-500/70 text-xs flex flex-col leading-tight shrink-0">
+                                    {level.weeklyPlays > 0 && <span>🔥 {level.weeklyPlays} this wk</span>}
+                                    {level.totalPlays > 0 && <span>🎮 {level.totalPlays} all-time</span>}
                                 </div>
                                 <div className="w-24 text-white/50 text-sm text-right">
                                     {new Date(level.uploadedAt).toLocaleDateString()}

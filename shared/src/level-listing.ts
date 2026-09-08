@@ -23,6 +23,8 @@ export interface LevelSummary {
     //This week's play count (Redis-only, not durable - see WeeklyPlays.ts). 0 wherever it's not
     //meaningfully computed (e.g. a profile's own-levels list), not just "never played".
     weeklyPlays : number;
+    //Durable, unlike weeklyPlays - a running total in Postgres, never reset.
+    totalPlays : number;
 }
 
 //Body of a POST /api/levels - uploads a level built in the editor. The server stores levelData
@@ -68,8 +70,9 @@ export interface RateLevelResponse {
 }
 
 //Body of a POST /api/levels/play - fired once whenever a level is picked to play (see
-//MainMenu.tsx/App.tsx), not once per completion. Fire-and-forget on the client; purely
-//incrementing a Redis counter server-side (see WeeklyPlays.ts), so there's no meaningful response.
+//MainMenu.tsx/App.tsx), not once per completion. Fire-and-forget on the client - bumps both the
+//Redis weekly counter (WeeklyPlays.ts) and the durable levels.total_plays column, so there's no
+//meaningful response.
 export interface RecordLevelPlayRequest {
     levelId : string;
 }

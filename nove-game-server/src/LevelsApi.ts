@@ -78,6 +78,7 @@ function RowToSummary(row : any) : LevelSummary {
         tags: row.tags ?? [],
         description: row.description ?? "",
         weeklyPlays: row.weekly_plays ?? 0,
+        totalPlays: Number(row.total_plays ?? 0),
     };
 }
 
@@ -94,7 +95,7 @@ async function HandleGetLevels(res : ServerResponse) : Promise<void> {
     //0006_anonymous_player_cleanup.sql) - the level survives that, just loses its byline.
     const result = await pool.query(`
         SELECT l.id, l.name, l.author_id, u.display_name AS created_by, l.rating, l.created_at, l.path,
-            l.thumbnail_url, l.description, ${TAGS_SUBQUERY}
+            l.thumbnail_url, l.description, l.total_plays, ${TAGS_SUBQUERY}
         FROM levels l
         LEFT JOIN users u ON u.id = l.author_id
         WHERE l.path IS NOT NULL
@@ -170,7 +171,7 @@ async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : 
         WITH inserted AS (
             INSERT INTO levels (id, author_id, name, path, thumbnail_url, description)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description
+            RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description, total_plays
         )
         SELECT inserted.*, u.display_name AS created_by FROM inserted JOIN users u ON u.id = $2
     `, [id, playerId, parsed.name.trim(), path, thumbnailUrl, parsed.description.trim()]);
@@ -252,13 +253,13 @@ async function HandleUpdateLevel(req : IncomingMessage, res : ServerResponse) : 
         DeleteFromR2(`levels/${parsed.levelId}/thumbnail.${oldExtension}`).catch(() => {});
     }
 
-    //rating is deliberately left untouched - an edit doesn't invalidate what players already
-    //thought of the level.
+    //rating and total_plays are deliberately left untouched - an edit doesn't invalidate what
+    //players already thought of the level, or how many times it's been played.
     const result = await pool.query(`
         WITH updated AS (
             UPDATE levels SET name = $1, path = $2, thumbnail_url = $3, description = $4
             WHERE id = $5
-            RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description
+            RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description, total_plays
         )
         SELECT updated.*, u.display_name AS created_by FROM updated JOIN users u ON u.id = updated.author_id
     `, [parsed.name.trim(), path, thumbnailUrl, parsed.description.trim(), parsed.levelId]);
@@ -326,8 +327,9 @@ async function HandleRateLevel(req : IncomingMessage, res : ServerResponse) : Pr
 }
 
 //Fire-and-forget on the client (see MainMenu.tsx/App.tsx) - increments this level's this-week
-//play counter in Redis. No response body needed; a bad/forged levelId just wastes a small Redis
-//key, not worth an extra DB round trip to validate against.
+//play counter in Redis and its durable all-time counter in Postgres. No response body needed; a
+//bad/forged levelId just wastes a small Redis key and a no-op UPDATE, not worth an extra DB
+//round trip to validate against first.
 async function HandleRecordPlay(req : IncomingMessage, res : ServerResponse) : Promise<void> {
     if (await IsRateLimited(GetClientIp(req), "play-level", PLAY_RATE_LIMIT, PLAY_RATE_LIMIT_WINDOW_SECONDS)) {
         res.writeHead(429);
@@ -349,7 +351,10 @@ async function HandleRecordPlay(req : IncomingMessage, res : ServerResponse) : P
         return;
     }
 
-    await RecordLevelPlay(parsed.levelId);
+    await Promise.all([
+        RecordLevelPlay(parsed.levelId),
+        pool.query("UPDATE levels SET total_plays = total_plays + 1 WHERE id = $1", [parsed.levelId]),
+    ]);
     res.writeHead(204);
     res.end();
 }
