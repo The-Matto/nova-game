@@ -12,6 +12,11 @@ export class EditorSpawning {
     //Spawns an item from the editor palette a fixed distance in front of the camera, then
     //selects it (so the gizmo appears on it immediately, ready to reposition).
     public static SpawnFromPalette(item : SpawnableItem) {
+        if (!NVScene.CanSpawnMoreLevelActors()) {
+            console.warn("Level actor limit reached - can't spawn more.");
+            return;
+        }
+
         const camera = MainCamera.GetCamera();
 
         const forward = new THREE.Vector3();

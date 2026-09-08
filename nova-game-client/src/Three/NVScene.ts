@@ -9,9 +9,14 @@ import {LevelObjectives} from "./Gameplay/LevelObjectives";
 import {EditorSelection} from "./Editor/EditorSelection";
 import {MainCamera} from "./Camera.ts";
 import {EditorState, LevelSelection} from "./Utility/PlayerGlobals.ts";
+import {GameEvents} from "./Utility/GameEvents.ts";
 
 //Matches what every level used before this was configurable.
 export const DEFAULT_WORLD_SETTINGS : WorldSettings = {skyColor: "#88ccee", killY: -50, fogDistance: 1000};
+
+//Editor-only ceiling on a single level's actor count (see EditorSpawning/EditorSelection, which
+//are the only spawn paths that check it - gameplay-spawned actors like projectiles aren't gated).
+export const MAX_LEVEL_ACTORS = 1000;
 
 export class NVScene {
 
@@ -132,6 +137,7 @@ export class NVScene {
         NVScene.worldOctree = new Octree();
         LevelObjectives.Clear();
         EditorSelection.ClearSelection();
+        NVScene.NotifyActorCountChanged();
     }
 
     //Despawns everything the level spawned and respawns fresh from the same JSON file.
@@ -159,6 +165,19 @@ export class NVScene {
 
     public static GetSceneActors() : Set<NVActor>{
         return NVScene.sceneActors;
+    }
+
+    //Excludes persistent actors (the editor pawn) - matches what SerializeLevel actually saves.
+    public static GetLevelActorCount() : number {
+        return NVScene.sceneActors.size - NVScene.persistentActors.size;
+    }
+
+    public static CanSpawnMoreLevelActors() : boolean {
+        return NVScene.GetLevelActorCount() < MAX_LEVEL_ACTORS;
+    }
+
+    private static NotifyActorCountChanged() {
+        GameEvents.Emit('levelActorCountChanged', {count: NVScene.GetLevelActorCount(), max: MAX_LEVEL_ACTORS});
     }
 
     //Rebuilds the collision octree from every actor's current transform - needed after an actor
@@ -198,6 +217,7 @@ export class NVScene {
             if (!EditorState.isInEditor) actor.TryBeginPlay();
         });
         console.log("Spawned actor - ", descripter.class);
+        NVScene.NotifyActorCountChanged();
         return actor;
     }
 
@@ -217,5 +237,6 @@ export class NVScene {
         actor.RemoveFromScene();
         actor.BeginDestroy();
         NVScene.RebuildWorldOctree();
+        NVScene.NotifyActorCountChanged();
     }
 }

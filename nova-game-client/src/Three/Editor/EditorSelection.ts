@@ -99,6 +99,7 @@ export class EditorSelection {
         if (EditorSelection.GetTransformMode() !== 'translate') return;
 
         for (const actor of EditorSelection.selectedActors) {
+            if (!NVScene.CanSpawnMoreLevelActors()) break;
             NVScene.SpawnActor(actor.ToSpawnDescriptor());
         }
     }

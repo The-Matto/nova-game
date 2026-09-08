@@ -18,6 +18,9 @@ export type GameEventMap = {
     //Closes the menu without resetting anything - only reachable from a voluntary pause, via
     //NVPlayerCharacter.Resume ('P' again).
     gameResumed : undefined;
+    //Fired whenever the level's actor count changes (spawn, destroy, reload) - see
+    //NVScene.MAX_LEVEL_ACTORS / GetLevelActorCount.
+    levelActorCountChanged : { count : number, max : number };
 };
 
 type Listener<T> = (payload : T) => void;

@@ -2,7 +2,35 @@ import {useEffect, useState} from "react";
 import {PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
 import {EDITOR_PALETTE} from "../../../Three/Editor/EditorPalette";
 import {EditorSpawning} from "../../../Three/Editor/EditorSpawning";
+import {NVScene, MAX_LEVEL_ACTORS} from "../../../Three/NVScene";
+import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {OptionsMenu} from "./OptionsMenu";
+
+//Fills up as the level's actor count approaches NVScene.MAX_LEVEL_ACTORS - see
+//EditorSpawning/EditorSelection, which stop letting you place more once it's full.
+const ActorLimitBar = () => {
+    const [count, setCount] = useState(NVScene.GetLevelActorCount());
+
+    useEffect(() => {
+        return GameEvents.On('levelActorCountChanged', payload => setCount(payload.count));
+    }, []);
+
+    const fraction = Math.min(count / MAX_LEVEL_ACTORS, 1);
+    const isFull = count >= MAX_LEVEL_ACTORS;
+
+    return <div className="mb-3">
+        <div className="flex justify-between text-[10px] uppercase tracking-wide text-orange-500/60 mb-1">
+            <span>Actors</span>
+            <span>{count}/{MAX_LEVEL_ACTORS}</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div
+                className={`h-full rounded-full ${isFull ? 'bg-red-500' : 'bg-orange-500'}`}
+                style={{width: `${fraction * 100}%`}}
+            />
+        </div>
+    </div>;
+};
 
 //'P' is taken while actually editing - it starts Play mode instead of pausing (see
 //PlayerController.ToggleEditorMode), since there's no gameplay running yet to pause. This is the
@@ -91,6 +119,8 @@ export const EditorPalettePanel = () => {
                 ☰
             </button>
         </div>
+
+        <ActorLimitBar />
 
         <input
             type="text"
