@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import type {LevelSummary} from "nova-shared/level-listing";
 import {LEVEL_TAGS} from "nova-shared/level-tags";
 import type {LevelTag} from "nova-shared/level-tags";
+import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {LevelLeaderboardPreview} from "./LevelLeaderboardPreview";
 import {AccountSection} from "./AccountSection";
 
@@ -53,6 +54,12 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     const [selectedTags, setSelectedTags] = useState<LevelTag[]>([]);
     const [sortMode, setSortMode] = useState<SortMode>('default');
     const [page, setPage] = useState(0);
+    const [myLevelsOnly, setMyLevelsOnly] = useState(false);
+    const [playerId, setPlayerId] = useState<string | null>(null);
+
+    useEffect(() => {
+        EnsureRegistered().then(setPlayerId);
+    }, []);
 
     const toggleTag = (tag : LevelTag) => {
         setSelectedTags(current => current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]);
@@ -79,6 +86,7 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     const filteredLevels = levels?.filter(level =>
         level.name.toLowerCase().includes(query)
         && (selectedTags.length === 0 || selectedTags.some(tag => level.tags.includes(tag)))
+        && (!myLevelsOnly || level.authorId === playerId)
     ) ?? null;
     const sortedLevels = filteredLevels && [...filteredLevels].sort((a, b) => {
         if (sortMode === 'popular') return b.weeklyPlays - a.weeklyPlays;
@@ -120,6 +128,14 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                         </button>
                     ))}
                 </div>
+                <button
+                    onClick={() => { setMyLevelsOnly(current => !current); setPage(0); }}
+                    className={`text-xs px-2.5 py-1 rounded-full cursor-pointer ${
+                        myLevelsOnly ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70 hover:text-orange-500"
+                    }`}
+                >
+                    👤 My Levels
+                </button>
                 <div className="flex flex-wrap gap-1.5">
                     {LEVEL_TAGS.map(tag => (
                         <TagPill key={tag} tag={tag} active={selectedTags.includes(tag)} onClick={() => toggleTag(tag)} />
@@ -132,7 +148,7 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                 {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
                 {!error && levels?.length === 0 && <div className="text-white/50 py-6 text-center">No levels yet.</div>}
                 {!error && levels && levels.length > 0 && filteredLevels?.length === 0 && (
-                    <div className="text-white/50 py-6 text-center">No levels match the current search/tags.</div>
+                    <div className="text-white/50 py-6 text-center">No levels match the current filters.</div>
                 )}
 
                 {pagedLevels?.map(level => {

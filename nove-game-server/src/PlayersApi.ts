@@ -114,6 +114,8 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
             id: row.id,
             name: row.name,
             createdBy: row.created_by ?? "Unknown",
+            //The query itself is WHERE l.author_id = playerId - every row here is already theirs.
+            authorId: playerId,
             rating: Number(row.rating),
             uploadedAt: row.created_at.toISOString(),
             path: row.path,

@@ -30,10 +30,11 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
 - [x] Leaderboard durability: `GET`/`POST /api/leaderboard` query real Postgres now (ranked,
       deduped per-player).
 - [x] Level list/fetch API — `GET /api/levels` queries the real `levels` table.
-- [ ] `GET /api/levels` gains real `?search=&page=&tags=&sort=` params, with search/pagination/tag
-      filtering/sorting moved server-side (Postgres `ILIKE`/`LIMIT`/`OFFSET`/a `level_tags` join/
-      `ORDER BY`) instead of the level browser fetching every level and doing all of it
-      client-side, which stops scaling once there are enough levels to matter.
+- [ ] `GET /api/levels` gains real `?search=&page=&tags=&sort=&authorId=` params, with
+      search/pagination/tag/author filtering/sorting moved server-side (Postgres `ILIKE`/`LIMIT`/
+      `OFFSET`/a `level_tags` join/`ORDER BY`/`WHERE author_id`) instead of the level browser
+      fetching every level and doing all of it client-side, which stops scaling once there are
+      enough levels to matter.
 - [x] Level save/upload API — `POST /api/levels` stores the level JSON + thumbnail in Cloudflare
       R2 (`R2.ts`, keyed by level id) and creates the `levels` row.
 - [x] Leaderboard service backed by Redis — a sorted set per level caches the ranking in front of

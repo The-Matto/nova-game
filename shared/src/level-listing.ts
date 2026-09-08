@@ -8,6 +8,10 @@ export interface LevelSummary {
     id : string;
     name : string;
     createdBy : string;
+    //null if the author's since been wiped (see 0006_anonymous_player_cleanup.sql) - matches
+    //createdBy falling back to "Unknown" in that case. Lets the browser filter to "my levels"
+    //without relying on the (not necessarily unique) display name.
+    authorId : string | null;
     rating : number;
     uploadedAt : string;
     path : string;

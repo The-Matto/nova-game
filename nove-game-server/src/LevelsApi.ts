@@ -49,6 +49,7 @@ function RowToSummary(row : any) : LevelSummary {
         id: row.id,
         name: row.name,
         createdBy: row.created_by ?? "Unknown",
+        authorId: row.author_id ?? null,
         rating: Number(row.rating),
         uploadedAt: row.created_at.toISOString(),
         path: row.path,
@@ -71,8 +72,8 @@ async function HandleGetLevels(res : ServerResponse) : Promise<void> {
     //LEFT JOIN since author_id can be null (an anonymous author who's since been wiped - see
     //0006_anonymous_player_cleanup.sql) - the level survives that, just loses its byline.
     const result = await pool.query(`
-        SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url,
-            l.description, ${TAGS_SUBQUERY}
+        SELECT l.id, l.name, l.author_id, u.display_name AS created_by, l.rating, l.created_at, l.path,
+            l.thumbnail_url, l.description, ${TAGS_SUBQUERY}
         FROM levels l
         LEFT JOIN users u ON u.id = l.author_id
         WHERE l.path IS NOT NULL
@@ -148,7 +149,7 @@ async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : 
         WITH inserted AS (
             INSERT INTO levels (id, author_id, name, path, thumbnail_url, description)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, name, rating, created_at, path, thumbnail_url, description
+            RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description
         )
         SELECT inserted.*, u.display_name AS created_by FROM inserted JOIN users u ON u.id = $2
     `, [id, playerId, parsed.name.trim(), path, thumbnailUrl, parsed.description.trim()]);
