@@ -1,5 +1,6 @@
 import {useEffect, useState} from "react";
 import {Countdown} from "../../../../Three/Utility/Countdown";
+import {PlaySound} from "../../../../Three/Utility/Sound";
 
 //Countdown is plain mutable state, not React state - re-render every frame to read it live.
 export const CountdownDisplay = () => {
@@ -15,9 +16,15 @@ export const CountdownDisplay = () => {
         return () => cancelAnimationFrame(frame);
     }, []);
 
-    if (!Countdown.isActive) return null;
-
     const displayValue = Math.ceil(Countdown.secondsRemaining);
+
+    //Fires once per number actually shown (3, 2, 1) - guarded by isActive so the silent jump to
+    //0/negative once the countdown ends (nothing's rendered for that) stays silent too.
+    useEffect(() => {
+        if (Countdown.isActive) PlaySound('countdownTick');
+    }, [displayValue]);
+
+    if (!Countdown.isActive) return null;
 
     //Full opacity until the final second (displayValue 1), then fades linearly alongside it -
     //driven by the live countdown value, not a fixed-duration animation, so it also tracks a

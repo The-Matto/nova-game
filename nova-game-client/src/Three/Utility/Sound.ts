@@ -9,6 +9,7 @@ const SOUND_PATHS = {
     spikesExtend: '/audio/spikes-extend.wav',
     spikesRetract: '/audio/spikes-retract.wav',
     cannonFire: '/audio/cannon-fire.wav',
+    countdownTick: '/audio/countdown-tick.wav',
 } as const;
 
 export type SoundName = keyof typeof SOUND_PATHS;
