@@ -16,7 +16,7 @@ const RatingStars = ({rating} : {rating : number}) => {
 //Client-side only for now - fine at the current level count, would want a real ?search=&page=
 //API instead once there are enough levels for "fetch everything up front" to actually cost
 //something.
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 10;
 
 //Shown after clicking Play - a Happy Wheels-style list of community levels, fetched from the
 //backend's REST API. Only "Test World" exists for now (see LevelsApi.ts on the server), but the
@@ -53,7 +53,7 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
 
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
         <AccountSection />
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-4xl max-h-[80vh]">
+        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-6xl max-h-[90vh]">
             <div className="flex items-center gap-4">
                 <div className="text-3xl font-bold text-orange-500">Select Level</div>
                 <input
