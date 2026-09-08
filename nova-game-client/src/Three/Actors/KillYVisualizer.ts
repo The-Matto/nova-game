@@ -10,7 +10,7 @@ const PLANE_SIZE = 4000;
 const TEXTURE_REPEAT = 200;
 //UV units/second the texture scrolls by, both axes - see Tick. Reads as slowly flowing lava
 //instead of a static image.
-const PAN_SPEED = 1;
+const PAN_SPEED = .3;
 
 //Drop the real art at public/T_Lava.png - loads as a plain white plane until it's there, same as
 //any other missing texture in this project.
