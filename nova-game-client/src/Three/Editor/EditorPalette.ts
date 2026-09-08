@@ -33,4 +33,11 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             {label: "Door", class: "NVDoorActor", scale: {x: 2.2, y: 3.5, z: 0.4}},
         ],
     },
+    {
+        label: "Post Process",
+        items: [
+            //Room-sized by default - meant to enclose an area, not sit as a small marker.
+            {label: "Post Process Volume", class: "NVPostProcessVolume", scale: {x: 6, y: 4, z: 6}},
+        ],
+    },
 ];
