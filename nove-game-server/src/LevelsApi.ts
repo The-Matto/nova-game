@@ -1,12 +1,13 @@
 import type {IncomingMessage, ServerResponse} from "http";
 import {randomUUID} from "crypto";
-import type {LevelSummary, RateLevelRequest, UploadLevelRequest} from "nova-shared/level-listing";
+import type {LevelSummary, RateLevelRequest, RecordLevelPlayRequest, UploadLevelRequest} from "nova-shared/level-listing";
 import {IsLevelTag} from "nova-shared/level-tags";
 import {pool} from "./Db";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ResolveEffectivePlayerId} from "./Session";
 import {ReadBody} from "./Http";
 import {UploadToR2} from "./R2";
+import {GetWeeklyPlays, RecordLevelPlay} from "./WeeklyPlays";
 
 const MAX_NAME_LENGTH = 80;
 const MAX_DESCRIPTION_LENGTH = 500;
@@ -17,6 +18,9 @@ const UPLOAD_RATE_LIMIT_WINDOW_SECONDS = 60;
 //More generous - rating a level after every playthrough is the expected common case.
 const RATING_RATE_LIMIT = 20;
 const RATING_RATE_LIMIT_WINDOW_SECONDS = 60;
+//Generous like rating - every "Play" click hits this once, which is the expected common case.
+const PLAY_RATE_LIMIT = 30;
+const PLAY_RATE_LIMIT_WINDOW_SECONDS = 60;
 const MAX_LEVEL_DATA_BYTES = 2 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024;
 const THUMBNAIL_DATA_URL = /^data:(image\/(?:jpeg|png));base64,(.+)$/;
@@ -36,6 +40,10 @@ function IsValidRating(value : any) : value is RateLevelRequest {
         && Number.isInteger(value?.rating) && value.rating >= 1 && value.rating <= 5;
 }
 
+function IsValidPlay(value : any) : value is RecordLevelPlayRequest {
+    return typeof value?.levelId === "string" && value.levelId.length > 0;
+}
+
 function RowToSummary(row : any) : LevelSummary {
     return {
         id: row.id,
@@ -47,6 +55,7 @@ function RowToSummary(row : any) : LevelSummary {
         thumbnailUrl: row.thumbnail_url ?? undefined,
         tags: row.tags ?? [],
         description: row.description ?? "",
+        weeklyPlays: row.weekly_plays ?? 0,
     };
 }
 
@@ -70,8 +79,12 @@ async function HandleGetLevels(res : ServerResponse) : Promise<void> {
         ORDER BY l.created_at ASC
     `);
 
+    //Redis-only, so it's fetched separately from the Postgres row itself - see WeeklyPlays.ts.
+    const weeklyPlays = await GetWeeklyPlays(result.rows.map(row => row.id));
+    const summaries = result.rows.map(row => RowToSummary({...row, weekly_plays: weeklyPlays.get(row.id) ?? 0}));
+
     res.writeHead(200, {"Content-Type": "application/json"});
-    res.end(JSON.stringify(result.rows.map(RowToSummary)));
+    res.end(JSON.stringify(summaries));
 }
 
 async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : Promise<void> {
@@ -200,6 +213,35 @@ async function HandleRateLevel(req : IncomingMessage, res : ServerResponse) : Pr
     res.end(JSON.stringify({rating: Number(result.rows[0].rating)}));
 }
 
+//Fire-and-forget on the client (see MainMenu.tsx/App.tsx) - increments this level's this-week
+//play counter in Redis. No response body needed; a bad/forged levelId just wastes a small Redis
+//key, not worth an extra DB round trip to validate against.
+async function HandleRecordPlay(req : IncomingMessage, res : ServerResponse) : Promise<void> {
+    if (await IsRateLimited(GetClientIp(req), "play-level", PLAY_RATE_LIMIT, PLAY_RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
+
+    let parsed : unknown;
+    try {
+        parsed = JSON.parse(await ReadBody(req));
+    } catch {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+    if (!IsValidPlay(parsed)) {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
+
+    await RecordLevelPlay(parsed.levelId);
+    res.writeHead(204);
+    res.end();
+}
+
 //Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
 export async function HandleLevelsRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
     const url = new URL(req.url ?? "", "http://localhost");
@@ -214,6 +256,10 @@ export async function HandleLevelsRequest(req : IncomingMessage, res : ServerRes
     }
     if (url.pathname === "/api/levels/rating" && req.method === "POST") {
         await HandleRateLevel(req, res);
+        return true;
+    }
+    if (url.pathname === "/api/levels/play" && req.method === "POST") {
+        await HandleRecordPlay(req, res);
         return true;
     }
 

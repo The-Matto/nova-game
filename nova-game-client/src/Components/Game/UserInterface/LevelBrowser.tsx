@@ -30,6 +30,13 @@ const RatingStars = ({rating} : {rating : number}) => {
 //something.
 const PAGE_SIZE = 10;
 
+type SortMode = 'default' | 'popular' | 'new';
+
+const SORT_OPTIONS : {mode : SortMode, label : string}[] = [
+    {mode: 'popular', label: '🔥 Popular this week'},
+    {mode: 'new', label: '🆕 New'},
+];
+
 //Shown after clicking Play - list of community levels, fetched from the
 //backend's REST API. Only "Test World" exists for now (see LevelsApi.ts on the server), but the
 //list itself is already real, not a placeholder.
@@ -44,10 +51,16 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [search, setSearch] = useState("");
     const [selectedTags, setSelectedTags] = useState<LevelTag[]>([]);
+    const [sortMode, setSortMode] = useState<SortMode>('default');
     const [page, setPage] = useState(0);
 
     const toggleTag = (tag : LevelTag) => {
         setSelectedTags(current => current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]);
+        setPage(0);
+    };
+
+    const toggleSort = (mode : SortMode) => {
+        setSortMode(current => current === mode ? 'default' : mode);
         setPage(0);
     };
 
@@ -67,11 +80,16 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
         level.name.toLowerCase().includes(query)
         && (selectedTags.length === 0 || selectedTags.some(tag => level.tags.includes(tag)))
     ) ?? null;
-    const pageCount = filteredLevels ? Math.max(1, Math.ceil(filteredLevels.length / PAGE_SIZE)) : 1;
+    const sortedLevels = filteredLevels && [...filteredLevels].sort((a, b) => {
+        if (sortMode === 'popular') return b.weeklyPlays - a.weeklyPlays;
+        if (sortMode === 'new') return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+        return 0;
+    });
+    const pageCount = sortedLevels ? Math.max(1, Math.ceil(sortedLevels.length / PAGE_SIZE)) : 1;
     //Clamped rather than reset outright - keeps you on a sensible page if a search shrinks the
     //result count out from under the current one, instead of always snapping back to page 1.
     const clampedPage = Math.min(page, pageCount - 1);
-    const pagedLevels = filteredLevels?.slice(clampedPage * PAGE_SIZE, (clampedPage + 1) * PAGE_SIZE) ?? null;
+    const pagedLevels = sortedLevels?.slice(clampedPage * PAGE_SIZE, (clampedPage + 1) * PAGE_SIZE) ?? null;
 
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
         <AccountSection />
@@ -87,10 +105,26 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                 />
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-                {LEVEL_TAGS.map(tag => (
-                    <TagPill key={tag} tag={tag} active={selectedTags.includes(tag)} onClick={() => toggleTag(tag)} />
-                ))}
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-white/40">Sort:</span>
+                    {SORT_OPTIONS.map(opt => (
+                        <button
+                            key={opt.mode}
+                            onClick={() => toggleSort(opt.mode)}
+                            className={`text-xs px-2.5 py-1 rounded-full cursor-pointer ${
+                                sortMode === opt.mode ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70 hover:text-orange-500"
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                    {LEVEL_TAGS.map(tag => (
+                        <TagPill key={tag} tag={tag} active={selectedTags.includes(tag)} onClick={() => toggleTag(tag)} />
+                    ))}
+                </div>
             </div>
 
             <div className="flex flex-col overflow-y-auto">
@@ -119,6 +153,9 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
                             </div>
                             <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
                             <div className="w-32"><RatingStars rating={level.rating} /></div>
+                            <div className="w-20 text-orange-500/70 text-sm">
+                                {level.weeklyPlays > 0 && `🔥 ${level.weeklyPlays}`}
+                            </div>
                             <div className="w-24 text-white/50 text-sm text-right">
                                 {new Date(level.uploadedAt).toLocaleDateString()}
                             </div>

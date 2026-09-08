@@ -120,6 +120,9 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
             thumbnailUrl: row.thumbnail_url ?? undefined,
             tags: row.tags ?? [],
             description: row.description ?? "",
+            //Not computed here - a profile's own-levels list isn't sorted/shown by popularity,
+            //so it's not worth an extra Redis round trip on every profile view (see LevelsApi.ts).
+            weeklyPlays: 0,
         })),
         personalBests: bests.rows.map((row) : PersonalBest => ({
             levelId: row.level_id,

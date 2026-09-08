@@ -6,6 +6,7 @@ import {ReactInputHandler} from "./Components/ReactInputHandler.tsx";
 import {MainMenu} from "./Components/Game/UserInterface/MainMenu.tsx";
 import {HomeLink} from "./Components/HomeLink.tsx";
 import {ConsumePendingLevelSelection, CursorState, EditorState, GameMode, LevelSelection} from "./Three/Utility/PlayerGlobals.ts";
+import {RecordLevelPlay} from "./Three/Utility/LevelPlays.ts";
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
         GameMode.appMode = "play";
         EditorState.isInEditor = false;
         CursorState.isCursorNeeded = false;
+        RecordLevelPlay(pending.id);
         return true;
     });
 

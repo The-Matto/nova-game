@@ -1,5 +1,6 @@
 import {useState} from "react";
 import {CursorState, EditorState, GameMode, LevelSelection} from "../../../Three/Utility/PlayerGlobals";
+import {RecordLevelPlay} from "../../../Three/Utility/LevelPlays";
 import {OptionsMenu} from "./OptionsMenu";
 import {LevelBrowser} from "./LevelBrowser";
 import {AccountSection} from "./AccountSection";
@@ -19,6 +20,7 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         GameMode.appMode = "play";
         EditorState.isInEditor = false;
         CursorState.isCursorNeeded = false;
+        RecordLevelPlay(level.id);
         onStart();
     };
 

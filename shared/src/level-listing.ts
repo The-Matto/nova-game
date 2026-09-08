@@ -16,6 +16,9 @@ export interface LevelSummary {
     tags : LevelTag[];
     //Freeform, author-written - empty string if none was given at upload.
     description : string;
+    //This week's play count (Redis-only, not durable - see WeeklyPlays.ts). 0 wherever it's not
+    //meaningfully computed (e.g. a profile's own-levels list), not just "never played".
+    weeklyPlays : number;
 }
 
 //Body of a POST /api/levels - uploads a level built in the editor. The server stores levelData
@@ -45,4 +48,11 @@ export interface RateLevelRequest {
 //it immediately without a separate GET.
 export interface RateLevelResponse {
     rating : number;
+}
+
+//Body of a POST /api/levels/play - fired once whenever a level is picked to play (see
+//MainMenu.tsx/App.tsx), not once per completion. Fire-and-forget on the client; purely
+//incrementing a Redis counter server-side (see WeeklyPlays.ts), so there's no meaningful response.
+export interface RecordLevelPlayRequest {
+    levelId : string;
 }
