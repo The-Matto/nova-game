@@ -21,6 +21,20 @@ function App() {
         return () => document.removeEventListener('click', onClick);
     }, []);
 
+    //Same delegation as the click sound above. 'mouseover' bubbles (unlike 'mouseenter'), so the
+    //relatedTarget check re-derives enter-once behavior: skip it when the pointer came from
+    //somewhere already inside the same button (e.g. moving between its icon and label).
+    useEffect(() => {
+        const onHover = (e : MouseEvent) => {
+            const button = (e.target as HTMLElement | null)?.closest('button');
+            if (!button || button.disabled) return;
+            if (button.contains(e.relatedTarget as Node | null)) return;
+            PlaySound('uiHover', 0.4);
+        };
+        document.addEventListener('mouseover', onHover);
+        return () => document.removeEventListener('mouseover', onHover);
+    }, []);
+
     //The game (Canvas -> Game) only mounts once a choice is made on the main menu - see
     //MainMenu, which also sets GameMode.appMode beforehand. A queued level (see
     //QueuePlayLevelAndReload) skips the menu and starts straight into play instead.

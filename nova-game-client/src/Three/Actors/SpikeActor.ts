@@ -2,11 +2,15 @@ import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
-import {EditorState, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditorState, IsGameplayFrozen, IsPlayerWithinRange, PlayerStatics} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {NVScene} from "../NVScene.ts";
+import {PlaySound} from "../Utility/Sound.ts";
 
 const SPIKE_GRID_SIZE = 5;
+//Distance-gated instead of true attenuation (see IsPlayerWithinRange) - close enough to hear the
+//mechanism, not the whole level.
+const SOUND_MAX_DISTANCE = 20;
 
 //Shared by every spike instance - one texture, loaded once from public/ (same pattern as
 //NVTargetActor's TARGET_TEXTURE). Used on both the base cube and the cones.
@@ -30,6 +34,9 @@ export class NVSpikeActor extends NVActor {
     //0 = fully retracted, 1 = fully extended - see Tick/UpdateExtension.
     private extension : number = 1;
     private cycleTime : number = 0;
+    //Which leg of the cycle UpdateExtension computed last frame - compared each frame so the
+    //extend/retract sound plays once per transition, not every frame while it's happening.
+    private lastPhase : 'up' | 'goingDown' | 'down' | 'goingUp' = 'up';
 
     //Counts up from BeginPlay - compared against startDelay each Tick (not snapshotted once,
     //since startDelay's real value only lands after construction - see ApplyEditableProperties).
@@ -119,6 +126,7 @@ export class NVSpikeActor extends NVActor {
     public OnPlayerRespawned() : void {
         this.cycleTime = 0;
         this.extension = 1;
+        this.lastPhase = 'up';
     }
 
     Tick(deltaTime : number) {
@@ -173,16 +181,26 @@ export class NVSpikeActor extends NVActor {
 
         this.cycleTime = (this.cycleTime + deltaTime) % cycleLength;
         let t = this.cycleTime;
+        let phase : typeof this.lastPhase;
 
-        if (t < up) { this.extension = 1; return; }
-        t -= up;
+        if (t < up) {
+            this.extension = 1;
+            phase = 'up';
+        } else if ((t -= up) < transition) {
+            this.extension = 1 - t / transition;
+            phase = 'goingDown';
+        } else if ((t -= transition) < down) {
+            this.extension = 0;
+            phase = 'down';
+        } else {
+            this.extension = (t - down) / transition;
+            phase = 'goingUp';
+        }
 
-        if (t < transition) { this.extension = 1 - t / transition; return; }
-        t -= transition;
-
-        if (t < down) { this.extension = 0; return; }
-        t -= down;
-
-        this.extension = t / transition;
+        if (phase !== this.lastPhase) {
+            if (phase === 'goingDown' && IsPlayerWithinRange(this.scene.position, SOUND_MAX_DISTANCE)) PlaySound('spikesRetract');
+            if (phase === 'goingUp' && IsPlayerWithinRange(this.scene.position, SOUND_MAX_DISTANCE)) PlaySound('spikesExtend');
+            this.lastPhase = phase;
+        }
     }
 }

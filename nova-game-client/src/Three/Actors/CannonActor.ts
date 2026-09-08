@@ -3,9 +3,14 @@ import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
-import {EditorState, IsGameplayFrozen} from "../Utility/PlayerGlobals";
+import {EditorState, IsGameplayFrozen, IsPlayerWithinRange} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {LaserPool} from "./LaserProjectile.ts";
+import {PlaySound} from "../Utility/Sound.ts";
+
+//Distance-gated instead of true attenuation (see IsPlayerWithinRange) - close enough to hear the
+//shot, not the whole level.
+const SOUND_MAX_DISTANCE = 25;
 
 //A stationary cannon that fires a pooled laser forward (see LaserProjectile.ts) every
 //fireInterval seconds.
@@ -63,5 +68,6 @@ export class NVCannonActor extends NVActor {
 
         const muzzle = this.scene.localToWorld(NVCannonActor.MUZZLE_OFFSET.clone());
         LaserPool.Fire(muzzle, this.GetForwardVector());
+        if (IsPlayerWithinRange(this.scene.position, SOUND_MAX_DISTANCE)) PlaySound('cannonFire');
     }
 }

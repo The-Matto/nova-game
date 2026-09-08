@@ -1,4 +1,5 @@
 ﻿
+import * as THREE from "three";
 import {PlayerController} from "../Actors/PlayerController";
 import {NVPlayerCharacter} from "../Actors/PlayerCharacter";
 import type {LevelTag} from "nova-shared/level-tags";
@@ -144,4 +145,11 @@ export const PlayerStatics : IPlayerStatics = {};
 export function IsGameplayFrozen() : boolean {
     const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
     return !!physics && (physics.isDead || physics.isPaused || physics.isCountingDown || physics.isLevelComplete);
+}
+
+//Cheap stand-in for real audio attenuation (see SpikeActor/CannonActor) - just gates whether a
+//world-space sound plays at all, rather than actually falling off with distance.
+export function IsPlayerWithinRange(position : THREE.Vector3, maxDistance : number) : boolean {
+    const playerPosition = PlayerStatics.PlayerCharacter?.scene.position;
+    return !!playerPosition && playerPosition.distanceTo(position) <= maxDistance;
 }

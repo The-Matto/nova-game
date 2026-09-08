@@ -1,8 +1,12 @@
 const SOUND_PATHS = {
     fireWeapon: '/audio/fire-weapon.wav',
     uiClick: '/audio/ui-click.wav',
+    uiHover: '/audio/ui-hover.wav',
     playerDeath: '/audio/player-death.wav',
     levelComplete: '/audio/level-complete.wav',
+    spikesExtend: '/audio/spikes-extend.wav',
+    spikesRetract: '/audio/spikes-retract.wav',
+    cannonFire: '/audio/cannon-fire.wav',
 } as const;
 
 export type SoundName = keyof typeof SOUND_PATHS;
