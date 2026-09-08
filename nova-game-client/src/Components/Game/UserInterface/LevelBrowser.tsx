@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import type {LevelSummary} from "nova-shared/level-listing";
 import {LevelLeaderboardPreview} from "./LevelLeaderboardPreview";
+import {AccountSection} from "./AccountSection";
 
 //Star rating rendered as filled/empty glyphs plus the raw number - good enough without needing
 //an icon font.
@@ -36,6 +37,7 @@ export const LevelBrowser = ({onSelectLevel, onBack} : {
     }, []);
 
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
+        <AccountSection />
         <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-4xl max-h-[80vh]">
             <div className="text-3xl font-bold text-orange-500">Select Level</div>
 

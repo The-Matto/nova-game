@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {CursorState, GameMode, PlayerStatics, UIState} from "../../../Three/Utility/PlayerGlobals";
 import {OptionsMenu} from "./OptionsMenu";
+import {AccountSection} from "./AccountSection";
 
 //Shown on player death or a voluntary pause ('P' during gameplay) - see
 //NVPlayerCharacter.PlayerDeath/Pause, the single entry points for each. The world is left
@@ -65,6 +66,7 @@ export const GameMenuOverlay = () => {
     if (showOptions) return <OptionsMenu onBack={() => setShowOptions(false)} />;
 
     return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
+        <AccountSection />
         {reason === 'died' && (
             <div className="absolute inset-0 pointer-events-none" style={{
                 background: "radial-gradient(circle, transparent 30%, rgba(185,28,28,0.85) 100%)",
