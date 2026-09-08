@@ -4,11 +4,21 @@ import {HandleLevelsRequest} from "./LevelsApi";
 import {HandleLeaderboardRequest} from "./LeaderboardApi";
 import {HandlePlayersRequest} from "./PlayersApi";
 import {HandleAuthRequest} from "./AuthApi";
+import {IsTrustedRequest} from "./RateLimit";
 
 console.log("Launching Server");
 
 const httpServer = createServer(async (req, res) => {
     try {
+        //Rejects anything not proxied through nova.mattheritage.dev's Cloudflare Pages Function -
+        //Railway's own URL is also directly, publicly reachable, and there's no way to reliably
+        //rate-limit (or otherwise identify) a caller that bypasses it. See RateLimit.ts.
+        if (!IsTrustedRequest(req)) {
+            res.writeHead(403);
+            res.end();
+            return;
+        }
+
         if (await HandleLevelsRequest(req, res)) return;
         if (await HandlePlayersRequest(req, res)) return;
         if (await HandleLeaderboardRequest(req, res)) return;
