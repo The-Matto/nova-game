@@ -5,6 +5,7 @@ import {PlayInEditor} from "../../../Three/Editor/PlayInEditor";
 import {FormatLevelTime, LevelTimer} from "../../../Three/Utility/LevelTimer";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {GetRunHistory, RecordRun} from "../../../Three/Utility/RunHistory";
+import {ConfettiBurst} from "./ConfettiBurst";
 import {LeaderboardPanel} from "./LeaderboardPanel";
 import {LevelRatingWidget} from "./LevelRatingWidget";
 import {RunHistoryPanel} from "./RunHistoryPanel";
@@ -17,6 +18,7 @@ export const LevelCompleteOverlay = () => {
     const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
     const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
     const [runHistory, setRunHistory] = useState<number[]>([]);
+    const [isNewPB, setIsNewPB] = useState(false);
 
     useEffect(() => {
         return GameEvents.On('levelComplete', () => {
@@ -32,7 +34,7 @@ export const LevelCompleteOverlay = () => {
 
             //Local-only, not PIE testing - same gating as LevelRatingWidget below.
             if (GameMode.appMode !== "createLevel") {
-                RecordRun(levelId, LevelTimer.elapsedTime);
+                setIsNewPB(RecordRun(levelId, LevelTimer.elapsedTime));
                 setRunHistory(GetRunHistory(levelId));
             }
 
@@ -60,6 +62,7 @@ export const LevelCompleteOverlay = () => {
         setLeaderboard(null);
         setLeaderboardError(null);
         setRunHistory([]);
+        setIsNewPB(false);
 
         //Hand control back to normal FPS look.
         CursorState.isCursorNeeded = false;
@@ -81,6 +84,8 @@ export const LevelCompleteOverlay = () => {
 
     if (isComplete) {
         return <div className="absolute inset-0 z-30 flex items-center justify-center gap-6 bg-slate-950/25">
+            {isNewPB && <ConfettiBurst />}
+
             <LeaderboardPanel data={leaderboard} error={leaderboardError} />
             {GameMode.appMode !== "createLevel" && <RunHistoryPanel attempts={runHistory} />}
 

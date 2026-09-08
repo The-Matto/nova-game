@@ -26,16 +26,20 @@ function SaveStore(store : Record<string, LevelHistory>) {
 }
 
 //Call once per completed run (see LevelCompleteOverlay) - updates this browser's local record
-//for the level, either raising bestTime or appending to the attempts list, never both.
-export function RecordRun(levelId : string, timeSeconds : number) : void {
+//for the level, either raising bestTime or appending to the attempts list, never both. Returns
+//whether this run became the new bestTime (including a level's first-ever completion), so the
+//caller can trigger a PB celebration.
+export function RecordRun(levelId : string, timeSeconds : number) : boolean {
     const store = LoadStore();
     const existing = store[levelId];
+    const isNewBest = !existing || timeSeconds < existing.bestTime;
 
-    store[levelId] = (!existing || timeSeconds < existing.bestTime)
+    store[levelId] = isNewBest
         ? {bestTime: timeSeconds, attempts: existing?.attempts ?? []}
         : {bestTime: existing.bestTime, attempts: [timeSeconds, ...existing.attempts].slice(0, MAX_HISTORY_ENTRIES)};
 
     SaveStore(store);
+    return isNewBest;
 }
 
 //Most recent non-PB attempts first - empty if this level's never been played on this browser, or
