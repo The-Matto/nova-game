@@ -78,22 +78,30 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
         ? null
         : new Date(user.rows[0].created_at.getTime() + ANONYMOUS_ACCOUNT_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
+    //Most recent 5 - a profile page, not the full level browser.
     const levels = await pool.query(
         `SELECT l.id, l.name, u.display_name AS created_by, l.rating, l.created_at, l.path, l.thumbnail_url
          FROM levels l
          LEFT JOIN users u ON u.id = l.author_id
          WHERE l.author_id = $1 AND l.path IS NOT NULL
-         ORDER BY l.created_at DESC`,
+         ORDER BY l.created_at DESC
+         LIMIT 5`,
         [playerId],
     );
 
-    //One row per level this player's played, their best time on each - not one level's top N.
+    //One row per level this player's played, their best time on each (not one level's top N),
+    //limited to the 5 most recently played.
     const bests = await pool.query(
-        `SELECT DISTINCT ON (le.level_id) le.level_id, l.name AS level_name, le.time_seconds
-         FROM leaderboard_entries le
-         JOIN levels l ON l.id = le.level_id
-         WHERE le.player_id = $1
-         ORDER BY le.level_id, le.time_seconds ASC`,
+        `SELECT level_id, level_name, time_seconds, path, thumbnail_url FROM (
+             SELECT DISTINCT ON (le.level_id) le.level_id, l.name AS level_name, le.time_seconds,
+                 le.submitted_at, l.path, l.thumbnail_url
+             FROM leaderboard_entries le
+             JOIN levels l ON l.id = le.level_id
+             WHERE le.player_id = $1 AND l.path IS NOT NULL
+             ORDER BY le.level_id, le.time_seconds ASC
+         ) best
+         ORDER BY submitted_at DESC
+         LIMIT 5`,
         [playerId],
     );
 
@@ -113,6 +121,8 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
             levelId: row.level_id,
             levelName: row.level_name,
             timeSeconds: Number(row.time_seconds),
+            levelPath: row.path,
+            thumbnailUrl: row.thumbnail_url ?? undefined,
         })),
         deletionAt,
     };

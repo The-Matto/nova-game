@@ -1,9 +1,34 @@
 import {useEffect, useState} from "react";
+import type {ReactNode} from "react";
 import type {PlayerProfile} from "nova-shared/profile";
 import type {AuthMeResponse} from "nova-shared/auth";
 import {PlayerIdentity, SignInWithGitHub} from "../../../Three/Utility/PlayerIdentity";
+import {QueuePlayLevelAndReload} from "../../../Three/Utility/PlayerGlobals";
 
 const FormatTime = (seconds : number) => `${seconds.toFixed(2)}s`;
+
+//One row shared by "Levels created" and "Personal bests" - thumbnail, name, a caller-supplied
+//detail (rating or time), and a Play button that jumps straight into that level.
+const ProfileLevelRow = ({thumbnailUrl, name, detail, onPlay} : {
+    thumbnailUrl? : string,
+    name : string,
+    detail : ReactNode,
+    onPlay : () => void,
+}) => (
+    <div className="flex items-center gap-3 text-white">
+        {thumbnailUrl
+            ? <img src={thumbnailUrl} alt="" className="w-16 h-9 object-cover rounded-lg bg-slate-800 shrink-0" />
+            : <div className="w-16 h-9 rounded-lg bg-slate-800 shrink-0" />}
+        <span className="flex-1 truncate">{name}</span>
+        <span className="text-orange-500 text-sm shrink-0">{detail}</span>
+        <button
+            className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-orange-500 text-sm cursor-pointer shrink-0"
+            onClick={onPlay}
+        >
+            Play
+        </button>
+    </div>
+);
 
 //Generic - works for any playerId, not just the current player. Editing is only offered when
 //it's genuinely the signed-in caller's own profile (see RenameField) - the server independently
@@ -44,12 +69,15 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
                         <div className="text-lg font-semibold text-orange-500/80 mb-2">Levels created</div>
                         {profile.levels.length === 0
                             ? <div className="text-white/50 text-sm">No levels uploaded yet.</div>
-                            : <div className="flex flex-col gap-1">
+                            : <div className="flex flex-col gap-2">
                                 {profile.levels.map(level => (
-                                    <div key={level.id} className="flex items-center gap-3 text-white">
-                                        <span className="flex-1 truncate">{level.name}</span>
-                                        <span className="text-orange-500 text-sm">{level.rating.toFixed(1)}★</span>
-                                    </div>
+                                    <ProfileLevelRow
+                                        key={level.id}
+                                        thumbnailUrl={level.thumbnailUrl}
+                                        name={level.name}
+                                        detail={`${level.rating.toFixed(1)}★`}
+                                        onPlay={() => QueuePlayLevelAndReload({id: level.id, path: level.path})}
+                                    />
                                 ))}
                             </div>}
                     </div>
@@ -58,12 +86,15 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
                         <div className="text-lg font-semibold text-orange-500/80 mb-2">Personal bests</div>
                         {profile.personalBests.length === 0
                             ? <div className="text-white/50 text-sm">No runs recorded yet.</div>
-                            : <div className="flex flex-col gap-1">
+                            : <div className="flex flex-col gap-2">
                                 {profile.personalBests.map(pb => (
-                                    <div key={pb.levelId} className="flex items-center gap-3 text-white">
-                                        <span className="flex-1 truncate">{pb.levelName}</span>
-                                        <span className="text-orange-500 text-sm">{FormatTime(pb.timeSeconds)}</span>
-                                    </div>
+                                    <ProfileLevelRow
+                                        key={pb.levelId}
+                                        thumbnailUrl={pb.thumbnailUrl}
+                                        name={pb.levelName}
+                                        detail={FormatTime(pb.timeSeconds)}
+                                        onPlay={() => QueuePlayLevelAndReload({id: pb.levelId, path: pb.levelPath})}
+                                    />
                                 ))}
                             </div>}
                     </div>

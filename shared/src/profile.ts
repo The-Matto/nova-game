@@ -6,13 +6,18 @@ export interface PersonalBest {
     levelId : string;
     levelName : string;
     timeSeconds : number;
+    //Both needed for the profile's "Play" button - same reason LevelSummary carries them.
+    levelPath : string;
+    thumbnailUrl? : string;
 }
 
 //Response of GET /api/players/profile?playerId=X - public, viewable for any player id.
 export interface PlayerProfile {
     id : string;
     displayName : string;
+    //Most recent 5 only - see HandleProfile.
     levels : LevelSummary[];
+    //Most recently-played 5 only - see HandleProfile.
     personalBests : PersonalBest[];
     //null once permanently claimed (a real login linked) - an ISO date otherwise, when this
     //account will be deleted if never claimed (see CleanupAnonymousUsers.ts).

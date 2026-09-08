@@ -70,6 +70,32 @@ export const LevelSelection = {
     selectedLevelId: "test-world",
 };
 
+const PENDING_LEVEL_STORAGE_KEY = 'nova-game:pending-level-selection';
+
+//For jumping straight into a level from somewhere other than the level browser (e.g.
+//ProfileViewer's Play buttons) while a game may already be mounted - same "reload to reset
+//everything" approach as Return to Menu, but stashes which level to load first since a plain
+//reload alone would just land back on the main menu. App.tsx consumes this on boot.
+export function QueuePlayLevelAndReload(level : {id : string, path : string}) {
+    try {
+        sessionStorage.setItem(PENDING_LEVEL_STORAGE_KEY, JSON.stringify(level));
+    } catch {
+        //Ignore - falls through to a plain reload, landing on the menu instead.
+    }
+    window.location.reload();
+}
+
+export function ConsumePendingLevelSelection() : {id : string, path : string} | null {
+    try {
+        const raw = sessionStorage.getItem(PENDING_LEVEL_STORAGE_KEY);
+        if (!raw) return null;
+        sessionStorage.removeItem(PENDING_LEVEL_STORAGE_KEY);
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+
 //True while the player is in editor mode (free-fly, no-clip, RMB-to-look). Defaults from
 //GameMode since UI reads this as React initial state before PlayInEditor.Initialize runs.
 export const EditorState = {
