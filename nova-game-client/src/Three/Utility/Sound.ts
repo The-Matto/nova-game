@@ -11,6 +11,10 @@ const SOUND_PATHS = {
 
 export type SoundName = keyof typeof SOUND_PATHS;
 
+//Applied on top of every individual PlaySound call's own volume - a single global knob for
+//"everything's too loud" rather than having to retune each call site/sound separately.
+const GLOBAL_VOLUME_SCALE = 0.5;
+
 //One base HTMLAudioElement per sound, lazily created - actual playback always goes through a
 //cloneNode() of it instead, so overlapping plays (e.g. rapid-fire gunshots) each get their own
 //independent playhead rather than restarting/cutting off whatever's already playing.
@@ -24,7 +28,7 @@ export function PlaySound(name : SoundName, volume : number = 1) : void {
     }
 
     const instance = base.cloneNode() as HTMLAudioElement;
-    instance.volume = volume;
+    instance.volume = volume * GLOBAL_VOLUME_SCALE;
     //Browsers block audio before any user gesture on the page - not worth surfacing if one of
     //these four ever somehow fires before that.
     instance.play().catch(() => {});
