@@ -7,25 +7,41 @@ import {GameEvents} from "../Utility/GameEvents";
 import {StopLevelTimer} from "../Utility/LevelTimer";
 import {PlaySound} from "../Utility/Sound";
 
+//Tinted this while any objective (e.g. a target) is still incomplete - overrides the author's
+//configured color below to warn the player off, regardless of what that color is.
+const LOCKED_COLOR = '#e5484d';
+
 //The level's end goal - a trigger volume, not solid geometry. Entering it checks LevelObjectives
-//and fires a GameEvent for the UI layer to react to.
+//and fires a GameEvent for the UI layer to react to. Red/green isn't just decorative - see Tick,
+//which tints it LOCKED_COLOR while any objective's still incomplete and the author's own color
+//(unlockedColor) once they're all done.
 @RegisterClass("NVGoalVolume")
 export class NVGoalVolume extends NVActor {
 
     private bounds = new THREE.Box3();
     private playerWasInside : boolean = false;
+    private material : THREE.MeshStandardMaterial;
+    private unlockedColor : string;
+    //null until the first Tick actually checks - guarantees the very first real check sets the
+    //material instead of no-oping because it happens to match this default.
+    private isUnlocked : boolean | null = null;
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
 
+        this.unlockedColor = (descripter.properties?.color as string) ?? '#39d353';
+
+        //Starts unlocked-colored - editor mode never ticks the objectives check below (targets
+        //only register on real BeginPlay), and real gameplay corrects this on its very first Tick
+        //anyway, before the player can see it.
         const geometry = new THREE.BoxGeometry(descripter.scale.x, descripter.scale.y, descripter.scale.z);
-        const material = new THREE.MeshStandardMaterial({
-            color: (descripter.properties?.color as string) ?? '#39d353',
+        this.material = new THREE.MeshStandardMaterial({
+            color: this.unlockedColor,
             transparent: true,
             opacity: 0.35,
             depthWrite: false,
         });
-        this.scene = new THREE.Mesh(geometry, material);
+        this.scene = new THREE.Mesh(geometry, this.material);
 
         //Deliberately NOT added to NVScene.worldOctree - this is a trigger, not solid geometry.
     }
@@ -47,6 +63,12 @@ export class NVGoalVolume extends NVActor {
         //Trigger volumes are gameplay-only - editor mode is for inspecting/moving around the
         //level, not playing it.
         if (EditorState.isInEditor) return;
+
+        const isUnlocked = LevelObjectives.AllComplete();
+        if (isUnlocked !== this.isUnlocked) {
+            this.material.color.set(isUnlocked ? this.unlockedColor : LOCKED_COLOR);
+            this.isUnlocked = isUnlocked;
+        }
 
         const playerCollider = PlayerStatics.PlayerCharacter?.GetPhysicsComp().playerCollider;
         if (!playerCollider) return;
