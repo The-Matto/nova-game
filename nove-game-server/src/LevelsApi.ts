@@ -15,6 +15,14 @@ const MAX_DESCRIPTION_LENGTH = 500;
 //uploading a level isn't something a real player does often.
 const UPLOAD_RATE_LIMIT = 5;
 const UPLOAD_RATE_LIMIT_WINDOW_SECONDS = 60;
+//Global, not per-IP - a floodgate on the whole level browser filling up at once (spam or a
+//runaway script), on top of the per-IP limit above. Shares IsRateLimited's fixed-window counter
+//by passing a constant key instead of a real IP.
+const GLOBAL_UPLOAD_RATE_LIMIT = 50;
+const GLOBAL_UPLOAD_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
+const GLOBAL_UPLOAD_RATE_LIMIT_KEY = "global";
+//Hard cap on the level browser's total size - not a rate, an absolute ceiling.
+const MAX_TOTAL_LEVELS = 1000;
 //More generous - rating a level after every playthrough is the expected common case.
 const RATING_RATE_LIMIT = 20;
 const RATING_RATE_LIMIT_WINDOW_SECONDS = 60;
@@ -116,6 +124,11 @@ async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : 
         res.end();
         return;
     }
+    if (await IsRateLimited(GLOBAL_UPLOAD_RATE_LIMIT_KEY, "levels-global", GLOBAL_UPLOAD_RATE_LIMIT, GLOBAL_UPLOAD_RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
 
     let parsed : unknown;
     try {
@@ -156,6 +169,14 @@ async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : 
     const authorExists = await pool.query("SELECT 1 FROM users WHERE id = $1", [playerId]);
     if (authorExists.rowCount === 0) {
         res.writeHead(400);
+        res.end();
+        return;
+    }
+
+    //Also checked before touching R2 - same reasoning as the author check above.
+    const levelCount = await pool.query("SELECT COUNT(*) FROM levels");
+    if (Number(levelCount.rows[0].count) >= MAX_TOTAL_LEVELS) {
+        res.writeHead(409);
         res.end();
         return;
     }
