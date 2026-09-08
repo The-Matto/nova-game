@@ -13,8 +13,13 @@ import {ReadBody} from "./Http";
 const OAUTH_STATE_TTL_SECONDS = 10 * 60;
 const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 const MAX_DISPLAY_NAME_LENGTH = 40;
-const RATE_LIMIT = 5;
-const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RENAME_RATE_LIMIT = 5;
+const RENAME_RATE_LIMIT_WINDOW_SECONDS = 60;
+//A bit more generous than rename - a real user might click sign-in, cancel, and retry a couple
+//times. Applies to the callback too, even though it's already gated by needing a real, unguessable
+//state - defense in depth against someone just hammering it with garbage.
+const LOGIN_RATE_LIMIT = 10;
+const LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
 //GitHub's API requires a User-Agent on every request - it's not optional like most REST APIs.
 const GITHUB_USER_AGENT = "nova-game";
 
@@ -26,6 +31,12 @@ function OAuthStateKey(state : string) : string {
 //Redis (not the playerId itself) so a tampered state param can't link GitHub to the wrong
 //account; only the value this server already put there is ever trusted back.
 async function HandleGitHubLogin(req : IncomingMessage, res : ServerResponse, url : URL) : Promise<void> {
+    if (await IsRateLimited(GetClientIp(req), "github-login", LOGIN_RATE_LIMIT, LOGIN_RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
+
     const playerId = url.searchParams.get("playerId");
     if (!playerId) {
         res.writeHead(400);
@@ -78,6 +89,12 @@ async function FetchGitHubProfile(code : string) : Promise<{id : string, email :
 }
 
 async function HandleGitHubCallback(req : IncomingMessage, res : ServerResponse, url : URL) : Promise<void> {
+    if (await IsRateLimited(GetClientIp(req), "github-callback", LOGIN_RATE_LIMIT, LOGIN_RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
+
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
     if (!code || !state) {
@@ -180,7 +197,7 @@ async function HandleRename(req : IncomingMessage, res : ServerResponse) : Promi
         return;
     }
 
-    if (await IsRateLimited(GetClientIp(req), "rename", RATE_LIMIT, RATE_LIMIT_WINDOW_SECONDS)) {
+    if (await IsRateLimited(GetClientIp(req), "rename", RENAME_RATE_LIMIT, RENAME_RATE_LIMIT_WINDOW_SECONDS)) {
         res.writeHead(429);
         res.end();
         return;

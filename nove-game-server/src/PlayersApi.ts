@@ -8,8 +8,12 @@ import {ReadBody} from "./Http";
 const MAX_DISPLAY_NAME_LENGTH = 40;
 //A real browser registers once ever (see PlayerIdentity.ts) - this just caps a script hammering
 //the endpoint to mint fake users, not normal usage.
-const RATE_LIMIT = 10;
-const RATE_LIMIT_WINDOW_SECONDS = 60;
+const REGISTER_RATE_LIMIT = 10;
+const REGISTER_RATE_LIMIT_WINDOW_SECONDS = 60;
+//More generous - browsing several players' profiles in one session is normal. Still worth a cap
+//since it's three queries per call, heavier than the other GETs.
+const PROFILE_RATE_LIMIT = 30;
+const PROFILE_RATE_LIMIT_WINDOW_SECONDS = 60;
 
 function IsValidRegistration(value : any) : value is RegisterPlayerRequest {
     return typeof value?.displayName === "string"
@@ -17,7 +21,7 @@ function IsValidRegistration(value : any) : value is RegisterPlayerRequest {
 }
 
 async function HandleRegister(req : IncomingMessage, res : ServerResponse) : Promise<void> {
-    if (await IsRateLimited(GetClientIp(req), "players", RATE_LIMIT, RATE_LIMIT_WINDOW_SECONDS)) {
+    if (await IsRateLimited(GetClientIp(req), "players", REGISTER_RATE_LIMIT, REGISTER_RATE_LIMIT_WINDOW_SECONDS)) {
         res.writeHead(429);
         res.end();
         return;
@@ -48,7 +52,13 @@ async function HandleRegister(req : IncomingMessage, res : ServerResponse) : Pro
 }
 
 //Public - anyone can view anyone's profile (levels they've made, their best time per level).
-async function HandleProfile(res : ServerResponse, url : URL) : Promise<void> {
+async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : URL) : Promise<void> {
+    if (await IsRateLimited(GetClientIp(req), "profile", PROFILE_RATE_LIMIT, PROFILE_RATE_LIMIT_WINDOW_SECONDS)) {
+        res.writeHead(429);
+        res.end();
+        return;
+    }
+
     const playerId = url.searchParams.get("playerId");
     if (!playerId) {
         res.writeHead(400);
@@ -114,7 +124,7 @@ export async function HandlePlayersRequest(req : IncomingMessage, res : ServerRe
         return true;
     }
     if (url.pathname === "/api/players/profile" && req.method === "GET") {
-        await HandleProfile(res, url);
+        await HandleProfile(req, res, url);
         return true;
     }
 
