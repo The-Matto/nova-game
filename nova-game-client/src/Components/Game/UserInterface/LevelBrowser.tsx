@@ -106,6 +106,10 @@ const LevelOwnerMenu = ({onEdit, onConfirmDelete} : {onEdit : () => void, onConf
 //something.
 const PAGE_SIZE = 10;
 
+//How many levels get the 🔥 "popular this week" marker on their name - a genuine top N, not just
+//"played at all this week".
+const POPULAR_THIS_WEEK_COUNT = 3;
+
 type SortMode = 'default' | 'popular' | 'new' | 'mostPlayed';
 
 const SORT_OPTIONS : {mode : SortMode, label : string}[] = [
@@ -168,6 +172,16 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
             .then(setLevels)
             .catch(() => setError("Couldn't reach the level server - is it running?"));
     }, []);
+
+    //The genuine top N by weekly plays across every level, not just "played at all this week" -
+    //computed off the full list so it doesn't shift around as search/tag/page filters change.
+    const popularLevelIds = new Set(
+        [...(levels ?? [])]
+            .filter(level => level.weeklyPlays > 0)
+            .sort((a, b) => b.weeklyPlays - a.weeklyPlays)
+            .slice(0, POPULAR_THIS_WEEK_COUNT)
+            .map(level => level.id)
+    );
 
     const query = search.trim().toLowerCase();
     //Tag filter is OR - a level matches if it has any of the selected tags, not all of them.
@@ -263,7 +277,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                                     : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
                                 <div className="flex-1 min-w-0 flex flex-col gap-1">
                                     <div className="text-xl text-white font-semibold truncate">
-                                        {level.weeklyPlays > 0 && '🔥 '}{level.name}
+                                        {popularLevelIds.has(level.id) && '🔥 '}{level.name}
                                     </div>
                                     {level.tags.length > 0 && <div className="flex flex-wrap gap-1">
                                         {level.tags.map(tag => <TagPill key={tag} tag={tag} />)}
@@ -271,8 +285,8 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                                 </div>
                                 <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
                                 <div className="w-32"><RatingStars rating={level.rating} /></div>
-                                <div className="w-24 text-orange-500/70 text-xs shrink-0">
-                                    {level.totalPlays > 0 && `🔥 ${level.totalPlays} plays`}
+                                <div className="w-24 text-orange-500/70 text-sm shrink-0">
+                                    {level.totalPlays > 0 && level.totalPlays}
                                 </div>
                                 <div className="w-24 text-white/50 text-sm text-right">
                                     {new Date(level.uploadedAt).toLocaleDateString()}
