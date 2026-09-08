@@ -1,9 +1,9 @@
 import {useState} from "react";
 import {NVScene} from "../../../Three/NVScene";
 import {Game} from "../../../Three/Game";
-import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {DragNumberInput} from "../../UI/DragNumberInput";
 import {EditorLevelStorageModal} from "./EditorLevelStorageModal";
+import {EditorUploadModal} from "./EditorUploadModal";
 
 //Sits at the far left (see EditorMenu) - level-wide settings (as opposed to any one actor's, see
 //EditorInspectorPanel) plus save/load (browser storage, see EditorLevelStorageModal) and upload,
@@ -15,43 +15,15 @@ export const EditorWorldSettingsPanel = () => {
     const [fogDistance, setFogDistance] = useState(NVScene.worldSettings.fogDistance);
 
     const [showStorageModal, setShowStorageModal] = useState(false);
-    const [showUpload, setShowUpload] = useState(false);
-    const [uploadName, setUploadName] = useState("");
-    const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
+    //Set (not just a boolean) so the captured thumbnail is available to render as soon as the
+    //modal opens - captured once here, at open time, not re-captured at submit time.
+    const [uploadThumbnail, setUploadThumbnail] = useState<string | null>(null);
 
     //Applies straight to the live scene, same "mutate the live instance directly" pattern as
     //EditorInspectorPanel - the local state above is only for these controls to be controlled
     //inputs, not the source of truth.
     const applySettings = (next : Partial<typeof NVScene.worldSettings>) => {
         NVScene.ApplyWorldSettings({...NVScene.worldSettings, ...next});
-    };
-
-    //Sends the current level (plus a screenshot of the editor view as its thumbnail) to the
-    //backend - see LevelsApi.ts's POST /api/levels.
-    const uploadLevel = async () => {
-        if (!uploadName.trim()) return;
-        setUploadStatus('uploading');
-        try {
-            const playerId = await EnsureRegistered();
-            const thumbnailDataUrl = Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85);
-            const res = await fetch('/api/levels', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    playerId,
-                    name: uploadName.trim(),
-                    levelData: NVScene.SerializeLevel(),
-                    thumbnailDataUrl,
-                }),
-            });
-            if (!res.ok) throw new Error(`Server responded ${res.status}`);
-
-            setUploadStatus('idle');
-            setShowUpload(false);
-            setUploadName("");
-        } catch {
-            setUploadStatus('error');
-        }
     };
 
     //After loading a saved/imported level, the panel's own controls need to catch up to whatever
@@ -105,37 +77,18 @@ export const EditorWorldSettingsPanel = () => {
             </button>
             <button
                 className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
-                onClick={() => {
-                    setShowUpload(v => !v);
-                    setUploadStatus('idle');
-                }}
+                onClick={() => setUploadThumbnail(Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85))}
             >
                 Upload
             </button>
         </div>
 
-        {showUpload && (
-            <div className="mb-3 flex flex-col gap-2">
-                <input
-                    type="text"
-                    value={uploadName}
-                    onChange={e => setUploadName(e.target.value)}
-                    placeholder="Level name..."
-                    className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
-                />
-                {uploadStatus === 'error' && <div className="text-sm text-red-400">Upload failed - try again.</div>}
-                <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer disabled:opacity-50"
-                    onClick={uploadLevel}
-                    disabled={uploadStatus === 'uploading' || !uploadName.trim()}
-                >
-                    {uploadStatus === 'uploading' ? "Uploading…" : "Upload to Nova"}
-                </button>
-            </div>
-        )}
-
         {showStorageModal && (
             <EditorLevelStorageModal onClose={onLevelLoaded} />
+        )}
+
+        {uploadThumbnail && (
+            <EditorUploadModal thumbnailDataUrl={uploadThumbnail} onClose={() => setUploadThumbnail(null)} />
         )}
     </div>;
 };
