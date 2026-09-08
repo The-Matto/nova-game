@@ -77,7 +77,8 @@ export const EditorWorldSettingsPanel = () => {
                 <DragNumberInput
                     value={fogDistance}
                     onChange={v => { setFogDistance(v); applySettings({fogDistance: v}); }}
-                    min={0}
+                    min={1}
+                    max={100}
                     sensitivity={1}
                     className="w-16 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
                 />

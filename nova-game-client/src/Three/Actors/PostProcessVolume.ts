@@ -6,6 +6,10 @@ import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 
+//How long an enter/exit takes to blend, in seconds - short enough to still read as reacting to
+//the player, long enough not to feel like an instant, jarring cut.
+const TRANSITION_SECONDS = 1;
+
 //A trigger volume, not solid geometry - swaps the level's sky color/fog distance for custom ones
 //while the player's inside it, reverting to the level's own settings on exit. Doesn't touch
 //NVScene.worldSettings itself (only the live scene.background/fog), so the level's real settings
@@ -17,6 +21,16 @@ export class NVPostProcessVolume extends NVActor {
 
     private bounds = new THREE.Box3();
     private playerWasInside : boolean = false;
+
+    //Blends the live scene.background/fog from whatever they currently are to a target over
+    //TRANSITION_SECONDS - see StartTransition/Tick. isTransitioning false means Tick leaves the
+    //scene's visuals alone entirely.
+    private isTransitioning : boolean = false;
+    private transitionElapsed : number = 0;
+    private transitionFromColor = new THREE.Color();
+    private transitionToColor = new THREE.Color();
+    private transitionFromFog : number = 0;
+    private transitionToFog : number = 0;
 
     @EditableProperty()
     public overrideSkyColor : string = '#2b1055';
@@ -61,19 +75,27 @@ export class NVPostProcessVolume extends NVActor {
     }
 
     //Retry teleports the player back to the spawn point, wherever that is relative to this volume
-    //- if they died mid-override, revert now rather than leaving the scene stuck on it.
+    //- if they died mid-override, snap back instantly rather than fading out over a respawn (and
+    //rather than leaving the scene stuck on the override).
     public OnPlayerRespawned() : void {
-        if (this.playerWasInside) this.RevertOverride();
+        if (this.playerWasInside) {
+            this.isTransitioning = false;
+            NVScene.ApplyWorldSettings(NVScene.worldSettings);
+        }
         this.playerWasInside = false;
     }
 
     //Fired by the inspector panel on every edit (see NVActor.ApplyEditableProperties/
-    //EditorInspectorPanel) - re-applies immediately if the override's already active, so tweaking
-    //the color/fog distance while standing inside the volume updates the world live instead of
-    //only taking effect on the next enter.
+    //EditorInspectorPanel) - snaps to the new value immediately if the override's already active,
+    //rather than blending, so tuning the color/fog distance while standing inside reads as direct
+    //feedback instead of chasing a moving target.
     public OnEditablePropertyChanged(key : string) : void {
         super.OnEditablePropertyChanged(key);
-        if (this.playerWasInside) this.ApplyOverride();
+        if (!this.playerWasInside) return;
+
+        this.isTransitioning = false;
+        NVScene.scene.background = new THREE.Color(this.overrideSkyColor);
+        NVScene.scene.fog = new THREE.Fog(this.overrideSkyColor, 0, this.overrideFogDistance);
     }
 
     Tick(deltaTime : number) {
@@ -93,21 +115,38 @@ export class NVPostProcessVolume extends NVActor {
             isInside = this.bounds.containsPoint(playerCollider.start) || this.bounds.containsPoint(playerCollider.end);
         }
 
-        if (isInside && !this.playerWasInside) this.ApplyOverride();
-        else if (!isInside && this.playerWasInside) this.RevertOverride();
+        if (isInside && !this.playerWasInside) this.StartTransition(this.overrideSkyColor, this.overrideFogDistance);
+        else if (!isInside && this.playerWasInside) this.StartTransition(NVScene.worldSettings.skyColor, NVScene.worldSettings.fogDistance);
 
         this.playerWasInside = isInside;
+
+        this.UpdateTransition(deltaTime);
     }
 
-    private ApplyOverride() {
-        NVScene.scene.background = new THREE.Color(this.overrideSkyColor);
-        NVScene.scene.fog = new THREE.Fog(this.overrideSkyColor, 0, this.overrideFogDistance);
+    //Blends from whatever the scene's actually showing right now (not necessarily this volume's
+    //own previous target - could be mid-blend already, e.g. two volumes entered back to back) to
+    //the new target over TRANSITION_SECONDS.
+    private StartTransition(targetColorHex : string, targetFogDistance : number) {
+        this.transitionFromColor.copy((NVScene.scene.background as THREE.Color | null) ?? new THREE.Color(targetColorHex));
+        this.transitionToColor.set(targetColorHex);
+        //This codebase only ever uses THREE.Fog (linear), never FogExp2 - which is the only other
+        //thing NVScene.scene.fog could be, and doesn't have a `far` to read.
+        this.transitionFromFog = NVScene.scene.fog instanceof THREE.Fog ? NVScene.scene.fog.far : targetFogDistance;
+        this.transitionToFog = targetFogDistance;
+        this.transitionElapsed = 0;
+        this.isTransitioning = true;
     }
 
-    //Reapplies the level's own (untouched) settings rather than remembering what was active
-    //before entering - simpler, and still correct even if this volume's own properties were
-    //edited while the player was inside it.
-    private RevertOverride() {
-        NVScene.ApplyWorldSettings(NVScene.worldSettings);
+    private UpdateTransition(deltaTime : number) {
+        if (!this.isTransitioning) return;
+
+        this.transitionElapsed += deltaTime;
+        const t = Math.min(this.transitionElapsed / TRANSITION_SECONDS, 1);
+
+        const color = this.transitionFromColor.clone().lerp(this.transitionToColor, t);
+        NVScene.scene.background = color;
+        NVScene.scene.fog = new THREE.Fog(color, 0, THREE.MathUtils.lerp(this.transitionFromFog, this.transitionToFog, t));
+
+        if (t >= 1) this.isTransitioning = false;
     }
 }

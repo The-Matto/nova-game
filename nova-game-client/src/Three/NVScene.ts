@@ -12,7 +12,7 @@ import {EditorState, LevelSelection} from "./Utility/PlayerGlobals.ts";
 import {GameEvents} from "./Utility/GameEvents.ts";
 
 //Matches what every level used before this was configurable.
-export const DEFAULT_WORLD_SETTINGS : WorldSettings = {skyColor: "#88ccee", killY: -50, fogDistance: 1000};
+export const DEFAULT_WORLD_SETTINGS : WorldSettings = {skyColor: "#88ccee", killY: -50, fogDistance: 100};
 
 //Editor-only ceiling on a single level's actor count (see EditorSpawning/EditorSelection, which
 //are the only spawn paths that check it - gameplay-spawned actors like projectiles aren't gated).
