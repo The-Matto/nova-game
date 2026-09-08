@@ -9,8 +9,7 @@ import {NVScene} from "../NVScene.ts";
 const SPIKE_GRID_SIZE = 5;
 
 //Shared by every spike instance - one texture, loaded once from public/ (same pattern as
-//NVTargetActor's TARGET_TEXTURE). Only on the spike cones, not the base - spikeColor already
-//only tints those too.
+//NVTargetActor's TARGET_TEXTURE). Only on the spike cones, not the base.
 const SPIKE_TEXTURE = new THREE.TextureLoader().load('/T_Spikes.png');
 
 //A cube base with a 5x5 grid of cone spikes. Always solid (doubles as a platform); a trigger
@@ -35,9 +34,6 @@ export class NVSpikeActor extends NVActor {
     //Counts up from BeginPlay - compared against startDelay each Tick (not snapshotted once,
     //since startDelay's real value only lands after construction - see ApplyEditableProperties).
     private timeSinceBeginPlay : number = 0;
-
-    @EditableProperty()
-    public spikeColor : string = '#8a8f99';
 
     @EditableProperty()
     public isTimed : boolean = false;
@@ -82,7 +78,10 @@ export class NVSpikeActor extends NVActor {
 
         const spikeHeight = descripter.scale.y * 0.8;
         const spikeRadius = Math.min(stepX, stepZ) * 0.35;
-        this.spikeMaterial = new THREE.MeshStandardMaterial({color: this.spikeColor, map: SPIKE_TEXTURE, metalness: 0.6, roughness: 0.4});
+        //No color/metalness - those were tinting/darkening the texture (metalness needs an
+        //environment map to read as anything but near-black under this scene's plain two-light
+        //setup). Just the texture, unmodified.
+        this.spikeMaterial = new THREE.MeshStandardMaterial({map: SPIKE_TEXTURE});
 
         //Extended: tip pokes up above the cube. Retracted: sunk back down flush with its top.
         this.extendedY = descripter.scale.y / 2 + spikeHeight / 2;
@@ -102,10 +101,6 @@ export class NVSpikeActor extends NVActor {
         }
 
         //Not added to the world octree here - RegisterCollision() does that (called from Init()).
-    }
-
-    public OnEditablePropertyChanged(key : string) {
-        if (key === 'spikeColor') this.spikeMaterial.color.set(this.spikeColor);
     }
 
     public async Init(descripter : SpawnDescriptor) {
