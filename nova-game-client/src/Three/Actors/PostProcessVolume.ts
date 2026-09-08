@@ -6,10 +6,6 @@ import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 
-//How long an enter/exit takes to blend, in seconds - short enough to still read as reacting to
-//the player, long enough not to feel like an instant, jarring cut.
-const TRANSITION_SECONDS = 1;
-
 //A trigger volume, not solid geometry - swaps the level's sky color/fog distance for custom ones
 //while the player's inside it, reverting to the level's own settings on exit. Doesn't touch
 //NVScene.worldSettings itself (only the live scene.background/fog), so the level's real settings
@@ -23,7 +19,7 @@ export class NVPostProcessVolume extends NVActor {
     private playerWasInside : boolean = false;
 
     //Blends the live scene.background/fog from whatever they currently are to a target over
-    //TRANSITION_SECONDS - see StartTransition/Tick. isTransitioning false means Tick leaves the
+    //transitionDuration - see StartTransition/Tick. isTransitioning false means Tick leaves the
     //scene's visuals alone entirely.
     private isTransitioning : boolean = false;
     private transitionElapsed : number = 0;
@@ -35,11 +31,17 @@ export class NVPostProcessVolume extends NVActor {
     @EditableProperty()
     public overrideSkyColor : string = '#2b1055';
 
-    //Matches EditorWorldSettingsPanel's own Fog Distance slider's sensitivity - without this it
-    //defaults to DragNumberInput's much finer 0.1/px, making the same drag distance move this
-    //value ~10x less than the base setting's slider, despite being the exact same kind of value.
-    @EditableProperty({min: 0, sensitivity: 1})
-    public overrideFogDistance : number = 40;
+    //Matches EditorWorldSettingsPanel's own Fog Distance slider - same range (1-100) and the same
+    //sensitivity, since without it this defaults to DragNumberInput's much finer 0.1/px, making
+    //the same drag distance move this value ~10x less than the base setting's slider despite
+    //being the exact same kind of value.
+    @EditableProperty({min: 1, max: 100, sensitivity: 1})
+    public overrideFogDistance : number = 100;
+
+    //How long an enter/exit takes to blend, in seconds - see UpdateTransition. Floored just above
+    //0 rather than at it, same reasoning as NVSpikeActor's transitionDuration - it divides by this.
+    @EditableProperty({min: 0.01})
+    public transitionDuration : number = 1;
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
@@ -125,7 +127,7 @@ export class NVPostProcessVolume extends NVActor {
 
     //Blends from whatever the scene's actually showing right now (not necessarily this volume's
     //own previous target - could be mid-blend already, e.g. two volumes entered back to back) to
-    //the new target over TRANSITION_SECONDS.
+    //the new target over transitionDuration.
     private StartTransition(targetColorHex : string, targetFogDistance : number) {
         this.transitionFromColor.copy((NVScene.scene.background as THREE.Color | null) ?? new THREE.Color(targetColorHex));
         this.transitionToColor.set(targetColorHex);
@@ -141,7 +143,7 @@ export class NVPostProcessVolume extends NVActor {
         if (!this.isTransitioning) return;
 
         this.transitionElapsed += deltaTime;
-        const t = Math.min(this.transitionElapsed / TRANSITION_SECONDS, 1);
+        const t = Math.min(this.transitionElapsed / this.transitionDuration, 1);
 
         const color = this.transitionFromColor.clone().lerp(this.transitionToColor, t);
         NVScene.scene.background = color;
