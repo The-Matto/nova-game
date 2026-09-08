@@ -258,6 +258,11 @@ export class PlayerController {
         this.isRightMouseDown = false;
         EditorState.isInEditor = true;
         CursorState.isCursorNeeded = true;
+        //Explicit rather than relying on a pointerlockchange event to set this - pointer lock is
+        //usually already released by now (e.g. Escape released it before the pause menu even
+        //opened), so exitPointerLock() below is often a no-op that fires no event at all, leaving
+        //nothing else to un-stick this if it were ever wrong.
+        InputInfo.gameHasFocus = true;
         if (document.pointerLockElement) document.exitPointerLock();
         PlayInEditor.StopPlaying();
         GameEvents.Emit('editorModeChanged', {isInEditor: true});

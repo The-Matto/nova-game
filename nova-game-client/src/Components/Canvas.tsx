@@ -48,19 +48,26 @@ export const ThreeCanvas = () => {
         });
 
         document.addEventListener('pointerlockchange', () => {
-                //Pointer lock is deliberately released sometimes (editor mode, a modal UI), but
-                //the game loop still needs to tick/render then - gameHasFocus isn't purely this.
                 const isLocked = document.pointerLockElement === container;
-                InputInfo.gameHasFocus = isLocked || CursorState.isCursorNeeded;
 
                 //Losing lock mid-gameplay (Escape, clicking away, ...) force-pauses - same as
-                //losing window focus (see ReactInputHandler's blur handler).
+                //losing window focus (see ReactInputHandler's blur handler). Done before the
+                //gameHasFocus recompute below: Escape releases lock itself before this handler
+                //ever runs, so Pause() (via the game menu opening) is what flips
+                //CursorState.isCursorNeeded true here - reading it first would catch the stale
+                //pre-pause value and wrongly leave gameHasFocus false, freezing the game loop
+                //(including input) until something else happened to fire another
+                //pointerlockchange event to correct it, which often never came.
                 if (!isLocked && !EditorState.isInEditor) {
                     const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
                     if (physics && !physics.isDead && !physics.isPaused && !physics.isLevelComplete) {
                         PlayerStatics.PlayerCharacter?.Pause();
                     }
                 }
+
+                //Pointer lock is deliberately released sometimes (editor mode, a modal UI), but
+                //the game loop still needs to tick/render then - gameHasFocus isn't purely this.
+                InputInfo.gameHasFocus = isLocked || CursorState.isCursorNeeded;
         });
 
 
