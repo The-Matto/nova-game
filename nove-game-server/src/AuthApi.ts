@@ -112,9 +112,10 @@ async function HandleGitHubCallback(req : IncomingMessage, res : ServerResponse,
         [githubId],
     );
 
-    const sessionUserId : string = existing.rowCount === 0 ? playerId : existing.rows[0].user_id;
+    const isFirstLink = existing.rowCount === 0;
+    const sessionUserId : string = isFirstLink ? playerId : existing.rows[0].user_id;
 
-    if (existing.rowCount === 0) {
+    if (isFirstLink) {
         await pool.query(
             "INSERT INTO oauth_identities (user_id, provider, provider_user_id, email) VALUES ($1, 'github', $2, $3) ON CONFLICT (provider, provider_user_id) DO NOTHING",
             [sessionUserId, githubId, email ?? null],
@@ -128,7 +129,9 @@ async function HandleGitHubCallback(req : IncomingMessage, res : ServerResponse,
 
     const sessionToken = await CreateSession(sessionUserId);
     res.writeHead(302, {
-        Location: "/",
+        //The client uses this to prompt for a chosen username on a first link, instead of
+        //silently sticking with whatever GitHub's own profile name happened to be.
+        Location: isFirstLink ? "/?welcome=1" : "/",
         "Set-Cookie": BuildSetCookie(req, SESSION_COOKIE_NAME, sessionToken, SESSION_MAX_AGE_SECONDS),
     });
     res.end();
