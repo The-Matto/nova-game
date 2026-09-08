@@ -147,9 +147,13 @@ export function IsGameplayFrozen() : boolean {
     return !!physics && (physics.isDead || physics.isPaused || physics.isCountingDown || physics.isLevelComplete);
 }
 
-//Cheap stand-in for real audio attenuation (see SpikeActor/CannonActor) - just gates whether a
-//world-space sound plays at all, rather than actually falling off with distance.
-export function IsPlayerWithinRange(position : THREE.Vector3, maxDistance : number) : boolean {
+//Cheap stand-in for real audio attenuation (see SpikeActor/CannonActor) - linear falloff from
+//maxVolume at distance 0 down to 0 at maxDistance, clamped. 0 (i.e. don't play at all) once
+//beyond maxDistance, or if there's no player position to measure against yet.
+export function GetDistanceVolume(position : THREE.Vector3, maxDistance : number, maxVolume : number = 1) : number {
     const playerPosition = PlayerStatics.PlayerCharacter?.scene.position;
-    return !!playerPosition && playerPosition.distanceTo(position) <= maxDistance;
+    if (!playerPosition) return 0;
+
+    const distance = playerPosition.distanceTo(position);
+    return Math.max(0, 1 - distance / maxDistance) * maxVolume;
 }

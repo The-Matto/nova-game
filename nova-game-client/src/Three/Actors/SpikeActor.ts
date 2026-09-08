@@ -2,15 +2,16 @@ import {NVActor} from "../Actor.ts";
 import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
-import {EditorState, IsGameplayFrozen, IsPlayerWithinRange, PlayerStatics} from "../Utility/PlayerGlobals";
+import {EditorState, GetDistanceVolume, IsGameplayFrozen, PlayerStatics} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {NVScene} from "../NVScene.ts";
 import {PlaySound} from "../Utility/Sound.ts";
 
 const SPIKE_GRID_SIZE = 5;
-//Distance-gated instead of true attenuation (see IsPlayerWithinRange) - close enough to hear the
-//mechanism, not the whole level.
-const SOUND_MAX_DISTANCE = 20;
+//A short mechanical sound - doesn't need to carry far, and shouldn't compete with the rest of the
+//level's audio even up close (see GetDistanceVolume).
+const SOUND_MAX_DISTANCE = 10;
+const SOUND_MAX_VOLUME = 0.45;
 
 //Shared by every spike instance - one texture, loaded once from public/ (same pattern as
 //NVTargetActor's TARGET_TEXTURE). Used on both the base cube and the cones.
@@ -198,8 +199,11 @@ export class NVSpikeActor extends NVActor {
         }
 
         if (phase !== this.lastPhase) {
-            if (phase === 'goingDown' && IsPlayerWithinRange(this.scene.position, SOUND_MAX_DISTANCE)) PlaySound('spikesRetract');
-            if (phase === 'goingUp' && IsPlayerWithinRange(this.scene.position, SOUND_MAX_DISTANCE)) PlaySound('spikesExtend');
+            const volume = GetDistanceVolume(this.scene.position, SOUND_MAX_DISTANCE, SOUND_MAX_VOLUME);
+            if (volume > 0) {
+                if (phase === 'goingDown') PlaySound('spikesRetract', volume);
+                if (phase === 'goingUp') PlaySound('spikesExtend', volume);
+            }
             this.lastPhase = phase;
         }
     }
