@@ -7,6 +7,7 @@ import {GameEvents} from "../Utility/GameEvents.ts";
 import {NVTargetActor} from "./TargetActor.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
 import {PlayerSettings, PlayerStatics} from "../Utility/PlayerGlobals.ts";
+import {PlaySound} from "../Utility/Sound.ts";
 
 //A momentary visual per shot (impact marker, trace beam) - see NVWeapon.UpdateEffects.
 type TimedEffect = {
@@ -109,6 +110,7 @@ export class NVWeapon extends NVActor {
     private static activeEffects = new Set<TimedEffect>();
 
     public Fire() {
+        PlaySound('fireWeapon');
         this.recoilOffset = Math.min(this.recoilOffset + NVWeapon.RECOIL_KICK, NVWeapon.RECOIL_MAX);
 
         const camera = MainCamera.GetCamera();

@@ -6,6 +6,7 @@ import {NVWeapon} from "./Weapon.ts";
 import * as THREE from "three";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {StartCountdown} from "../Utility/Countdown.ts";
+import {PlaySound} from "../Utility/Sound.ts";
 
 //The real gameplay pawn: gravity, collision, jumping. Spawned fresh each PIE start at the
 //level's NVPlayerSpawn marker - never placed directly in level JSON.
@@ -51,6 +52,7 @@ export class NVPlayerCharacter extends NVPawn {
         this.playerPhysics.isDead = true;
         this.playerPhysics.playerVelocity.set(0, 0, 0);
         GameEvents.Emit('gameMenuOpened', {reason: 'died'});
+        PlaySound('playerDeath');
     }
 
     //Called by the game menu's "Retry" button - the deferred reset PlayerDeath held off on, or

@@ -1,0 +1,27 @@
+const SOUND_PATHS = {
+    fireWeapon: '/audio/fire-weapon.wav',
+    uiClick: '/audio/ui-click.wav',
+    playerDeath: '/audio/player-death.wav',
+    levelComplete: '/audio/level-complete.wav',
+} as const;
+
+export type SoundName = keyof typeof SOUND_PATHS;
+
+//One base HTMLAudioElement per sound, lazily created - actual playback always goes through a
+//cloneNode() of it instead, so overlapping plays (e.g. rapid-fire gunshots) each get their own
+//independent playhead rather than restarting/cutting off whatever's already playing.
+const baseElements = new Map<SoundName, HTMLAudioElement>();
+
+export function PlaySound(name : SoundName, volume : number = 1) : void {
+    let base = baseElements.get(name);
+    if (!base) {
+        base = new Audio(SOUND_PATHS[name]);
+        baseElements.set(name, base);
+    }
+
+    const instance = base.cloneNode() as HTMLAudioElement;
+    instance.volume = volume;
+    //Browsers block audio before any user gesture on the page - not worth surfacing if one of
+    //these four ever somehow fires before that.
+    instance.play().catch(() => {});
+}

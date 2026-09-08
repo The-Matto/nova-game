@@ -1,5 +1,5 @@
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import './App.css'
 import {ThreeCanvas} from "./Components/Canvas.tsx";
 import {ReactInputHandler} from "./Components/ReactInputHandler.tsx";
@@ -7,8 +7,19 @@ import {MainMenu} from "./Components/Game/UserInterface/MainMenu.tsx";
 import {HomeLink} from "./Components/HomeLink.tsx";
 import {ConsumePendingLevelSelection, CursorState, EditorState, GameMode, LevelSelection} from "./Three/Utility/PlayerGlobals.ts";
 import {RecordLevelPlay} from "./Three/Utility/LevelPlays.ts";
+import {PlaySound} from "./Three/Utility/Sound.ts";
 
 function App() {
+
+    //Delegated rather than wiring every individual button's onClick - there are dozens of them
+    //across the menus/editor/HUD, and any button anywhere should make this sound.
+    useEffect(() => {
+        const onClick = (e : MouseEvent) => {
+            if ((e.target as HTMLElement | null)?.closest('button')) PlaySound('uiClick');
+        };
+        document.addEventListener('click', onClick);
+        return () => document.removeEventListener('click', onClick);
+    }, []);
 
     //The game (Canvas -> Game) only mounts once a choice is made on the main menu - see
     //MainMenu, which also sets GameMode.appMode beforehand. A queued level (see

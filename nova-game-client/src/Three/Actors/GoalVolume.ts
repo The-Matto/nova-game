@@ -5,6 +5,7 @@ import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
 import {LevelObjectives} from "../Gameplay/LevelObjectives";
 import {GameEvents} from "../Utility/GameEvents";
 import {StopLevelTimer} from "../Utility/LevelTimer";
+import {PlaySound} from "../Utility/Sound";
 
 //The level's end goal - a trigger volume, not solid geometry. Entering it checks LevelObjectives
 //and fires a GameEvent for the UI layer to react to.
@@ -68,6 +69,7 @@ export class NVGoalVolume extends NVActor {
             StopLevelTimer();
             PlayerStatics.PlayerCharacter?.LevelComplete();
             GameEvents.Emit('levelComplete', undefined);
+            PlaySound('levelComplete');
         }
     }
 }
