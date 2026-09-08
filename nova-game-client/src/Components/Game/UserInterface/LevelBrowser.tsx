@@ -232,6 +232,15 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                 </div>
             </div>
 
+            <div className="flex items-center gap-4 px-4 text-[11px] uppercase tracking-wide text-orange-500/50 font-semibold">
+                <div className="w-24 shrink-0" />
+                <div className="flex-1">Level</div>
+                <div className="w-32">Created By</div>
+                <div className="w-32">Rating</div>
+                <div className="w-24 shrink-0">Plays</div>
+                <div className="w-24 text-right">Uploaded</div>
+            </div>
+
             <div className="flex flex-col overflow-y-auto">
                 {error && <div className="text-red-400 py-6 text-center">{error}</div>}
                 {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
@@ -253,16 +262,17 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                                     ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
                                     : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
                                 <div className="flex-1 min-w-0 flex flex-col gap-1">
-                                    <div className="text-xl text-white font-semibold truncate">{level.name}</div>
+                                    <div className="text-xl text-white font-semibold truncate">
+                                        {level.weeklyPlays > 0 && '🔥 '}{level.name}
+                                    </div>
                                     {level.tags.length > 0 && <div className="flex flex-wrap gap-1">
                                         {level.tags.map(tag => <TagPill key={tag} tag={tag} />)}
                                     </div>}
                                 </div>
                                 <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
                                 <div className="w-32"><RatingStars rating={level.rating} /></div>
-                                <div className="w-24 text-orange-500/70 text-xs flex flex-col leading-tight shrink-0">
-                                    {level.weeklyPlays > 0 && <span>🔥 {level.weeklyPlays} this wk</span>}
-                                    {level.totalPlays > 0 && <span>🎮 {level.totalPlays} all-time</span>}
+                                <div className="w-24 text-orange-500/70 text-xs shrink-0">
+                                    {level.totalPlays > 0 && `🔥 ${level.totalPlays} plays`}
                                 </div>
                                 <div className="w-24 text-white/50 text-sm text-right">
                                     {new Date(level.uploadedAt).toLocaleDateString()}
