@@ -14,6 +14,7 @@ import './Actors/FallingPlatform.ts';
 import './Actors/LaserProjectile.ts';
 import './Actors/CannonActor.ts';
 import './Actors/DeactivatableCannon.ts';
+import './Actors/MovingBladeActor.ts';
 import './Actors/DoorActor.ts';
 import './Actors/PostProcessVolume.ts';
 import './Actors/KillYVisualizer.ts';

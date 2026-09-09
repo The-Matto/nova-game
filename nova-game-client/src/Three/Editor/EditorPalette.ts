@@ -26,6 +26,9 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             //z is the disc's thickness now (see NVTargetActor's rotated cylinder) - thin by default.
             {label: "Target", class: "NVTargetActor", scale: {x: 1, y: 1, z: 0.2}},
             {label: "Spikes", class: "NVSpikeActor"},
+            //A blade sliding back and forth out of a mount cube - see
+            //NVMovingBladeActor.travelDistance/cycleDuration.
+            {label: "Moving Blade", class: "NVMovingBladeActor"},
             //Matches the scale of TestWorld.json's jump platforms.
             {label: "Falling Platform", class: "FallingPlatform", scale: {x: 1.8, y: 0.3, z: 2}},
             {label: "Cannon", class: "NVCannon"},
