@@ -47,7 +47,7 @@ export class NVPlayerCharacter extends NVPawn {
     }
 
     Jump() {
-        this.playerPhysics.TryJump(5);
+        if (this.playerPhysics.TryJump(5)) PlaySound('jump');
     }
 
     //Every death routes through here (see NVPawn.PlayerDeath). Freezes physics rather than

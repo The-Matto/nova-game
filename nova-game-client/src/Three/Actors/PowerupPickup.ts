@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {EditorState, PlayerStatics} from "../Utility/PlayerGlobals";
+import {PlaySound} from "../Utility/Sound";
 
 //The full set of abilities this pickup can grant - add a new one here, give it its own
 //`isXAbility` getter + editCondition-gated properties below, and a new case in ApplyAbility.
@@ -159,6 +160,7 @@ export class NVPowerupPickup extends NVActor {
     private OnPlayerEnter() {
         this.hasBeenCollected = true;
         this.scene.visible = false;
+        PlaySound('powerupPickup');
         this.ApplyAbility();
     }
 
