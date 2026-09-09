@@ -69,11 +69,8 @@ export class NVStaticMeshActor extends NVActor{
         }
         if (key !== 'shape') return;
 
-        //spawnDescriptor.scale, not scene.scale - the latter is a live gizmo multiplier layered
-        //on top of the baked geometry (see NVActor.ToSpawnDescriptor), not the baked size itself.
-        //Using it here would double-apply any existing gizmo scaling on every shape swap, and -
-        //since it's always (1,1,1) right after a fresh spawn/reload - silently collapse the
-        //actor's saved size back to a unit shape.
+        //spawnDescriptor.scale, not scene.scale - the latter is a live gizmo multiplier on top of
+        //the baked geometry, and is always (1,1,1) right after a fresh spawn/reload.
         this.mesh.geometry.dispose();
         this.mesh.geometry = NVStaticMeshActor.CreateGeometry(this.shape, this.spawnDescriptor.scale);
         NVScene.RebuildWorldOctree();
@@ -106,18 +103,13 @@ export class NVStaticMeshActor extends NVActor{
             this.BuildPrimitiveMesh(this.spawnDescriptor);
         }
 
-        //Positioned before this ever enters the scene graph below - Init() also repositions
-        //after awaiting this method, but that ran too late: this swapped `scene` out for a fresh,
-        //unpositioned object sitting at the origin, and levelRoot.add() below would already have
-        //made that visible for a frame (or more, depending on scheduling) before Init() got to
-        //move it - read as "a big cube flashes at world origin" for any placed actor whose model
-        //fails to load (which is every one right now, see AssetManager.ts).
+        //Positioned before this enters the scene graph below - Init() also repositions after
+        //awaiting this, but too late: a frame at the unpositioned origin was otherwise visible.
         this.SetWorldLocation(this.spawnDescriptor.location);
         if (this.spawnDescriptor.rotation) this.SetWorldRotation(this.spawnDescriptor.rotation);
 
-        //Re-tag: SpawnActor tagged the old placeholder before this swapped `scene` out for the
-        //loaded model (or the fallback mesh above), so EditorSelection couldn't otherwise walk
-        //up from a click on it.
+        //Re-tag: SpawnActor tagged the old placeholder before this swapped `scene` out, so
+        //EditorSelection couldn't otherwise walk up from a click on it.
         this.scene.userData.nvActor = this;
         //levelRoot, not scene directly, so this gets torn down along with everything else on
         //NVScene.ReloadLevel().

@@ -5,9 +5,7 @@ import {OptionsMenu} from "./OptionsMenu";
 import {AccountSection} from "./AccountSection";
 
 //Shown on player death or a voluntary pause ('P' during gameplay) - see
-//NVPlayerCharacter.PlayerDeath/Pause, the single entry points for each. The world is left
-//exactly as it was at the moment this opened until a button here actually decides what happens
-//next.
+//NVPlayerCharacter.PlayerDeath/Pause. The world stays exactly as it was until a button here decides.
 export const GameMenuOverlay = () => {
 
     const [reason, setReason] = useState<'died' | 'paused' | null>(null);
@@ -37,10 +35,8 @@ export const GameMenuOverlay = () => {
         };
     }, []);
 
-    //Escape already opens this (a voluntary pause - Canvas.tsx's pointerlockchange handler force-
-    //pauses on losing pointer lock, which Escape always does). This is the other half: pressing
-    //it again while already paused resumes, same as clicking Resume - not available on 'died',
-    //same as 'P' can't toggle out of a real death either.
+    //Escape already opens this (losing pointer lock force-pauses, see Canvas.tsx). This is the
+    //other half: pressing it again while paused resumes - not available on 'died', like 'P'.
     useEffect(() => {
         if (reason !== 'paused') return;
         const onKeyDown = (e : KeyboardEvent) => {

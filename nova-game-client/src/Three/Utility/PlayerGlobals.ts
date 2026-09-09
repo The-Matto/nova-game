@@ -67,23 +67,15 @@ export const GameMode = {
     appMode: "createLevel" as AppMode,
 };
 
-//Which level NVScene's constructor loads - set by LevelBrowser before Play mounts the game, by
-//MainMenu's Editor/Edit Level buttons, or by EditorStartupModal. The field initializers below are
-//never actually read live - App.tsx only ever mounts the game after one of those has run - just a
-//safe fallback that isn't a path to a real file, so nothing renders if that assumption ever breaks.
-//selectedLevelId matches a LevelSummary.id (see LevelBrowser) - what LeaderboardPanel submits/
-//fetches against, since the level's file path isn't a stable identifier on the backend.
+//Which level NVScene's constructor loads - always set (LevelBrowser, MainMenu, or
+//EditorStartupModal) before App.tsx mounts. selectedLevelId is a LevelSummary.id.
 export const LevelSelection = {
     selectedLevelPath: "/BlankLevel.json",
     selectedLevelId: "",
 };
 
-//Set by MainMenu's "Edit Level" (see LevelBrowser.tsx) when the editor was opened to edit an
-//existing upload rather than start a fresh level - lets EditorWorldSettingsPanel's Upload button
-//offer "Update" (overwrite this level) alongside "Upload as New". null for a fresh level, where
-//Upload always creates a new one. Never explicitly reset - every path back to the main menu is a
-//full page reload (see LevelCompleteOverlay/GameMenuOverlay's "Return to Menu"), which clears it
-//along with everything else in memory.
+//Set by MainMenu's "Edit Level" when editing an existing upload - lets Upload offer "Update"
+//alongside "Upload as New". Null for a fresh level; cleared by the full reload on Return to Menu.
 export const EditingLevel = {
     id: null as string | null,
     name: null as string | null,
@@ -93,10 +85,8 @@ export const EditingLevel = {
 
 const PENDING_LEVEL_STORAGE_KEY = 'nova-game:pending-level-selection';
 
-//For jumping straight into a level from somewhere other than the level browser (e.g.
-//ProfileViewer's Play buttons) while a game may already be mounted - same "reload to reset
-//everything" approach as Return to Menu, but stashes which level to load first since a plain
-//reload alone would just land back on the main menu. App.tsx consumes this on boot.
+//Jumps straight into a level from outside the level browser (e.g. ProfileViewer's Play buttons) -
+//same reload-to-reset approach as Return to Menu, but stashes which level first.
 export function QueuePlayLevelAndReload(level : {id : string, path : string}) {
     try {
         sessionStorage.setItem(PENDING_LEVEL_STORAGE_KEY, JSON.stringify(level));
@@ -144,17 +134,15 @@ interface IPlayerStatics {
 
 export const PlayerStatics : IPlayerStatics = {};
 
-//True whenever the player is dead, paused, or still in the pre-run countdown - gameplay actors
-//with their own Tick-driven behavior (hazards, projectiles) should check this too, not just
-//NVPlayerPhysics itself, so the whole world actually stops while a menu's up.
+//True whenever the player is dead, paused, or in the pre-run countdown - other Tick-driven
+//actors (hazards, projectiles) should check this too, so the whole world stops.
 export function IsGameplayFrozen() : boolean {
     const physics = PlayerStatics.PlayerCharacter?.GetPhysicsComp();
     return !!physics && (physics.isDead || physics.isPaused || physics.isCountingDown || physics.isLevelComplete);
 }
 
-//Cheap stand-in for real audio attenuation (see SpikeActor/CannonActor) - linear falloff from
-//maxVolume at distance 0 down to 0 at maxDistance, clamped. 0 (i.e. don't play at all) once
-//beyond maxDistance, or if there's no player position to measure against yet.
+//Cheap stand-in for real audio attenuation - linear falloff from maxVolume at 0 down to 0 at
+//maxDistance, clamped; 0 if there's no player position to measure against yet.
 export function GetDistanceVolume(position : THREE.Vector3, maxDistance : number, maxVolume : number = 1) : number {
     const playerPosition = PlayerStatics.PlayerCharacter?.scene.position;
     if (!playerPosition) return 0;

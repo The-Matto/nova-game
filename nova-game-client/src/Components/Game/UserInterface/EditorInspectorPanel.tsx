@@ -27,9 +27,8 @@ const Vector3Row = ({label, vector, onChange, sensitivity} : {
     </div>
 );
 
-//Sits left of the spawn-actor menu (see EditorMenu) while an actor's selected - Location/
-//Rotation/Scale plus one input per @EditableProperty field, writing straight back to the live
-//actor instance on change.
+//Sits left of the spawn-actor menu while an actor's selected - Location/Rotation/Scale plus one
+//input per @EditableProperty field, writing straight back to the live actor instance.
 export const EditorInspectorPanel = () => {
 
     const [selectedActor, setSelectedActor] = useState<NVActor | null>(null);

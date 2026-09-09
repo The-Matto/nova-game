@@ -156,10 +156,8 @@ export class PlayerController {
              }
         }
 
-        //Auto-fire while holding LMB - only actually fires anything while NVWeapon.isAutoFire
-        //(a fast-fire powerup is active); otherwise a shot only ever comes from HandleMouseClick's
-        //one-per-press handling, so this is a no-op the rest of the time. Fire() itself is still
-        //the one enforcing the cooldown between shots, same as a real held trigger would be.
+        //Auto-fire while holding LMB - only fires while NVWeapon.isAutoFire (a fast-fire powerup);
+        //Fire() itself still enforces the cooldown, same as a real held trigger would.
         if (this.isLeftMouseDown && !EditorState.isInEditor && !Countdown.isActive) {
             const weapon = PlayerStatics.PlayerCharacter?.GetWeapon();
             if (weapon?.isAutoFire) weapon.Fire();
@@ -168,10 +166,8 @@ export class PlayerController {
         //Handle mouse input
         if (mousePosition.x != 0 || mousePosition.y != 0){
 
-            //In editor mode the real OS cursor moves itself, so mouse movement should only
-            //drive the camera while actively looking (RMB held); outside it, it always looks -
-            //except while a blocking modal (Level Complete, Player Death) is open, or during the
-            //pre-run countdown.
+            //In editor mode the OS cursor moves itself, so mouse movement only drives the camera
+            //while RMB is held; outside it, it always looks except during a blocking modal or countdown.
             const shouldLook = !UIState.isModalOpen && !Countdown.isActive && (!EditorState.isInEditor || this.isRightMouseDown);
             if (shouldLook) {
                 this.possessedPawn?.AddLookInput(new Vector2(mousePosition.x, mousePosition.y));
@@ -201,9 +197,8 @@ export class PlayerController {
         this.possessedPawn?.Crouch(isStart)
     }
 
-    //In editor mode, left click picks the actor under the cursor (EditorSelection) - Ctrl held
-    //adds it to the selection instead of replacing it. Otherwise it's routed to the possessed
-    //pawn as fire input - UI buttons have their own onClick, not this.
+    //In editor mode, left click picks the actor under the cursor (Ctrl adds to selection);
+    //otherwise it's routed to the possessed pawn as fire input.
     public HandleMouseClick =  (pressedButton : number, clientX : number, clientY : number, isCtrlHeld : boolean = false) => {
 
         if (pressedButton !== 0) return;
@@ -246,9 +241,8 @@ export class PlayerController {
         for (const actor of actors) NVScene.DestroyActor(actor);
     }
 
-    //'P' - starts a fresh PIE session from editor mode; during gameplay it opens/closes the
-    //pause menu instead of exiting straight to the editor (see ReturnToEditor for that). Pausing
-    //itself isn't editor-only - only entering the editor is (see the appMode check below).
+    //'P' - starts a fresh PIE session from editor mode; during gameplay it opens/closes the pause
+    //menu instead (see ReturnToEditor for exiting straight to the editor).
     public ToggleEditorMode = () => {
         if (EditorState.isInEditor) {
             if (GameMode.appMode !== "createLevel") return;
@@ -264,8 +258,7 @@ export class PlayerController {
     }
 
     //'R' during real gameplay - the same full reset as the pause menu's Retry button, without
-    //needing to open the menu first. 'gameResumed' also closes it if it happened to already be
-    //open (paused or dead), same as a normal Resume/Retry click would.
+    //opening the menu first; 'gameResumed' also closes it if one was already open.
     public QuickRetry = () => {
         PlayerStatics.PlayerCharacter?.PlayerRetry();
         GameEvents.Emit('gameResumed', undefined);
@@ -290,10 +283,8 @@ export class PlayerController {
         this.isLeftMouseDown = false;
         EditorState.isInEditor = true;
         CursorState.isCursorNeeded = true;
-        //Explicit rather than relying on a pointerlockchange event to set this - pointer lock is
-        //usually already released by now (e.g. Escape released it before the pause menu even
-        //opened), so exitPointerLock() below is often a no-op that fires no event at all, leaving
-        //nothing else to un-stick this if it were ever wrong.
+        //Explicit rather than relying on a pointerlockchange event - pointer lock is usually
+        //already released by now (e.g. Escape), so exitPointerLock() below is often a no-op.
         InputInfo.gameHasFocus = true;
         if (document.pointerLockElement) document.exitPointerLock();
         PlayInEditor.StopPlaying();

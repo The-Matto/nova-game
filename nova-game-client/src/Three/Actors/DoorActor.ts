@@ -6,10 +6,8 @@ import {EditorState, IsGameplayFrozen} from "../Utility/PlayerGlobals";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {NVTargetActor} from "./TargetActor.ts";
 
-//A solid door that lerps toward openOffset (relative to where it's placed) once at least
-//targetsBeforeOpen targets in the level have been shot (see NVTargetActor.GetHitCount) - no
-//per-door target linking needed. Blocks movement/bullets while closed; left out of the world
-//octree once open, same as NVFallingPlatform while falling.
+//A solid door that lerps toward openOffset once targetsBeforeOpen targets have been shot (see
+//NVTargetActor.GetHitCount) - left out of the world octree once open, like NVFallingPlatform.
 @RegisterClass("NVDoorActor")
 export class NVDoorActor extends NVActor {
 
@@ -39,10 +37,8 @@ export class NVDoorActor extends NVActor {
         const material = new THREE.MeshStandardMaterial({color: NVDoorActor.COLOR});
         this.scene = new THREE.Mesh(geometry, material);
 
-        //Matches the old hardcoded "straight up by 2x height" behavior - a level saved before
-        //openOffset existed has no override in its JSON, so this is the only default it'll ever
-        //see and needs to reproduce what was already there. Overwritten below by
-        //ApplyEditableProperties if the level actually does have a saved value.
+        //Matches the old hardcoded "straight up by 2x height" behavior, for a level saved before
+        //openOffset existed - overwritten by ApplyEditableProperties if the level has a saved value.
         this.openOffset = new THREE.Vector3(0, descripter.scale.y * NVDoorActor.OPEN_HEIGHT_MULTIPLIER, 0);
     }
 

@@ -1,7 +1,5 @@
-//A static, author-maintained list of starting-point levels under public/level-presets/ - see
-//that folder's own README for the format. Unlike saved/uploaded levels, presets aren't
-//discoverable automatically (this is a static site, no directory listing), so the manifest is
-//the single source of truth for what's offered.
+//A static, author-maintained list of starting-point levels under public/level-presets/, added to
+//manifest.json by hand - a static site can't list files there automatically.
 export type LevelPreset = {
     name : string,
     file : string,

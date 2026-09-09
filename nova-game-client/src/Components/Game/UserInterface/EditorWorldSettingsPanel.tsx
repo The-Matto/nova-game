@@ -38,10 +38,7 @@ const ActorLimitBar = () => {
 };
 
 //Shown from EditorMenuOverlay's "Return to Menu" - a full reload discards any in-memory editor
-//state (there's no autosave/dirty-tracking), so this offers a quick named local save first
-//instead of silently losing it. A standalone save, not EditorLevelStorageModal - that one's
-//"Close"/Load/Import paths all treat leaving as a no-op, which isn't what "Leave Without Saving"
-//should mean here.
+//state, so this offers a quick named local save first instead of silently losing it.
 const LeaveConfirmModal = ({onCancel} : {onCancel : () => void}) => {
     const [saveName, setSaveName] = useState("");
     const [saveError, setSaveError] = useState<string | null>(null);
@@ -99,10 +96,8 @@ const LeaveConfirmModal = ({onCancel} : {onCancel : () => void}) => {
     </div>;
 };
 
-//'P' is taken while actually editing - it starts Play mode instead of pausing (see
-//PlayerController.ToggleEditorMode), since there's no gameplay running yet to pause. This is the
-//only other way to reach Options/leave the editor - just those two, not Retry/Resume/Return to
-//Editor, since none of those make sense while already sitting in the editor.
+//'P' is taken while editing - it starts Play mode instead of pausing (no gameplay to pause yet).
+//This is the only other way to reach Options/leave the editor.
 const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
     const [showOptions, setShowOptions] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -135,9 +130,8 @@ const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
     </div>;
 };
 
-//Sits at the far left (see EditorMenu) - level-wide settings (as opposed to any one actor's, see
-//EditorInspectorPanel), Play/Menu, the actor count limit, plus save/load (browser storage, see
-//EditorLevelStorageModal) and upload.
+//Sits at the far left (see EditorMenu) - level-wide settings, Play/Menu, the actor count limit,
+//plus save/load and upload.
 export const EditorWorldSettingsPanel = () => {
 
     const [skyColor, setSkyColor] = useState(NVScene.worldSettings.skyColor);
@@ -158,10 +152,8 @@ export const EditorWorldSettingsPanel = () => {
 
     const [showMenu, setShowMenu] = useState(false);
 
-    //Escape already pauses during actual gameplay (Canvas.tsx's pointerlockchange handler - it
-    //always releases pointer lock, browsers won't let JS prevent that). This covers the other
-    //case: purely editing, no pointer lock to lose. Ignored while typing so cancelling text
-    //entry doesn't also pop this open.
+    //Escape already pauses during gameplay (Canvas.tsx's pointerlockchange handler) - this covers
+    //purely editing, with no pointer lock to lose. Ignored while typing.
     useEffect(() => {
         const onKeyDown = (e : KeyboardEvent) => {
             if (e.code !== 'Escape') return;
@@ -190,9 +182,8 @@ export const EditorWorldSettingsPanel = () => {
         setUploadMode(null);
     };
 
-    //Applies straight to the live scene, same "mutate the live instance directly" pattern as
-    //EditorInspectorPanel - the local state above is only for these controls to be controlled
-    //inputs, not the source of truth.
+    //Applies straight to the live scene, same "mutate directly" pattern as EditorInspectorPanel -
+    //local state above is just for controlled inputs, not the source of truth.
     const applySettings = (next : Partial<typeof NVScene.worldSettings>) => {
         NVScene.ApplyWorldSettings({...NVScene.worldSettings, ...next});
     };

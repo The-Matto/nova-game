@@ -28,12 +28,8 @@ const LevelTile = ({name, thumbnailSrc, onClick} : {name : string, thumbnailSrc?
     </button>
 );
 
-//Opens the instant a fresh editor session starts (see MainMenu.openEditor/EditorMenu) - lets you
-//pick a real starting point instead of always editing a blank level (Presets' own "Blank" tile
-//just closes this, since MainMenu.openEditor already loaded BlankLevel.json underneath it).
-//Skipped entirely when EditingLevel.id is already set (see EditorMenu), since re-opening a
-//specific upload via the level browser's "Edit Level" already is a deliberate choice of
-//starting point.
+//Opens the instant a fresh editor session starts - lets you pick a real starting point instead
+//of always editing a blank level. Skipped when EditingLevel.id is already set (see EditorMenu).
 export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
     const [tab, setTab] = useState<Tab>('presets');
 

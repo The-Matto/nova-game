@@ -9,9 +9,8 @@ import {ProfileViewer} from "./ProfileViewer";
 const DaysUntil = (isoDate : string) : number =>
     Math.max(1, Math.ceil((new Date(isoDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
 
-//GitHub silently skips its own consent screen for an already-authorized app (no equivalent of
-//Google's prompt=consent to force it back) - this stands in for that missing "are you sure"
-//moment, so signing in is never a single accidental click.
+//GitHub silently skips its own consent screen for an already-authorized app - this stands in
+//for that missing "are you sure" moment, so signing in is never a single accidental click.
 const SignInConfirm = ({onCancel} : {onCancel : () => void}) => (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/25">
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8">
@@ -36,8 +35,7 @@ const SignInConfirm = ({onCancel} : {onCancel : () => void}) => (
 );
 
 //Shown once, right after a first-ever GitHub link (see AuthApi.ts's ?welcome=1 redirect) -
-//pre-filled with whatever name was carried over, so hitting Continue immediately is a valid
-//choice too, not just a placeholder blocking submission.
+//pre-filled so hitting Continue immediately is a valid choice too.
 const WelcomePrompt = ({onDone} : {onDone : (name : string) => void}) => {
     const [draft, setDraft] = useState(PlayerIdentity.name);
     const [saving, setSaving] = useState(false);
@@ -82,9 +80,8 @@ const WelcomePrompt = ({onDone} : {onDone : (name : string) => void}) => {
     </div>;
 };
 
-//PlayerIdentity itself isn't reactive - this pulls a fresh snapshot on mount (there's no active
-//session state before then) and re-renders locally after sign-in/out rather than relying on
-//PlayerIdentity's fields changing to trigger it.
+//PlayerIdentity itself isn't reactive - this pulls a fresh snapshot on mount and re-renders
+//locally after sign-in/out instead.
 export const AccountSection = () => {
     const [loggedIn, setLoggedIn] = useState(PlayerIdentity.loggedIn);
     const [name, setName] = useState(PlayerIdentity.name);

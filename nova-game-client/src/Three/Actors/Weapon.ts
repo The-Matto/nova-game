@@ -36,14 +36,12 @@ export class NVWeapon extends NVActor {
     private static readonly MAX_TILT : number = THREE.MathUtils.degToRad(12);
     private static readonly TILT_SMOOTHING : number = 8;
 
-    //Friction decays velocity asymptotically rather than snapping it to zero - below this speed,
-    //treat the player as stopped so the lean eases back to neutral as soon as they're slowing
-    //down, rather than waiting for velocity to decay almost all the way to zero first.
+    //Friction decays velocity asymptotically rather than snapping to zero - below this speed,
+    //treat the player as stopped so the lean eases back to neutral instead of lingering.
     private static readonly MOVEMENT_THRESHOLD : number = 5;
 
-    //Recoil kick added to the pitch on Fire(), and how fast it eases back out afterward - kept
-    //separate from the movement lean's own pitch so the two don't fight over rotation.x. Kicks
-    //stack on rapid fire (capped at RECOIL_MAX) rather than resetting, for a climbing feel.
+    //Recoil kick added to the pitch on Fire(), kept separate from the movement lean's own pitch
+    //so the two don't fight over rotation.x. Stacks on rapid fire (capped at RECOIL_MAX).
     private static readonly RECOIL_KICK : number = THREE.MathUtils.degToRad(15);
     private static readonly RECOIL_MAX : number = THREE.MathUtils.degToRad(35);
     private static readonly RECOIL_RECOVERY_SPEED : number = 6;
@@ -107,9 +105,8 @@ export class NVWeapon extends NVActor {
         return this.fireRateOverrideDuration > 0 ? this.fastFireSecondsRemaining / this.fireRateOverrideDuration : 0;
     }
 
-    //Leans the viewmodel (and, more subtly, the camera itself) into whichever way the player's
-    //moving - strafing rolls it, moving forward/back pitches it - just a cosmetic read on player
-    //velocity, not physically driven.
+    //Leans the viewmodel (and camera) into whichever way the player's moving - purely cosmetic,
+    //not physically driven.
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
@@ -121,9 +118,8 @@ export class NVWeapon extends NVActor {
         const velocity = PlayerStatics.PlayerCharacter?.GetPhysicsComp().playerVelocity;
         const horizontalVelocity = velocity ? new THREE.Vector3(velocity.x, 0, velocity.z) : new THREE.Vector3();
 
-        //Direction stays a unit vector always (normalize() is a safe no-op on a zero vector), so
-        //the dot products below stay bounded to [-1,1] - speedFactor is what actually fades the
-        //lean out as the player slows down, dropping to 0 well before they've fully stopped.
+        //normalize() is a safe no-op on a zero vector, keeping the dot products below bounded to
+        //[-1,1] - speedFactor is what fades the lean out as the player slows down.
         const direction = horizontalVelocity.clone().normalize();
         const speedFactor = Math.min(1, horizontalVelocity.length() / NVWeapon.MOVEMENT_THRESHOLD);
 
@@ -157,9 +153,8 @@ export class NVWeapon extends NVActor {
     private static readonly BEAM_LIFETIME_MS : number = 100;
     private static readonly BEAM_OPACITY : number = 0.2;
 
-    //A momentary visual per shot - the marker and the beam - each fades/expires on its own via
-    //UpdateEffects(), called every Tick(). See the GameEvents subscription below for the one
-    //other way these get cleared (a mode switch, ahead of their own timers).
+    //The marker and beam each fade/expire on their own via UpdateEffects() (every Tick) - the
+    //GameEvents subscription below is the only other way they get cleared, ahead of that timer.
     private static activeEffects = new Set<TimedEffect>();
 
     public Fire() {
@@ -175,15 +170,13 @@ export class NVWeapon extends NVActor {
 
         const ray = new THREE.Ray(camera.position.clone(), direction);
 
-        //Solid world geometry (walls, the base cube of a hazard, etc.) - checked separately from
-        //shootables below, since a shootable (e.g. NVMovingTargetActor) isn't necessarily solid
-        //itself (see its class comment) and wouldn't otherwise be reachable by this trace at all.
+        //Solid world geometry, checked separately from shootables below - a shootable isn't
+        //necessarily solid itself (e.g. NVMovingTargetActor) and wouldn't otherwise be reachable.
         const solidHit = NVScene.worldOctree.rayIntersect(ray);
         const solidDistance = (solidHit && solidHit.distance <= NVWeapon.WEAPON_DISTANCE) ? solidHit.distance : Infinity;
 
-        //Closest shootable whose bounds this ray actually enters, capped to whichever's nearer of
-        //weapon range or a solid hit - a wall between the camera and a target should still block
-        //the shot from reaching it.
+        //Closest shootable this ray actually enters, capped so a wall between the camera and a
+        //target still blocks the shot from reaching it.
         const shootableHit = NVWeapon.RaycastShootables(ray, Math.min(solidDistance, NVWeapon.WEAPON_DISTANCE));
 
         const didHit = !!shootableHit || solidDistance <= NVWeapon.WEAPON_DISTANCE;
@@ -241,11 +234,8 @@ export class NVWeapon extends NVActor {
         });
     }
 
-    //Diameter for the trace beam cylinder below - a razor-thin one is invisible in a first-person
-    //view, since a shot down the crosshair is always nearly collinear with the camera's own view
-    //ray (foreshortened to a point no matter the opacity); wide enough here to still read as a
-    //visible cone/glow near the muzzle even head-on. (A THREE.Line was tried first, but WebGL
-    //caps line width to ~1px regardless of material settings, making it invisible either way.)
+    //Wide, not razor-thin - a shot down the crosshair is nearly collinear with the camera's own
+    //view ray and would otherwise be invisible (a THREE.Line was tried first; WebGL caps width to ~1px).
     private static readonly BEAM_RADIUS : number = 0.03;
 
     //A faint white beam along the trace path, gone almost as soon as it appears.

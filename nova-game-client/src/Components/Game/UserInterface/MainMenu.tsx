@@ -6,9 +6,8 @@ import {LevelBrowser} from "./LevelBrowser";
 import {AccountSection} from "./AccountSection";
 import type {LevelSummary} from "nova-shared/level-listing";
 
-//Shown before the game exists at all - Canvas/Game only mount once a choice is made here (see
-//App.tsx). Sets GameMode.appMode (and EditorState/CursorState to match, since those otherwise
-//stay frozen at their own module's load-time default) before handing off.
+//Shown before the game exists at all - Canvas/Game only mount once a choice is made here. Sets
+//GameMode.appMode (and EditorState/CursorState to match) before handing off.
 export const MainMenu = ({onStart} : { onStart : () => void }) => {
 
     const [showOptions, setShowOptions] = useState(false);
@@ -24,9 +23,8 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         onStart();
     };
 
-    //Opens on a genuinely blank level, not a hardcoded default - EditorStartupModal (see
-    //EditorMenu) offers a real choice (a local save, one of your uploads, or a preset) right
-    //after, so nothing here is ever actually seen unless the player picks "Start Blank".
+    //Opens on a genuinely blank level - EditorStartupModal offers a real choice right after, so
+    //nothing here is seen unless the player picks the Blank tile.
     const openEditor = () => {
         LevelSelection.selectedLevelPath = "/BlankLevel.json";
         GameMode.appMode = "createLevel";
@@ -35,9 +33,8 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         onStart();
     };
 
-    //From a level's ⋮ menu (see LevelBrowser) - opens the editor on that level instead of a
-    //fresh one, and remembers its id/metadata so Upload can offer "Update" instead of only
-    //ever creating a new level.
+    //From a level's ⋮ menu - opens the editor on that level and remembers its id/metadata so
+    //Upload can offer "Update" instead of only creating a new one.
     const editLevel = (level : LevelSummary) => {
         LevelSelection.selectedLevelPath = level.path;
         LevelSelection.selectedLevelId = level.id;

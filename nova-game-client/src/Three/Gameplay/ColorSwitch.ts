@@ -1,7 +1,5 @@
 //Shared on/off-block state, Mario-Maker-style - shooting any NVSwitchButtonActor flips this, and
-//every NVDisappearingCubeActor in the level reacts by resizing/toggling its own collision (see
-//both actors). Lives outside either actor class since multiple buttons/cubes in a level all
-//share the one state.
+//every NVDisappearingCubeActor reacts. Lives outside either actor class since a level can have several.
 
 export type SwitchColor = 'red' | 'blue';
 

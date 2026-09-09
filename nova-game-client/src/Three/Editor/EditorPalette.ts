@@ -72,10 +72,8 @@ const CLASS_TO_LABEL = new Map(
     EDITOR_PALETTE.flatMap(category => category.items.map(item => [item.class, item.label] as const))
 );
 
-//Friendly display name for an actor's registered class (see EditorInspectorPanel) - looked up
-//from the palette above rather than the raw class name, which is both unfriendly and, in a
-//production build, minified/mangled. Falls back to a readable guess for a class that isn't
-//player-placeable (e.g. the persistent editor pawn), so the panel never shows a blank/mangled name.
+//Friendly display name for an actor's registered class - looked up from the palette above rather
+//than the raw class name, which is minified in production. Falls back to a readable guess.
 export function GetActorDisplayName(className : string) : string {
     return CLASS_TO_LABEL.get(className) ?? className.replace(/^NV/, '').replace(/([a-z])([A-Z])/g, '$1 $2');
 }

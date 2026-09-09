@@ -109,12 +109,10 @@ export class NVScene {
     }
 
     //Updates the live scene (background/fog) and remembers the values for SerializeLevel() -
-    //called both on initial load and live from EditorWorldSettingsPanel as the editor drags a
-    //value, same "mutate the live instance directly" pattern as EditorInspectorPanel.
+    //called on load and live as EditorWorldSettingsPanel drags a value.
     public static ApplyWorldSettings(settings : WorldSettings){
-        //Merged over the defaults rather than trusted as complete - a level saved before a
-        //WorldSettings field existed (e.g. lavaRiseSpeed) still has an object here, just missing
-        //that one key, so a bare assignment would leave it undefined instead of falling back.
+        //Merged over the defaults rather than trusted complete - an older save missing a newer
+        //field (e.g. lavaRiseSpeed) would otherwise leave it undefined instead of falling back.
         NVScene.worldSettings = {...DEFAULT_WORLD_SETTINGS, ...settings};
         NVScene.scene.background = new THREE.Color(NVScene.worldSettings.skyColor);
         NVScene.scene.fog = new THREE.Fog(NVScene.worldSettings.skyColor, 0, NVScene.worldSettings.fogDistance);
@@ -136,10 +134,8 @@ export class NVScene {
         NVScene.levelRoot = new THREE.Group();
         NVScene.scene.add(NVScene.levelRoot);
 
-        //BeginDestroy(), not just dropping the reference - actors that register themselves with a
-        //static/module-level list on BeginPlay (e.g. NVTargetActor.allTargets) rely on it to
-        //unregister, or that state leaks into the next level/session (see LevelObjectives.Clear()
-        //below, needed for the same reason before that pattern existed).
+        //BeginDestroy(), not just dropping the reference - actors that register with a static
+        //list on BeginPlay (e.g. NVTargetActor.allTargets) rely on it to unregister.
         for (const actor of [...NVScene.sceneActors]) {
             if (NVScene.persistentActors.has(actor)) continue;
             NVScene.sceneActors.delete(actor);
@@ -159,8 +155,7 @@ export class NVScene {
     }
 
     //Despawns everything currently loaded and fetches+spawns a different level file in its place -
-    //see EditorStartupModal, which uses this for both "one of my uploads" and "a preset", neither
-    //of which is necessarily the path the editor originally opened on.
+    //see EditorStartupModal, which uses this for both an upload and a preset.
     public static async LoadLevelFromPath(path : string) : Promise<void> {
         NVScene.ResetLevelState();
         await NVScene.LoadLevel(path);
@@ -192,9 +187,8 @@ export class NVScene {
         return NVScene.sceneActors.size - NVScene.persistentActors.size;
     }
 
-    //Client-side gate before Upload (see EditorWorldSettingsPanel) - a level missing either can't
-    //actually be played through. Checked against spawnDescriptor.class, not constructor.name,
-    //which is minified in a production build (same reasoning as EditorPalette.GetActorDisplayName).
+    //Client-side gate before Upload (see EditorWorldSettingsPanel) - checked against
+    //spawnDescriptor.class, not constructor.name, which is minified in production.
     public static GetMissingRequiredActorLabels() : string[] {
         const classes = new Set([...NVScene.sceneActors].map(actor => actor.spawnDescriptor.class));
         const missing : string[] = [];

@@ -11,8 +11,7 @@ const COLOR_HEX : Record<SwitchColor, string> = {
 };
 
 //A shootable block that flips ColorSwitchState between red/blue every time it's hit - always
-//solid itself (only NVDisappearingCubeActor toggles), always tinted to show the currently active
-//color so it doubles as the level's own indicator.
+//solid itself, tinted to show the currently active color as the level's own indicator.
 @RegisterClass("NVSwitchButtonActor")
 export class NVSwitchButtonActor extends NVActor implements IShootable {
 

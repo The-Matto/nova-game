@@ -4,11 +4,8 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {EditableProperty} from "../Editor/EditableProperty.ts";
 import {EditorState, IsGameplayFrozen} from "../Utility/PlayerGlobals";
 
-//A target that continuously lerps back and forth between its spawn location and spawn + offset -
-//everything else (shootable bounds, hit reaction, goal-objective registration) is inherited from
-//NVTargetActor unchanged. Unlike the base target, this one is never solid - rebuilding world
-//collision every frame for something that moves constantly isn't worth it, and a target blocking
-//the player mid-flight isn't the point anyway; only its shootable trigger bounds are kept live.
+//A target that lerps back and forth between its spawn location and spawn + offset - everything
+//else inherits from NVTargetActor unchanged. Never solid, only its trigger bounds stay live.
 @RegisterClass("NVMovingTargetActor")
 export class NVMovingTargetActor extends NVTargetActor {
 
@@ -23,8 +20,7 @@ export class NVMovingTargetActor extends NVTargetActor {
     public cycleDuration : number = 2;
 
     //Drives the lerp - see Tick. Reset (not just frozen) whenever gameplay stops, so the target
-    //is always found at its spawn point the instant you pause or retry, not wherever it happened
-    //to be mid-swing.
+    //is always found at its spawn point instantly, not wherever it happened to be mid-swing.
     private age : number = 0;
     private wasFrozen : boolean = true;
 

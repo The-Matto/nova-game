@@ -6,10 +6,8 @@ import {EditorPalettePanel} from "./EditorPalettePanel";
 import {EditorWorldSettingsPanel} from "./EditorWorldSettingsPanel";
 import {EditorStartupModal} from "./EditorStartupModal";
 
-//Editor layout, shown in editor mode - world settings/save/load/upload at the far left, the
-//spawn-actor menu at the far right with the selected-actor inspector to its left (only taking up
-//space once something's selected). All children unmount (rather than merely hiding) on leaving
-//editor mode, so their own state resets for free.
+//Editor layout, shown in editor mode - world settings at the far left, the spawn-actor menu and
+//selected-actor inspector at the right. Children unmount (not just hide) on leaving, resetting for free.
 export const EditorMenu = () => {
 
     //Reflects EditorState.isInEditor's current value (rather than always starting false) since
@@ -17,8 +15,7 @@ export const EditorMenu = () => {
     const [isVisible, setIsVisible] = useState(EditorState.isInEditor);
 
     //Only for a genuinely fresh session (MainMenu's openEditor leaves EditingLevel.id null) -
-    //re-opening a specific upload via the level browser's "Edit Level" already sets it, and
-    //already is a deliberate choice of starting point, so this is skipped entirely then.
+    //"Edit Level" already sets it, and is already a deliberate choice of starting point.
     const [showStartupModal, setShowStartupModal] = useState(EditingLevel.id === null);
 
     useEffect(() => {

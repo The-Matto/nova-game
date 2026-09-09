@@ -12,10 +12,7 @@ const COLOR_HEX : Record<SwitchColor, string> = {
 };
 
 //Solid + full-size while `color` matches ColorSwitchState's active color, shrunk + translucent +
-//non-solid while it doesn't - shot an NVSwitchButtonActor to flip which set is which, Mario
-//Maker on/off-block style. The mesh is a child component (not `scene` itself) so its shrink
-//animation stays separate from the actor's own baked scale/live gizmo scale, same reasoning as
-//NVMovingBladeActor's base cube.
+//non-solid otherwise - shoot an NVSwitchButtonActor to flip which set is which, Mario Maker style.
 @RegisterClass("NVDisappearingCubeActor")
 export class NVDisappearingCubeActor extends NVActor {
 
@@ -68,10 +65,8 @@ export class NVDisappearingCubeActor extends NVActor {
         return ColorSwitchState.GetActive() === this.color;
     }
 
-    //Resizes/fades the mesh to match on/off state and re-registers collision - called on spawn
-    //and every switch toggle. Doesn't itself rebuild the world octree (RegisterCollision alone
-    //only adds/leaves this one actor out of the existing octree); NVSwitchButtonActor.RegisterHit
-    //does one full NVScene.RebuildWorldOctree() after toggling, covering every cube at once.
+    //Resizes/fades the mesh to match on/off state - called on spawn and every switch toggle.
+    //Doesn't rebuild the world octree itself; NVSwitchButtonActor.RegisterHit does that once for all.
     private ApplyActiveState() {
         const active = this.IsActive();
         const scale = this.spawnDescriptor.scale;
