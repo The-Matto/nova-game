@@ -17,46 +17,51 @@ export interface SpawnableCategory {
 
 export const EDITOR_PALETTE : SpawnableCategory[] = [
     {
-        label: "Gameplay",
+        label: "Required",
         items: [
-            //Defaults to a cube - see NVStaticMeshActor's own "shape" dropdown for the rest.
-            {label: "Static Mesh", class: "NVStaticMeshActor"},
             {label: "Player Start", class: "NVPlayerSpawn"},
             {label: "Goal", class: "NVGoalVolume"},
-            //z is the disc's thickness now (see NVTargetActor's rotated cylinder) - thin by default.
-            {label: "Target", class: "NVTargetActor", scale: {x: 1, y: 1, z: 0.2}},
-            //Lerps back and forth between spawn and spawn+offset - see
-            //NVMovingTargetActor.offset/cycleDuration.
-            {label: "Moving Target", class: "NVMovingTargetActor", scale: {x: 1, y: 1, z: 0.2}},
+        ],
+    },
+    {
+        label: "Danger",
+        items: [
             {label: "Spikes", class: "NVSpikeActor"},
-            //A blade sliding back and forth out of a mount cube - see
-            //NVMovingBladeActor.travelDistance/cycleDuration.
-            {label: "Moving Blade", class: "NVMovingBladeActor"},
-            //Matches the scale of TestWorld.json's jump platforms.
-            {label: "Falling Platform", class: "FallingPlatform", scale: {x: 1.8, y: 0.3, z: 2}},
             {label: "Cannon", class: "NVCannon"},
             //A regular cannon with a shootable switch on top - hitting it disables firing for a
             //while (see NVDeactivatableCannon.deactivateDuration).
             {label: "Switch Cannon", class: "NVDeactivatableCannon"},
-            //A doorway-shaped default (width, height, thickness) rather than a unit cube.
-            {label: "Door", class: "NVDoorActor", scale: {x: 2.2, y: 3.5, z: 0.4}},
-            //Shooting this flips ColorSwitchState, toggling every Disappearing Cube in the level.
-            {label: "Switch Button", class: "NVSwitchButtonActor", scale: {x: 0.6, y: 0.6, z: 0.6}},
-            //Solid+full-size while its color property matches the switch's active color, shrunk+
-            //non-solid otherwise - see NVDisappearingCubeActor.
-            {label: "Disappearing Cube", class: "NVDisappearingCubeActor"},
+            //A blade sliding back and forth out of a mount cube - see
+            //NVMovingBladeActor.travelDistance/cycleDuration.
+            {label: "Moving Blade", class: "NVMovingBladeActor"},
         ],
     },
     {
-        label: "Post Process",
+        label: "Structures",
         items: [
+            //Defaults to a cube - see NVStaticMeshActor's own "shape" dropdown for the rest.
+            {label: "Static Mesh", class: "NVStaticMeshActor"},
+            //A doorway-shaped default (width, height, thickness) rather than a unit cube.
+            {label: "Door", class: "NVDoorActor", scale: {x: 2.2, y: 3.5, z: 0.4}},
+            //Matches the scale of TestWorld.json's jump platforms.
+            {label: "Falling Platform", class: "FallingPlatform", scale: {x: 1.8, y: 0.3, z: 2}},
             //Room-sized by default - meant to enclose an area, not sit as a small marker.
             {label: "Post Process Volume", class: "NVPostProcessVolume", scale: {x: 6, y: 4, z: 6}},
         ],
     },
     {
-        label: "Powerups",
+        label: "Interactive",
         items: [
+            //z is the disc's thickness now (see NVTargetActor's rotated cylinder) - thin by default.
+            {label: "Target", class: "NVTargetActor", scale: {x: 1, y: 1, z: 0.2}},
+            //Lerps back and forth between spawn and spawn+offset - see
+            //NVMovingTargetActor.offset/cycleDuration.
+            {label: "Moving Target", class: "NVMovingTargetActor", scale: {x: 1, y: 1, z: 0.2}},
+            //Shooting this flips ColorSwitchState, toggling every Disappearing Cube in the level.
+            {label: "Switch Button", class: "NVSwitchButtonActor", scale: {x: 0.6, y: 0.6, z: 0.6}},
+            //Solid+full-size while its color property matches the switch's active color, shrunk+
+            //non-solid otherwise - see NVDisappearingCubeActor.
+            {label: "Disappearing Cube", class: "NVDisappearingCubeActor"},
             //Smaller than a unit cube by default - a pickup, not a block.
             {label: "Powerup Pickup", class: "NVPowerupPickup", scale: {x: 0.6, y: 0.6, z: 0.6}},
         ],
