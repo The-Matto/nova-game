@@ -37,6 +37,20 @@ export const GameMenuOverlay = () => {
         };
     }, []);
 
+    //Escape already opens this (a voluntary pause - Canvas.tsx's pointerlockchange handler force-
+    //pauses on losing pointer lock, which Escape always does). This is the other half: pressing
+    //it again while already paused resumes, same as clicking Resume - not available on 'died',
+    //same as 'P' can't toggle out of a real death either.
+    useEffect(() => {
+        if (reason !== 'paused') return;
+        const onKeyDown = (e : KeyboardEvent) => {
+            if (e.code !== 'Escape') return;
+            PlayerStatics.PlayerCharacter?.Resume();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [reason]);
+
     //Shared cleanup only - CursorState is left to each button, since Return to Editor already
     //sets it correctly itself (via ReturnToEditor) and shouldn't have that undone here.
     const dismissOverlay = () => {
