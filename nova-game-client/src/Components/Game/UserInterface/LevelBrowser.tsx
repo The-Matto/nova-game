@@ -204,7 +204,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
 
     return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
         <AccountSection />
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-6xl max-h-[90vh]">
+        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-6xl max-h-[90vh] overflow-hidden">
             <div className="flex items-center gap-4">
                 <div className="text-3xl font-bold text-orange-500">Select Level</div>
                 <input
@@ -255,7 +255,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                 <div className="w-24 text-right">Uploaded</div>
             </div>
 
-            <div className="flex flex-col overflow-y-auto">
+            <div className="flex flex-col overflow-y-auto flex-1 min-h-0">
                 {error && <div className="text-red-400 py-6 text-center">{error}</div>}
                 {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
                 {!error && levels?.length === 0 && <div className="text-white/50 py-6 text-center">No levels yet.</div>}
@@ -266,7 +266,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                 {pagedLevels?.map(level => {
                     const isExpanded = expandedId === level.id;
                     const isOwnLevel = playerId !== null && level.authorId === playerId;
-                    return <div key={level.id} className="rounded-xl overflow-hidden">
+                    return <div key={level.id} className="rounded-xl overflow-hidden shrink-0">
                         <div className="relative">
                             <button
                                 onClick={() => setExpandedId(isExpanded ? null : level.id)}
