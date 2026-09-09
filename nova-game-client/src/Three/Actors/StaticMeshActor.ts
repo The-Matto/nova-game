@@ -105,6 +105,16 @@ export class NVStaticMeshActor extends NVActor{
             //rather than leaving this actor with no scene at all.
             this.BuildPrimitiveMesh(this.spawnDescriptor);
         }
+
+        //Positioned before this ever enters the scene graph below - Init() also repositions
+        //after awaiting this method, but that ran too late: this swapped `scene` out for a fresh,
+        //unpositioned object sitting at the origin, and levelRoot.add() below would already have
+        //made that visible for a frame (or more, depending on scheduling) before Init() got to
+        //move it - read as "a big cube flashes at world origin" for any placed actor whose model
+        //fails to load (which is every one right now, see AssetManager.ts).
+        this.SetWorldLocation(this.spawnDescriptor.location);
+        if (this.spawnDescriptor.rotation) this.SetWorldRotation(this.spawnDescriptor.rotation);
+
         //Re-tag: SpawnActor tagged the old placeholder before this swapped `scene` out for the
         //loaded model (or the fallback mesh above), so EditorSelection couldn't otherwise walk
         //up from a click on it.
