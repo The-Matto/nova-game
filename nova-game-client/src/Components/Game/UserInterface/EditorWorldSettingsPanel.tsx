@@ -87,6 +87,9 @@ export const EditorWorldSettingsPanel = () => {
     //'choice' only appears when editing an existing level (see EditingLevel) - a fresh level
     //skips straight to 'new', since there's nothing to update yet.
     const [uploadMode, setUploadMode] = useState<'choice' | 'update' | 'new' | null>(null);
+    //Set by openUploadFlow when the level's missing a Player Start/Goal - covers both the "new"
+    //and "update" paths, since both only ever start there.
+    const [uploadValidationError, setUploadValidationError] = useState<string | null>(null);
 
     const [showMenu, setShowMenu] = useState(false);
 
@@ -106,6 +109,13 @@ export const EditorWorldSettingsPanel = () => {
     }, []);
 
     const openUploadFlow = () => {
+        const missing = NVScene.GetMissingRequiredActorLabels();
+        if (missing.length > 0) {
+            setUploadValidationError(`Add ${missing.join(' and ')} before uploading.`);
+            return;
+        }
+
+        setUploadValidationError(null);
         setUploadThumbnail(Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85));
         setUploadMode(EditingLevel.id !== null ? 'choice' : 'new');
     };
@@ -209,6 +219,7 @@ export const EditorWorldSettingsPanel = () => {
             >
                 Upload
             </button>
+            {uploadValidationError && <div className="text-[10px] text-red-400">{uploadValidationError}</div>}
         </div>
 
         {showStorageModal && (

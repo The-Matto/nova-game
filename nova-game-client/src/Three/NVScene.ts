@@ -192,6 +192,17 @@ export class NVScene {
         return NVScene.sceneActors.size - NVScene.persistentActors.size;
     }
 
+    //Client-side gate before Upload (see EditorWorldSettingsPanel) - a level missing either can't
+    //actually be played through. Checked against spawnDescriptor.class, not constructor.name,
+    //which is minified in a production build (same reasoning as EditorPalette.GetActorDisplayName).
+    public static GetMissingRequiredActorLabels() : string[] {
+        const classes = new Set([...NVScene.sceneActors].map(actor => actor.spawnDescriptor.class));
+        const missing : string[] = [];
+        if (!classes.has('NVPlayerSpawn')) missing.push('a Player Start');
+        if (!classes.has('NVGoalVolume')) missing.push('a Goal');
+        return missing;
+    }
+
     public static CanSpawnMoreLevelActors() : boolean {
         return NVScene.GetLevelActorCount() < MAX_LEVEL_ACTORS;
     }
