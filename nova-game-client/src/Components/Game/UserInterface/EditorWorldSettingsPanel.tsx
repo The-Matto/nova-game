@@ -5,6 +5,7 @@ import {EditingLevel, PlayerStatics} from "../../../Three/Utility/PlayerGlobals"
 import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {DragNumberInput} from "../../UI/DragNumberInput";
 import {EditorLevelStorageModal} from "./EditorLevelStorageModal";
+import {SaveLevel} from "../../../Three/Editor/EditorLevelStorage";
 import {EditorUploadModal} from "./EditorUploadModal";
 import {EditorUploadChoiceModal} from "./EditorUploadChoiceModal";
 import {EditorUpdateModal} from "./EditorUpdateModal";
@@ -36,14 +37,78 @@ const ActorLimitBar = () => {
     </div>;
 };
 
+//Shown from EditorMenuOverlay's "Return to Menu" - a full reload discards any in-memory editor
+//state (there's no autosave/dirty-tracking), so this offers a quick named local save first
+//instead of silently losing it. A standalone save, not EditorLevelStorageModal - that one's
+//"Close"/Load/Import paths all treat leaving as a no-op, which isn't what "Leave Without Saving"
+//should mean here.
+const LeaveConfirmModal = ({onCancel} : {onCancel : () => void}) => {
+    const [saveName, setSaveName] = useState("");
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    const saveAndLeave = () => {
+        const name = saveName.trim();
+        if (!name) return;
+
+        const thumbnailDataUrl = Game.GetInstance().renderer.renderer.domElement.toDataURL('image/jpeg', 0.85);
+        if (!SaveLevel(name, NVScene.SerializeLevel(), thumbnailDataUrl)) {
+            setSaveError("Couldn't save - browser storage may be full.");
+            return;
+        }
+        window.location.reload();
+    };
+
+    return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50">
+        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-6 w-full max-w-sm">
+            <div className="text-lg font-bold text-orange-500">Leave Editor?</div>
+            <div className="text-sm text-white/70">Any unsaved changes to this level will be lost.</div>
+
+            <input
+                type="text"
+                value={saveName}
+                onChange={e => setSaveName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") saveAndLeave(); }}
+                placeholder="Level name to save as..."
+                autoFocus
+                className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+            />
+            {saveError && <div className="text-sm text-red-400">{saveError}</div>}
+            <button
+                className="bg-emerald-700 hover:bg-emerald-600 rounded-lg px-3 py-2 text-sm text-orange-100 cursor-pointer disabled:opacity-50"
+                onClick={saveAndLeave}
+                disabled={!saveName.trim()}
+            >
+                Save & Return to Menu
+            </button>
+
+            <div className="flex gap-2">
+                <button
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm text-orange-500/70 cursor-pointer"
+                    onClick={onCancel}
+                >
+                    Cancel
+                </button>
+                <button
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm text-red-400/80 hover:text-red-400 cursor-pointer"
+                    onClick={() => window.location.reload()}
+                >
+                    Leave Without Saving
+                </button>
+            </div>
+        </div>
+    </div>;
+};
+
 //'P' is taken while actually editing - it starts Play mode instead of pausing (see
 //PlayerController.ToggleEditorMode), since there's no gameplay running yet to pause. This is the
 //only other way to reach Options/leave the editor - just those two, not Retry/Resume/Return to
 //Editor, since none of those make sense while already sitting in the editor.
 const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
     const [showOptions, setShowOptions] = useState(false);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     if (showOptions) return <OptionsMenu onBack={() => setShowOptions(false)} />;
+    if (showLeaveConfirm) return <LeaveConfirmModal onCancel={() => setShowLeaveConfirm(false)} />;
 
     return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/25">
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
@@ -62,7 +127,7 @@ const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
             </button>
             <button
                 className="mt-4 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
-                onClick={() => window.location.reload()}
+                onClick={() => setShowLeaveConfirm(true)}
             >
                 Return to Menu
             </button>
