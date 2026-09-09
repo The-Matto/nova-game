@@ -42,21 +42,20 @@ export class NVMovingBladeActor extends NVActor {
         this.baseComponent = new StaticMeshComponent(this, new THREE.BoxGeometry(1, 1, 1), baseMaterial);
         this.UpdateBaseSize();
 
-        //A cylinder rotated flat (its own long axis becomes Z, the same axis it slides along) -
-        //centered on the cube's top face, so half its cross-section pokes up above the surface
-        //and half is embedded in it, same idea as a spike but lying down instead of standing up.
-        const bladeRadius = Math.min(descripter.scale.x, descripter.scale.y) * 0.18;
-        //3x the placed Z scale (not the travel-widened base) - long enough to actually read as a
-        //blade rather than a stub, without needing to track travelDistance itself.
-        const bladeLength = descripter.scale.z * 3;
+        //A cylinder rotated onto its side (axle along local X, perpendicular to the Z travel
+        //axis) so it reads as a wheel rolling across the cube's top face, not a rod poking out of
+        //it - centered on that face so half its circular profile pokes up and half is embedded.
+        const bladeRadius = Math.min(descripter.scale.y, descripter.scale.z) * 0.35;
+        //A short axle depth, not a long rod - just enough to read as a wheel's thickness.
+        const bladeLength = descripter.scale.x * 0.5;
         const bladeMaterial = new THREE.MeshStandardMaterial({color: '#cc2222', emissive: '#cc2222', emissiveIntensity: 0.3});
         this.bladeComponent = new StaticMeshComponent(
             this,
-            new THREE.CylinderGeometry(bladeRadius, bladeRadius, bladeLength, 12),
+            new THREE.CylinderGeometry(bladeRadius, bladeRadius, bladeLength, 24),
             bladeMaterial,
             new THREE.Vector3(0, descripter.scale.y / 2, 0),
         );
-        this.bladeComponent.mesh.rotation.x = Math.PI / 2;
+        this.bladeComponent.mesh.rotation.z = Math.PI / 2;
     }
 
     public async Init(descripter : SpawnDescriptor) {
