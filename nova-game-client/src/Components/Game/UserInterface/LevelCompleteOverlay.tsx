@@ -88,9 +88,12 @@ export const LevelCompleteOverlay = () => {
 
             {/* Explicitly positioned/z-indexed, not just DOM order - LeaderboardPanel/
             RunHistoryPanel are plain non-positioned divs, which paint below ConfettiBurst's
-            `fixed` layer regardless of source order unless raised like this. */}
-            <div className="relative z-10"><LeaderboardPanel data={leaderboard} error={leaderboardError} /></div>
-            {GameMode.appMode !== "createLevel" && <div className="relative z-10"><RunHistoryPanel attempts={runHistory} /></div>}
+            `fixed` layer regardless of source order unless raised like this. Stacked vertically
+            as one group rather than side by side. */}
+            <div className="relative z-10 flex flex-col gap-6">
+                <LeaderboardPanel data={leaderboard} error={leaderboardError} />
+                {GameMode.appMode !== "createLevel" && <RunHistoryPanel attempts={runHistory} />}
+            </div>
 
             <div className="relative z-10 flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
