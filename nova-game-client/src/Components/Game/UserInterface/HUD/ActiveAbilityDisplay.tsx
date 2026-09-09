@@ -30,7 +30,7 @@ export const ActiveAbilityDisplay = () => {
     if (active.length === 0) return null;
 
     //Sits above ControlsHint's bottom-2 text, not on top of it.
-    return <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex flex-row gap-2">
+    return <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-row gap-2">
         {active.map(a => (
             <div key={a.label} className="flex items-center gap-2 bg-slate-950/60 border border-orange-500/40 rounded-lg px-3 py-1">
                 <span className="text-orange-500 font-bold text-sm">{a.label}</span>
