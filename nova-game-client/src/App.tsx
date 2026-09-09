@@ -12,10 +12,11 @@ import {PlaySound} from "./Three/Utility/Sound.ts";
 function App() {
 
     //Delegated rather than wiring every individual button's onClick - there are dozens of them
-    //across the menus/editor/HUD, and any button anywhere should make this sound.
+    //across the menus/editor/HUD, and any button anywhere should make this sound. 0.3 (was 1) -
+    //UI sounds were too loud relative to everything else.
     useEffect(() => {
         const onClick = (e : MouseEvent) => {
-            if ((e.target as HTMLElement | null)?.closest('button')) PlaySound('uiClick');
+            if ((e.target as HTMLElement | null)?.closest('button')) PlaySound('uiClick', 0.3);
         };
         document.addEventListener('click', onClick);
         return () => document.removeEventListener('click', onClick);
@@ -23,13 +24,14 @@ function App() {
 
     //Same delegation as the click sound above. 'mouseover' bubbles (unlike 'mouseenter'), so the
     //relatedTarget check re-derives enter-once behavior: skip it when the pointer came from
-    //somewhere already inside the same button (e.g. moving between its icon and label).
+    //somewhere already inside the same button (e.g. moving between its icon and label). 0.12
+    //(was 0.4) - same 70% cut as the click sound above, off its already-quieter base volume.
     useEffect(() => {
         const onHover = (e : MouseEvent) => {
             const button = (e.target as HTMLElement | null)?.closest('button');
             if (!button || button.disabled) return;
             if (button.contains(e.relatedTarget as Node | null)) return;
-            PlaySound('uiHover', 0.4);
+            PlaySound('uiHover', 0.12);
         };
         document.addEventListener('mouseover', onHover);
         return () => document.removeEventListener('mouseover', onHover);
