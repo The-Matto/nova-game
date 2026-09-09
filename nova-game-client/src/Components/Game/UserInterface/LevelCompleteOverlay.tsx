@@ -32,27 +32,31 @@ export const LevelCompleteOverlay = () => {
 
             const levelId = LevelSelection.selectedLevelId;
 
-            //Local-only, not PIE testing - same gating as LevelRatingWidget below.
+            //Local-only, not PIE testing - a level being edited isn't necessarily even uploaded
+            //yet (LevelSelection.selectedLevelId is still whatever the default/last-loaded value
+            //is), so submitting/fetching a real leaderboard here could hit an unrelated level's
+            //entries on the actual server, or one that doesn't exist at all. Same gating as
+            //LevelRatingWidget/RunHistoryPanel below.
             if (GameMode.appMode !== "createLevel") {
                 setIsNewPB(RecordRun(levelId, LevelTimer.elapsedTime));
                 setRunHistory(GetRunHistory(levelId));
-            }
 
-            //Submit first, then re-fetch, so the just-finished run is guaranteed to be in the
-            //list LeaderboardPanel renders instead of racing a GET fired at the same time.
-            EnsureRegistered()
-                .then(playerId => fetch('/api/leaderboard', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({levelId, playerId, timeSeconds: LevelTimer.elapsedTime}),
-                }).then(() => playerId))
-                .then(playerId => fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerId=${encodeURIComponent(playerId)}`))
-                .then(res => {
-                    if (!res.ok) throw new Error(`Server responded ${res.status}`);
-                    return res.json();
-                })
-                .then(setLeaderboard)
-                .catch(() => setLeaderboardError("Couldn't reach the leaderboard server"));
+                //Submit first, then re-fetch, so the just-finished run is guaranteed to be in the
+                //list LeaderboardPanel renders instead of racing a GET fired at the same time.
+                EnsureRegistered()
+                    .then(playerId => fetch('/api/leaderboard', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({levelId, playerId, timeSeconds: LevelTimer.elapsedTime}),
+                    }).then(() => playerId))
+                    .then(playerId => fetch(`/api/leaderboard?levelId=${encodeURIComponent(levelId)}&playerId=${encodeURIComponent(playerId)}`))
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Server responded ${res.status}`);
+                        return res.json();
+                    })
+                    .then(setLeaderboard)
+                    .catch(() => setLeaderboardError("Couldn't reach the leaderboard server"));
+            }
         });
     }, []);
 
@@ -90,10 +94,12 @@ export const LevelCompleteOverlay = () => {
             RunHistoryPanel are plain non-positioned divs, which paint below ConfettiBurst's
             `fixed` layer regardless of source order unless raised like this. Stacked vertically
             as one group rather than side by side. */}
-            <div className="relative z-10 flex flex-col gap-6">
-                <LeaderboardPanel data={leaderboard} error={leaderboardError} />
-                {GameMode.appMode !== "createLevel" && <RunHistoryPanel attempts={runHistory} />}
-            </div>
+            {GameMode.appMode !== "createLevel" && (
+                <div className="relative z-10 flex flex-col gap-6">
+                    <LeaderboardPanel data={leaderboard} error={leaderboardError} />
+                    <RunHistoryPanel attempts={runHistory} />
+                </div>
+            )}
 
             <div className="relative z-10 flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
