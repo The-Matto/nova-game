@@ -29,9 +29,11 @@ const LevelTile = ({name, thumbnailSrc, onClick} : {name : string, thumbnailSrc?
 );
 
 //Opens the instant a fresh editor session starts (see MainMenu.openEditor/EditorMenu) - lets you
-//pick a real starting point instead of always editing a blank level. Skipped entirely when
-//EditingLevel.id is already set (see EditorMenu), since re-opening a specific upload via the
-//level browser's "Edit Level" already is a deliberate choice of starting point.
+//pick a real starting point instead of always editing a blank level (Presets' own "Blank" tile
+//just closes this, since MainMenu.openEditor already loaded BlankLevel.json underneath it).
+//Skipped entirely when EditingLevel.id is already set (see EditorMenu), since re-opening a
+//specific upload via the level browser's "Edit Level" already is a deliberate choice of
+//starting point.
 export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
     const [tab, setTab] = useState<Tab>('presets');
 
@@ -95,8 +97,11 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
             <div className="overflow-y-auto">
                 {tab === 'presets' && (
                     presets === null ? <div className="text-sm text-white/50 py-6 text-center">Loading…</div> :
-                    presets.length === 0 ? <div className="text-sm text-white/50 py-6 text-center">No presets yet.</div> :
                     <div className="grid grid-cols-4 gap-3">
+                        {/* Not a real preset (see BlankLevel.json/MainMenu.openEditor, which
+                        already loaded it) - just needs to close the modal. Always first, even
+                        with no presets configured yet. */}
+                        <LevelTile name="Blank" thumbnailSrc="/blank-level-thumbnail.svg" onClick={onClose} />
                         {presets.map(preset => (
                             <LevelTile key={preset.file} name={preset.name} onClick={() => loadPreset(preset)} />
                         ))}
@@ -123,13 +128,6 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
                     </div>
                 )}
             </div>
-
-            <button
-                className="self-start bg-slate-800 hover:bg-slate-700 rounded-lg px-4 py-2 text-sm text-orange-500/70 cursor-pointer"
-                onClick={onClose}
-            >
-                Start Blank
-            </button>
         </div>
     </div>;
 };
