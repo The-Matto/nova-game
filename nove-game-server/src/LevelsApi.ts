@@ -277,14 +277,20 @@ async function HandleUpdateLevel(req : IncomingMessage, res : ServerResponse) : 
     }
 
     const thumbnailExtension = thumbnailContentType === "image/png" ? "png" : "jpg";
-    const [path, thumbnailUrl] = await Promise.all([
+    const [path, rawThumbnailUrl] = await Promise.all([
         UploadToR2(`levels/${parsed.levelId}/level.json`, levelDataBuffer, "application/json"),
         UploadToR2(`levels/${parsed.levelId}/thumbnail.${thumbnailExtension}`, thumbnailBuffer, thumbnailContentType),
     ]);
+    //Unlike level.json, Cloudflare's edge does cache the thumbnail (image responses get a long
+    //default TTL) - since an update reuses the same key, a stale cached image would otherwise
+    //stick around for hours after a genuine change. A cache-busting query string forces a fresh
+    //fetch without needing to reach for a cache-purge API call.
+    const thumbnailUrl = `${rawThumbnailUrl}?v=${Date.now()}`;
 
     //If the new thumbnail landed under a different extension than the old one, the old file is
-    //now orphaned - clean it up (best-effort, same reasoning as HandleDeleteLevel).
-    const oldExtension = (existing.rows[0].thumbnail_url as string | null)?.match(/\.(\w+)$/)?.[1];
+    //now orphaned - clean it up (best-effort, same reasoning as HandleDeleteLevel). Strip any
+    //cache-busting query string first - the extension match needs to land on the actual filename.
+    const oldExtension = (existing.rows[0].thumbnail_url as string | null)?.split('?')[0]?.match(/\.(\w+)$/)?.[1];
     if (oldExtension && oldExtension !== thumbnailExtension) {
         DeleteFromR2(`levels/${parsed.levelId}/thumbnail.${oldExtension}`).catch(() => {});
     }
@@ -434,8 +440,9 @@ async function HandleDeleteLevel(req : IncomingMessage, res : ServerResponse) : 
     }
 
     //Best-effort - the DB row (the real source of truth for what's browsable) is already gone,
-    //so a stray R2 object left behind is a storage leak, not a correctness problem.
-    const thumbnailExtension = (result.rows[0].thumbnail_url as string | null)?.match(/\.(\w+)$/)?.[1];
+    //so a stray R2 object left behind is a storage leak, not a correctness problem. Strip any
+    //cache-busting query string (see HandleUpdateLevel) before matching the extension.
+    const thumbnailExtension = (result.rows[0].thumbnail_url as string | null)?.split('?')[0]?.match(/\.(\w+)$/)?.[1];
     await Promise.all([
         DeleteFromR2(`levels/${parsed.levelId}/level.json`).catch(() => {}),
         thumbnailExtension ? DeleteFromR2(`levels/${parsed.levelId}/thumbnail.${thumbnailExtension}`).catch(() => {}) : Promise.resolve(),
