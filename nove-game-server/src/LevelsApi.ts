@@ -8,6 +8,7 @@ import {ResolveEffectivePlayerId} from "./Session";
 import {ReadBody} from "./Http";
 import {DeleteFromR2, UploadToR2} from "./R2";
 import {GetWeeklyPlays, RecordLevelPlay} from "./WeeklyPlays";
+import {WipeLeaderboard} from "./LeaderboardApi";
 
 const MAX_NAME_LENGTH = 80;
 const MAX_DESCRIPTION_LENGTH = 500;
@@ -313,6 +314,10 @@ async function HandleUpdateLevel(req : IncomingMessage, res : ServerResponse) : 
         const values = tags.map((_, i) => `($1, $${i + 2})`).join(", ");
         await pool.query(`INSERT INTO level_tags (level_id, tag) VALUES ${values}`, [parsed.levelId, ...tags]);
     }
+
+    //Unlike rating/total_plays, past times aren't left alone - a geometry/target change can make
+    //them impossible or trivial, so they're wiped rather than compared against the new level.
+    await WipeLeaderboard(parsed.levelId);
 
     res.writeHead(200, {"Content-Type": "application/json"});
     res.end(JSON.stringify({...RowToSummary(result.rows[0]), tags}));

@@ -118,6 +118,19 @@ async function GetPlayerRank(levelId : string, playerId : string) : Promise<{ran
     }
 }
 
+//Called from HandleUpdateLevel (LevelsApi.ts) - a geometry/target change can make existing times
+//impossible or trivial, so past runs aren't comparable to the updated level.
+export async function WipeLeaderboard(levelId : string) : Promise<void> {
+    await pool.query("DELETE FROM leaderboard_entries WHERE level_id = $1", [levelId]);
+    try {
+        await GetRedis().del(RedisKey(levelId));
+    } catch {
+        //Ignore - Postgres is already wiped (the durable/authoritative copy); a stale Redis
+        //entry just falls back and re-backfills empty next read, same fail-open reasoning as
+        //everywhere else Redis is touched in this file.
+    }
+}
+
 //Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
 export async function HandleLeaderboardRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
     const url = new URL(req.url ?? "", "http://localhost");
