@@ -8,7 +8,7 @@ const EDITOR_CONTROLS = [
 ];
 
 const PLAY_CONTROLS = [
-    "WASD Move · Space Jump · LMB Fire · P Pause",
+    "WASD Move · Space Jump · LMB Fire · P Pause · R Reset",
 ];
 
 //A bottom-of-screen reminder of the current mode's controls - text only, so it never blocks
@@ -37,6 +37,6 @@ export const ControlsHint = () => {
     const lines = isInEditor ? EDITOR_CONTROLS : PLAY_CONTROLS;
 
     return <div className="absolute bottom-2 inset-x-0 z-10 flex flex-col items-center gap-0.5 pointer-events-none">
-        {lines.map((line, i) => <div key={i} className="text-xs text-white">{line}</div>)}
+        {lines.map((line, i) => <div key={i} className="text-sm text-white">{line}</div>)}
     </div>;
 };

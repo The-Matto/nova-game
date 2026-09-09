@@ -85,10 +85,15 @@ export class PlayerController {
             endFunc: () => {},
             isActive: false
         };
+        //Gizmo scale mode in the editor; a quick full level reset during real gameplay (isEcho-
+        //guarded like KeyP/Delete - one-shot, not repeat-while-held).
         keyActions["KeyR"] = {
             startFunc: () => {
-                if (EditorState.isInEditor && !this.isRightMouseDown) {
-                    this.TrySetTransformMode('scale', "KeyR");
+                if (EditorState.isInEditor) {
+                    if (!this.isRightMouseDown) this.TrySetTransformMode('scale', "KeyR");
+                } else if (!keyActions["KeyR"].isEcho) {
+                    this.QuickRetry();
+                    keyActions["KeyR"].isEcho = true;
                 }
             },
             endFunc: () => { keyActions["KeyR"].isEcho = false; },
@@ -256,6 +261,14 @@ export class PlayerController {
 
         if (physics.isPaused) PlayerStatics.PlayerCharacter?.Resume();
         else PlayerStatics.PlayerCharacter?.Pause();
+    }
+
+    //'R' during real gameplay - the same full reset as the pause menu's Retry button, without
+    //needing to open the menu first. 'gameResumed' also closes it if it happened to already be
+    //open (paused or dead), same as a normal Resume/Retry click would.
+    public QuickRetry = () => {
+        PlayerStatics.PlayerCharacter?.PlayerRetry();
+        GameEvents.Emit('gameResumed', undefined);
     }
 
     //Starts a fresh PIE session - called by 'P' from editor mode, and the palette's Play button.
