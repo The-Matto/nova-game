@@ -20,4 +20,6 @@ import './Actors/DoorActor.ts';
 import './Actors/PostProcessVolume.ts';
 import './Actors/KillYVisualizer.ts';
 import './Actors/PowerupPickup.ts';
+import './Actors/SwitchButtonActor.ts';
+import './Actors/DisappearingCubeActor.ts';
 

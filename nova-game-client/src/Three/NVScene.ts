@@ -6,6 +6,7 @@ import {SceneBuilder} from "./SceneBuilder.ts";
 import {Octree} from "three/examples/jsm/math/Octree.js";
 
 import {LevelObjectives} from "./Gameplay/LevelObjectives";
+import {ColorSwitchState} from "./Gameplay/ColorSwitch";
 import {EditorSelection} from "./Editor/EditorSelection";
 import {MainCamera} from "./Camera.ts";
 import {EditorState, LevelSelection} from "./Utility/PlayerGlobals.ts";
@@ -147,6 +148,7 @@ export class NVScene {
 
         NVScene.worldOctree = new Octree();
         LevelObjectives.Clear();
+        ColorSwitchState.Reset();
         EditorSelection.ClearSelection();
         NVScene.NotifyActorCountChanged();
     }

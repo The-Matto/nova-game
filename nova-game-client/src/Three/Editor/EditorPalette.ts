@@ -40,6 +40,11 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             {label: "Switch Cannon", class: "NVDeactivatableCannon"},
             //A doorway-shaped default (width, height, thickness) rather than a unit cube.
             {label: "Door", class: "NVDoorActor", scale: {x: 2.2, y: 3.5, z: 0.4}},
+            //Shooting this flips ColorSwitchState, toggling every Disappearing Cube in the level.
+            {label: "Switch Button", class: "NVSwitchButtonActor", scale: {x: 0.6, y: 0.6, z: 0.6}},
+            //Solid+full-size while its color property matches the switch's active color, shrunk+
+            //non-solid otherwise - see NVDisappearingCubeActor.
+            {label: "Disappearing Cube", class: "NVDisappearingCubeActor"},
         ],
     },
     {
