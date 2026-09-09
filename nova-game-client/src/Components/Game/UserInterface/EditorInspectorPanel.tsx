@@ -5,6 +5,7 @@ import {NVScene} from "../../../Three/NVScene";
 import type {NVActor} from "../../../Three/Actor";
 import {DragNumberInput} from "../../UI/DragNumberInput";
 import {Vector3Input, type Axis} from "../../UI/Vector3Input";
+import {GetActorDisplayName} from "../../../Three/Editor/EditorPalette";
 
 const isHexColor = (value : unknown) : value is string =>
     typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
@@ -72,7 +73,7 @@ export const EditorInspectorPanel = () => {
     );
 
     return <div className="pointer-events-auto w-56 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-3 text-orange-500">
-        <div className="text-base font-bold mb-1.5">{selectedActor.constructor.name}</div>
+        <div className="text-base font-bold mb-1.5">{GetActorDisplayName(selectedActor.spawnDescriptor.class)}</div>
 
         <div className="flex flex-col gap-1.5 mb-2">
             <Vector3Row label="Location" vector={position} onChange={setTransform(position)} sensitivity={0.05} />
