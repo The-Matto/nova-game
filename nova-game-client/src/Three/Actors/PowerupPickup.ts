@@ -26,15 +26,18 @@ const SPIN_SPEED = 1.5;
 @RegisterClass("NVPowerupPickup")
 export class NVPowerupPickup extends NVActor {
 
+    //The trigger volume - fixed to wherever this actor is actually placed (see RegisterCollision),
+    //deliberately never touched by the bob below. Standing in the pickup felt inconsistent because
+    //this used to be derived from the bobbing mesh itself (setFromObject), so the volume drifted
+    //up and down a frame behind whatever position the player was actually checked against.
     private bounds = new THREE.Box3();
+    //The bob/spin only ever move this, a child of `scene` - `scene`'s own position/rotation is
+    //the level author's placement and is never touched after spawn, so the trigger volume above
+    //can just be computed once from it and stay correct forever.
+    private visualMesh : THREE.Mesh;
     private material : THREE.MeshStandardMaterial;
     private hasBeenCollected : boolean = false;
     private age : number = 0;
-    //The Y the bob adds/subtracts around - (re)captured from the actual placed position every
-    //time real gameplay starts (see Tick), not just once at spawn, so a level author repositioning
-    //it in the editor isn't fought by the bob snapping back to a stale value every frame.
-    private restY : number = 0;
-    private wasInEditor : boolean = true;
 
     @EditableProperty({choices: [...POWERUP_TYPES]})
     public powerupType : PowerupType = 'Gravity';
@@ -83,7 +86,9 @@ export class NVPowerupPickup extends NVActor {
             emissive: color,
             emissiveIntensity: 0.6,
         });
-        this.scene = new THREE.Mesh(geometry, this.material);
+        this.visualMesh = new THREE.Mesh(geometry, this.material);
+        this.scene = new THREE.Object3D();
+        this.scene.add(this.visualMesh);
 
         //Not added to NVScene.worldOctree - this is a trigger, not solid geometry.
     }
@@ -93,10 +98,19 @@ export class NVPowerupPickup extends NVActor {
         this.RegisterCollision();
     }
 
-    //Keeps `bounds` current after an editor move - not solid, so this never touches worldOctree,
-    //but NVScene.RebuildWorldOctree() still reaches every actor after a gizmo drag.
+    //Sized from the placed scale rather than setFromObject(this.scene) - the mesh it'd otherwise
+    //measure is the one bobbing (see Tick), so this stays a fixed volume regardless of where the
+    //visual currently is. Also called on an editor gizmo move (see NVScene.RebuildWorldOctree),
+    //so a live Scale edit still resizes the trigger to match - same baked-scale * live-multiplier
+    //math as ToSpawnDescriptor().
     public RegisterCollision() {
-        this.bounds.setFromObject(this.scene);
+        const baked = this.spawnDescriptor.scale;
+        const size = new THREE.Vector3(
+            baked.x * this.scene.scale.x,
+            baked.y * this.scene.scale.y,
+            baked.z * this.scene.scale.z,
+        );
+        this.bounds.setFromCenterAndSize(this.scene.position, size);
     }
 
     //Back for another attempt, same as NVTargetActor - a pickup used earlier in a run shouldn't
@@ -123,22 +137,14 @@ export class NVPowerupPickup extends NVActor {
         super.Tick(deltaTime);
 
         //Bob/spin (and the trigger check below) are gameplay-only - editor mode is for
-        //inspecting/moving around the level, not playing it, and continuously overwriting
-        //position/rotation every frame would otherwise fight a gizmo drag or Location/Rotation
-        //edit right back to wherever the bob/spin math says they should be.
-        if (EditorState.isInEditor) {
-            this.wasInEditor = true;
-            return;
-        }
-
-        //Just-entered real gameplay - bob around wherever it's actually placed, not a stale
-        //value from whenever this instance was first constructed.
-        if (this.wasInEditor) this.restY = this.scene.position.y;
-        this.wasInEditor = false;
+        //inspecting/moving around the level, not playing it. Both only ever touch visualMesh's
+        //local transform now, never `scene`'s, so there's nothing left for this to fight a gizmo
+        //drag or Location/Rotation edit over.
+        if (EditorState.isInEditor) return;
 
         this.age += deltaTime;
-        this.scene.rotation.y += SPIN_SPEED * deltaTime;
-        this.scene.position.y = this.restY + Math.sin(this.age * BOB_SPEED) * BOB_HEIGHT;
+        this.visualMesh.rotation.y += SPIN_SPEED * deltaTime;
+        this.visualMesh.position.y = Math.sin(this.age * BOB_SPEED) * BOB_HEIGHT;
 
         if (this.hasBeenCollected) return;
 

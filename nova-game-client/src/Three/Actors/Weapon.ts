@@ -59,6 +59,7 @@ export class NVWeapon extends NVActor {
     //NVPowerupPickup) - same pattern as NVPlayerPhysics's gravity/speed overrides.
     private baseFireRate : number = this.fireRate;
     private fireRateOverrideRemaining : number = 0;
+    private fireRateOverrideDuration : number = 0;
 
     constructor(descripter : SpawnDescriptor) {
         super(descripter);
@@ -73,6 +74,7 @@ export class NVWeapon extends NVActor {
         if (this.fireRateOverrideRemaining <= 0) this.baseFireRate = this.fireRate;
         this.fireRate = value;
         this.fireRateOverrideRemaining = duration;
+        this.fireRateOverrideDuration = duration;
     }
 
     private TickFireRateOverride(deltaTime : number) {
@@ -99,6 +101,10 @@ export class NVWeapon extends NVActor {
     //For ActiveAbilityDisplay (HUD) - 0 means no fast-fire powerup is currently active.
     public get fastFireSecondsRemaining() : number {
         return Math.max(0, this.fireRateOverrideRemaining);
+    }
+
+    public get fastFireFraction() : number {
+        return this.fireRateOverrideDuration > 0 ? this.fastFireSecondsRemaining / this.fireRateOverrideDuration : 0;
     }
 
     //Leans the viewmodel (and, more subtly, the camera itself) into whichever way the player's

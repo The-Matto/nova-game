@@ -39,13 +39,16 @@ export class NVPlayerPhysics extends NVComponent {
     isLevelComplete : boolean = false;
 
     //Set while a temporary gravity powerup is active (see ApplyGravityOverride/NVPowerupPickup) -
-    //reverts on its own once the timer runs out, or immediately on respawn.
+    //reverts on its own once the timer runs out, or immediately on respawn. Duration is kept
+    //alongside remaining purely for the HUD's progress bar (see gravityBoostFraction below).
     private baseGravity : number = this.GRAVITY;
     private gravityOverrideRemaining : number = 0;
+    private gravityOverrideDuration : number = 0;
 
     //Same pattern as the gravity override above, for a temporary speed powerup.
     private baseWalkSpeed : number = this.walkSpeed;
     private walkSpeedOverrideRemaining : number = 0;
+    private walkSpeedOverrideDuration : number = 0;
 
     //Guards against one jump press applying multiple impulses.
     private hasJumpedSinceGrounded : boolean = false;
@@ -82,6 +85,7 @@ export class NVPlayerPhysics extends NVComponent {
         if (this.gravityOverrideRemaining <= 0) this.baseGravity = this.GRAVITY;
         this.GRAVITY = value;
         this.gravityOverrideRemaining = duration;
+        this.gravityOverrideDuration = duration;
     }
 
     private TickGravityOverride(deltaTime : number) {
@@ -96,6 +100,7 @@ export class NVPlayerPhysics extends NVComponent {
         if (this.walkSpeedOverrideRemaining <= 0) this.baseWalkSpeed = this.walkSpeed;
         this.walkSpeed = value;
         this.walkSpeedOverrideRemaining = duration;
+        this.walkSpeedOverrideDuration = duration;
     }
 
     private TickWalkSpeedOverride(deltaTime : number) {
@@ -110,8 +115,17 @@ export class NVPlayerPhysics extends NVComponent {
         return Math.max(0, this.gravityOverrideRemaining);
     }
 
+    //1 when freshly applied, counting down to 0 - the HUD's progress bar fill.
+    public get gravityBoostFraction() : number {
+        return this.gravityOverrideDuration > 0 ? this.gravityBoostSecondsRemaining / this.gravityOverrideDuration : 0;
+    }
+
     public get speedBoostSecondsRemaining() : number {
         return Math.max(0, this.walkSpeedOverrideRemaining);
+    }
+
+    public get speedBoostFraction() : number {
+        return this.walkSpeedOverrideDuration > 0 ? this.speedBoostSecondsRemaining / this.walkSpeedOverrideDuration : 0;
     }
 
     //Moves the collider and the KILL_Y respawn point - NVPawn.Init calls this once on spawn.
