@@ -153,8 +153,15 @@ export class NVScene {
 
     //Despawns everything the level spawned and respawns fresh from the same JSON file.
     public static async ReloadLevel() : Promise<void> {
+        await NVScene.LoadLevelFromPath(NVScene.currentLevelPath);
+    }
+
+    //Despawns everything currently loaded and fetches+spawns a different level file in its place -
+    //see EditorStartupModal, which uses this for both "one of my uploads" and "a preset", neither
+    //of which is necessarily the path the editor originally opened on.
+    public static async LoadLevelFromPath(path : string) : Promise<void> {
         NVScene.ResetLevelState();
-        await NVScene.LoadLevel(NVScene.currentLevelPath);
+        await NVScene.LoadLevel(path);
     }
 
     //Same as ReloadLevel, but respawns from an in-memory snapshot (see SerializeLevel) instead

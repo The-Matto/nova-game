@@ -24,7 +24,11 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         onStart();
     };
 
+    //Opens on a genuinely blank level, not a hardcoded default - EditorStartupModal (see
+    //EditorMenu) offers a real choice (a local save, one of your uploads, or a preset) right
+    //after, so nothing here is ever actually seen unless the player picks "Start Blank".
     const openEditor = () => {
+        LevelSelection.selectedLevelPath = "/BlankLevel.json";
         GameMode.appMode = "createLevel";
         EditorState.isInEditor = true;
         CursorState.isCursorNeeded = true;
