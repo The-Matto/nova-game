@@ -4,7 +4,7 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
-import {NVTargetActor} from "./TargetActor.ts";
+import {IsShootable} from "../Gameplay/Shootable.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
 import {PlayerSettings, PlayerStatics} from "../Utility/PlayerGlobals.ts";
 import {PlaySound} from "../Utility/Sound.ts";
@@ -186,7 +186,7 @@ export class NVWeapon extends NVActor {
         if (didHit) {
             console.log("Weapon hit at", hit!.position, "distance", hit!.distance.toFixed(2));
             NVWeapon.ShowImpactMarker(hit!.position);
-            NVWeapon.RegisterTargetHit(hit!.position);
+            NVWeapon.RegisterShootableHit(hit!.position);
         } else {
             console.log("Weapon fired - no hit within range");
         }
@@ -196,11 +196,12 @@ export class NVWeapon extends NVActor {
     //target's surface and floating-point rounding could otherwise put it a hair outside.
     private static readonly HIT_BOUNDS_EPSILON : number = 0.01;
 
-    //Finds whichever target's bounds the impact point landed in and registers the hit. Targets
-    //already block the trace via world collision, so this only figures out WHICH actor was hit.
-    private static RegisterTargetHit(position : THREE.Vector3) {
+    //Finds whichever IShootable's bounds the impact point landed in and registers the hit -
+    //targets and NVDeactivatableCannon's switch cube alike. Shootables already block the trace
+    //via world collision, so this only figures out WHICH actor was hit.
+    private static RegisterShootableHit(position : THREE.Vector3) {
         for (const actor of NVScene.GetSceneActors()) {
-            if (!(actor instanceof NVTargetActor)) continue;
+            if (!IsShootable(actor)) continue;
 
             const bounds = actor.bounds.clone().expandByScalar(NVWeapon.HIT_BOUNDS_EPSILON);
             if (bounds.containsPoint(position)) {

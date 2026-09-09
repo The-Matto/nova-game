@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {LevelObjectives, type ILevelObjective} from "../Gameplay/LevelObjectives.ts";
+import type {IShootable} from "../Gameplay/Shootable.ts";
 
 //Shared by every target instance - one texture, loaded once from public/.
 const TARGET_TEXTURE = new THREE.TextureLoader().load('/T_NV_Target.png');
@@ -12,7 +13,7 @@ const TARGET_TEXTURE = new THREE.TextureLoader().load('/T_NV_Target.png');
 //Registers itself as a level objective so NVGoalVolume won't let the player finish until every
 //target's been hit.
 @RegisterClass("NVTargetActor")
-export class NVTargetActor extends NVActor implements ILevelObjective {
+export class NVTargetActor extends NVActor implements ILevelObjective, IShootable {
 
     private static readonly DEFAULT_COLOR : string = '#ffffff';
     private static readonly HIT_COLOR : string = '#000000';

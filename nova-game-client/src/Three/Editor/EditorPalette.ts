@@ -29,6 +29,9 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             //Matches the scale of TestWorld.json's jump platforms.
             {label: "Falling Platform", class: "FallingPlatform", scale: {x: 1.8, y: 0.3, z: 2}},
             {label: "Cannon", class: "NVCannon"},
+            //A regular cannon with a shootable switch on top - hitting it disables firing for a
+            //while (see NVDeactivatableCannon.deactivateDuration).
+            {label: "Switch Cannon", class: "NVDeactivatableCannon"},
             //A doorway-shaped default (width, height, thickness) rather than a unit cube.
             {label: "Door", class: "NVDoorActor", scale: {x: 2.2, y: 3.5, z: 0.4}},
         ],

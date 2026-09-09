@@ -58,13 +58,21 @@ export class NVCannonActor extends NVActor {
         this.timeSinceLastFire = 0;
     }
 
+    //Overridable hook, not a field - lets NVDeactivatableCannon gate firing without needing
+    //access to timeSinceLastFire itself. Deliberately doesn't reset the timer when false, so a
+    //cannon that's blocked mid-cycle fires immediately once it can again, rather than waiting
+    //through a fresh interval on top of however long it was blocked.
+    protected CanFire() : boolean {
+        return true;
+    }
+
     Tick(deltaTime : number) {
         super.Tick(deltaTime);
 
         if (EditorState.isInEditor || IsGameplayFrozen()) return;
 
         this.timeSinceLastFire += deltaTime;
-        if (this.timeSinceLastFire < this.fireInterval) return;
+        if (this.timeSinceLastFire < this.fireInterval || !this.CanFire()) return;
         this.timeSinceLastFire = 0;
 
         const muzzle = this.scene.localToWorld(NVCannonActor.MUZZLE_OFFSET.clone());
