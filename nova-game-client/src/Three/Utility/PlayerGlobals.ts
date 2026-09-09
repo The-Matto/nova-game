@@ -67,14 +67,15 @@ export const GameMode = {
     appMode: "createLevel" as AppMode,
 };
 
-//Which level NVScene's constructor loads - set by LevelBrowser before Play mounts the game.
-//Also set by MainMenu's "Edit Level" (see EditingLevel below) so the editor opens that level
-//instead of the default TestWorld.json - editor mode is otherwise unaware of this.
+//Which level NVScene's constructor loads - set by LevelBrowser before Play mounts the game, by
+//MainMenu's Editor/Edit Level buttons, or by EditorStartupModal. The field initializers below are
+//never actually read live - App.tsx only ever mounts the game after one of those has run - just a
+//safe fallback that isn't a path to a real file, so nothing renders if that assumption ever breaks.
 //selectedLevelId matches a LevelSummary.id (see LevelBrowser) - what LeaderboardPanel submits/
 //fetches against, since the level's file path isn't a stable identifier on the backend.
 export const LevelSelection = {
-    selectedLevelPath: "/TestWorld.json",
-    selectedLevelId: "test-world",
+    selectedLevelPath: "/BlankLevel.json",
+    selectedLevelId: "",
 };
 
 //Set by MainMenu's "Edit Level" (see LevelBrowser.tsx) when the editor was opened to edit an

@@ -15,7 +15,7 @@ const TABS : {tab : Tab, label : string}[] = [
 ];
 
 //One tile per level, regardless of which of the three sources it came from - just a thumbnail
-//(optional; presets don't have one) and a name.
+//(optional - a preset without one just falls back to "No preview") and a name.
 const LevelTile = ({name, thumbnailSrc, onClick} : {name : string, thumbnailSrc? : string, onClick : () => void}) => (
     <button
         className="flex flex-col gap-1 text-left cursor-pointer"
@@ -103,7 +103,12 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
                         with no presets configured yet. */}
                         <LevelTile name="Blank" thumbnailSrc="/blank-level-thumbnail.svg" onClick={onClose} />
                         {presets.map(preset => (
-                            <LevelTile key={preset.file} name={preset.name} onClick={() => loadPreset(preset)} />
+                            <LevelTile
+                                key={preset.file}
+                                name={preset.name}
+                                thumbnailSrc={preset.thumbnail ? `/level-presets/${preset.thumbnail}` : undefined}
+                                onClick={() => loadPreset(preset)}
+                            />
                         ))}
                     </div>
                 )}

@@ -1,1 +1,4 @@
-[]
+[
+  {"name": "Test World", "file": "test-world.json", "thumbnail": "test-world-thumbnail.png"},
+  {"name": "Pinky", "file": "pinky.json"}
+]

@@ -7,8 +7,9 @@ way to discover files in this folder automatically.
 
 ```json
 [
-  {"name": "Empty Arena", "file": "empty-arena.json"}
+  {"name": "Empty Arena", "file": "empty-arena.json", "thumbnail": "empty-arena-thumbnail.png"}
 ]
 ```
 
-`file` is just the filename, resolved relative to this folder.
+`file` and `thumbnail` are both just filenames, resolved relative to this folder. `thumbnail` is
+optional - a preset without one just shows a "No preview" placeholder in the picker.

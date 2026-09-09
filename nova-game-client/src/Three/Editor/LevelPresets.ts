@@ -5,6 +5,9 @@
 export type LevelPreset = {
     name : string,
     file : string,
+    //Optional - resolved the same way as `file` (relative to level-presets/). Shows the tile's
+    //usual "No preview" placeholder when omitted (see EditorStartupModal).
+    thumbnail? : string,
 };
 
 export async function ListLevelPresets() : Promise<LevelPreset[]> {
