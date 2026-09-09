@@ -6,6 +6,13 @@ import {Vector3} from "three";
 import {NVScene} from "./NVScene.ts";
 import type {EditablePropertyOptions} from "./Editor/EditableProperty.ts";
 
+//A plain {x,y,z} object round-tripped through JSON - see ApplyEditableProperties.
+function IsVector3Like(value : unknown) : value is {x : number, y : number, z : number} {
+    const v = value as Partial<{x : unknown, y : unknown, z : unknown}> | null;
+    return typeof v === 'object' && v !== null
+        && typeof v.x === 'number' && typeof v.y === 'number' && typeof v.z === 'number';
+}
+
 //Base class which every game object inherits from
 export class NVActor {
 
@@ -59,10 +66,17 @@ export class NVActor {
         //value matching the default would still trigger a spurious "changed" side effect.
         const self = this as unknown as Record<string, unknown>;
         for (const key of ctor.editableProperties.keys()) {
-            if (key in properties && properties[key] !== self[key]) {
-                self[key] = properties[key];
-                this.OnEditablePropertyChanged(key);
-            }
+            if (!(key in properties) || properties[key] === self[key]) continue;
+
+            //A Vector3 field round-trips through JSON as a plain {x,y,z} object, not a real
+            //instance - rebuild one rather than assigning that plain object directly, or code
+            //elsewhere calling Vector3 methods on the field (e.g. .lerp) would break.
+            const existing = self[key];
+            const incoming = properties[key];
+            self[key] = existing instanceof Vector3 && IsVector3Like(incoming)
+                ? new Vector3(incoming.x, incoming.y, incoming.z)
+                : incoming;
+            this.OnEditablePropertyChanged(key);
         }
     }
 

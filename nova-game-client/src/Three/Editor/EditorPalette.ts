@@ -25,6 +25,9 @@ export const EDITOR_PALETTE : SpawnableCategory[] = [
             {label: "Goal", class: "NVGoalVolume"},
             //z is the disc's thickness now (see NVTargetActor's rotated cylinder) - thin by default.
             {label: "Target", class: "NVTargetActor", scale: {x: 1, y: 1, z: 0.2}},
+            //Lerps back and forth between spawn and spawn+offset - see
+            //NVMovingTargetActor.offset/cycleDuration.
+            {label: "Moving Target", class: "NVMovingTargetActor", scale: {x: 1, y: 1, z: 0.2}},
             {label: "Spikes", class: "NVSpikeActor"},
             //A blade sliding back and forth out of a mount cube - see
             //NVMovingBladeActor.travelDistance/cycleDuration.

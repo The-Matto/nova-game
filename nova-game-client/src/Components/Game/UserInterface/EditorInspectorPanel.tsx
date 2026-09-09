@@ -112,6 +112,17 @@ export const EditorInspectorPanel = () => {
                                 sensitivity={options.sensitivity}
                                 className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
                             />
+                        ) : value instanceof THREE.Vector3 ? (
+                            <Vector3Input
+                                vector={value}
+                                onChange={(axis, v) => {
+                                    value[axis] = v;
+                                    selectedActor.OnEditablePropertyChanged(key);
+                                    forceRerender(n => n + 1);
+                                }}
+                                sensitivity={options.sensitivity}
+                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none text-xs"
+                            />
                         ) : isHexColor(value) ? (
                             <input
                                 type="color"
