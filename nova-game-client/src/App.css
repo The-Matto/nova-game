@@ -35,6 +35,20 @@
   padding: 2em;
 }
 
+/* Main menu backdrop (see MainMenu.tsx) - the same lava art NVKillYVisualizer uses in-level,
+   panned diagonally so it doesn't feel like a static image. One tile at native resolution. */
+@keyframes lava-pan {
+  from { background-position: 0 0; }
+  to { background-position: 1024px 1024px; }
+}
+
+.lava-background {
+  background-image: url('/T_Lava.png');
+  background-repeat: repeat;
+  background-size: 1024px 1024px;
+  animation: lava-pan 40s linear infinite;
+}
+
 .read-the-docs {
   color: #888;
 }

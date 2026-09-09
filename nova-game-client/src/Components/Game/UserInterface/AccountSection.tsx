@@ -133,7 +133,7 @@ export const AccountSection = () => {
         {showSignInConfirm && <SignInConfirm onCancel={() => setShowSignInConfirm(false)} />}
         {profilePlayerId && <ProfileViewer playerId={profilePlayerId} onClose={() => setProfilePlayerId(null)} />}
         {showWelcomePrompt && <WelcomePrompt onDone={newName => { setName(newName); setShowWelcomePrompt(false); }} />}
-        <div className="absolute top-4 right-4 flex items-center gap-3 text-orange-500 text-sm">
+        <div className="absolute top-4 right-4 flex items-center gap-3 text-orange-500 text-sm border border-orange-500/40 rounded-xl bg-slate-900/80 px-4 py-2">
             {loggedIn
                 ? <>
                     <span>Signed in as <button className="underline cursor-pointer" onClick={openOwnProfile}>{name}</button></span>

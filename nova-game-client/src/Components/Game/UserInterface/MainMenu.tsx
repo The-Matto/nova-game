@@ -57,9 +57,13 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         return <LevelBrowser onSelectLevel={playLevel} onEditLevel={editLevel} onBack={() => setShowLevelBrowser(false)} />;
     }
 
-    return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
+    return <div className="fixed inset-0 flex items-center justify-center bg-slate-950 overflow-hidden">
+        <div className="lava-background absolute inset-0" />
+        {/* Dulls the lava enough that it reads as a backdrop, not something competing with the
+        menu card itself. */}
+        <div className="absolute inset-0 bg-slate-950/55" />
         <AccountSection />
-        <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-16 py-12">
+        <div className="relative flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-16 py-12">
             <div className="text-6xl font-bold text-orange-500 mb-4">Nova Game</div>
             <button
                 className="w-48 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
