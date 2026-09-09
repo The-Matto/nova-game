@@ -4,7 +4,7 @@ import {RegisterClass, type SpawnDescriptor} from "../ClassDescripter.ts";
 import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
-import {IsShootable} from "../Gameplay/Shootable.ts";
+import {IsShootable, type IShootable} from "../Gameplay/Shootable.ts";
 import {StaticMeshComponent} from "../Components/StaticMeshComponent.ts";
 import {PlayerSettings, PlayerStatics} from "../Utility/PlayerGlobals.ts";
 import {PlaySound} from "../Utility/Sound.ts";
@@ -174,9 +174,22 @@ export class NVWeapon extends NVActor {
         camera.getWorldDirection(direction);
 
         const ray = new THREE.Ray(camera.position.clone(), direction);
-        const hit = NVScene.worldOctree.rayIntersect(ray);
-        const didHit = !!hit && hit.distance <= NVWeapon.WEAPON_DISTANCE;
-        const endPoint = didHit ? hit!.position : camera.position.clone().addScaledVector(direction, NVWeapon.WEAPON_DISTANCE);
+
+        //Solid world geometry (walls, the base cube of a hazard, etc.) - checked separately from
+        //shootables below, since a shootable (e.g. NVMovingTargetActor) isn't necessarily solid
+        //itself (see its class comment) and wouldn't otherwise be reachable by this trace at all.
+        const solidHit = NVScene.worldOctree.rayIntersect(ray);
+        const solidDistance = (solidHit && solidHit.distance <= NVWeapon.WEAPON_DISTANCE) ? solidHit.distance : Infinity;
+
+        //Closest shootable whose bounds this ray actually enters, capped to whichever's nearer of
+        //weapon range or a solid hit - a wall between the camera and a target should still block
+        //the shot from reaching it.
+        const shootableHit = NVWeapon.RaycastShootables(ray, Math.min(solidDistance, NVWeapon.WEAPON_DISTANCE));
+
+        const didHit = !!shootableHit || solidDistance <= NVWeapon.WEAPON_DISTANCE;
+        const endPoint = shootableHit ? shootableHit.position
+            : didHit ? solidHit!.position
+            : camera.position.clone().addScaledVector(direction, NVWeapon.WEAPON_DISTANCE);
 
         //Drawn from the muzzle, not the eye - a beam running exactly along the camera's own view
         //ray is invisible to that camera (it's foreshortened to a point), same as a real tracer.
@@ -184,31 +197,29 @@ export class NVWeapon extends NVActor {
         NVWeapon.ShowTraceBeam(muzzlePosition, endPoint);
 
         if (didHit) {
-            console.log("Weapon hit at", hit!.position, "distance", hit!.distance.toFixed(2));
-            NVWeapon.ShowImpactMarker(hit!.position);
-            NVWeapon.RegisterShootableHit(hit!.position);
+            console.log("Weapon hit at", endPoint, "distance", (shootableHit?.distance ?? solidDistance).toFixed(2));
+            NVWeapon.ShowImpactMarker(endPoint);
+            shootableHit?.actor.RegisterHit();
         } else {
             console.log("Weapon fired - no hit within range");
         }
     }
 
-    //Small margin on the bounds check below, since a trace's impact point sits exactly on the
-    //target's surface and floating-point rounding could otherwise put it a hair outside.
-    private static readonly HIT_BOUNDS_EPSILON : number = 0.01;
+    //Finds the nearest IShootable whose bounds this ray actually enters, within maxDistance -
+    //targets (moving or not) and NVDeactivatableCannon's switch cube alike.
+    private static RaycastShootables(ray : THREE.Ray, maxDistance : number) {
+        let closest : {actor : NVActor & IShootable, position : THREE.Vector3, distance : number} | null = null;
+        const point = new THREE.Vector3();
 
-    //Finds whichever IShootable's bounds the impact point landed in and registers the hit -
-    //targets and NVDeactivatableCannon's switch cube alike. Shootables already block the trace
-    //via world collision, so this only figures out WHICH actor was hit.
-    private static RegisterShootableHit(position : THREE.Vector3) {
         for (const actor of NVScene.GetSceneActors()) {
             if (!IsShootable(actor)) continue;
+            if (!ray.intersectBox(actor.bounds, point)) continue;
 
-            const bounds = actor.bounds.clone().expandByScalar(NVWeapon.HIT_BOUNDS_EPSILON);
-            if (bounds.containsPoint(position)) {
-                actor.RegisterHit();
-                return;
-            }
+            const distance = ray.origin.distanceTo(point);
+            if (distance > maxDistance) continue;
+            if (!closest || distance < closest.distance) closest = {actor, position: point.clone(), distance};
         }
+        return closest;
     }
 
     //A small sphere at the hit point that fades out over IMPACT_MARKER_LIFETIME_MS - lets you
