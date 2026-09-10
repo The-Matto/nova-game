@@ -6,6 +6,13 @@ import {GetCookie} from "./Cookies";
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 export const SESSION_COOKIE_NAME = "nova_session";
 
+//Set only at the moment PlayersApi.ts mints a brand new anonymous user row - proves *this*
+//browser is the one that id was actually issued to. HandleGitHubLogin (AuthApi.ts) reads this
+//instead of trusting a client-supplied playerId, which used to let anyone link/hijack any
+//account just by knowing its id (ids aren't secret - they're echoed in leaderboard entries).
+export const ANON_ID_COOKIE_NAME = "nova_anon_id";
+export const ANON_ID_COOKIE_TTL_SECONDS = SESSION_TTL_SECONDS;
+
 function SessionKey(token : string) : string {
     return `session:${token}`;
 }

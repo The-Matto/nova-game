@@ -5,6 +5,8 @@ import {pool} from "./Db";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ReadBody} from "./Http";
 import {ANONYMOUS_ACCOUNT_GRACE_PERIOD_DAYS} from "./AccountLifetime";
+import {BuildSetCookie} from "./Cookies";
+import {ANON_ID_COOKIE_NAME, ANON_ID_COOKIE_TTL_SECONDS} from "./Session";
 
 const MAX_DISPLAY_NAME_LENGTH = 40;
 //A real browser registers once ever (see PlayerIdentity.ts) - this just caps a script hammering
@@ -48,7 +50,11 @@ async function HandleRegister(req : IncomingMessage, res : ServerResponse) : Pro
     );
 
     const dto : PlayerIdentityDto = {id: result.rows[0].id, displayName: result.rows[0].display_name};
-    res.writeHead(201, {"Content-Type": "application/json"});
+    res.writeHead(201, {
+        "Content-Type": "application/json",
+        //Ties this browser to this id server-side - see ANON_ID_COOKIE_NAME's own comment.
+        "Set-Cookie": BuildSetCookie(req, ANON_ID_COOKIE_NAME, dto.id, ANON_ID_COOKIE_TTL_SECONDS),
+    });
     res.end(JSON.stringify(dto));
 }
 

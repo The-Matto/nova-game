@@ -106,10 +106,13 @@ export async function RefreshAuthState() : Promise<void> {
 }
 
 //A real navigation, not a fetch - GitHub's consent screen has to be the top-level page. Comes
-//back to this same page via /api/auth/github/callback's redirect once done.
+//back to this same page via /api/auth/github/callback's redirect once done. No playerId in the
+//URL - the server reads it from the anon-id cookie EnsureRegistered's POST just set, since ids
+//aren't actually secret (they're echoed back in leaderboard entries) and trusting a client-
+//supplied one here would let anyone link/hijack any account.
 export async function SignInWithGitHub() : Promise<void> {
-    const id = await EnsureRegistered();
-    window.location.href = `/api/auth/github/login?playerId=${encodeURIComponent(id)}`;
+    await EnsureRegistered();
+    window.location.href = `/api/auth/github/login`;
 }
 
 //A full reset, not just clearing the session - otherwise this browser would keep acting as the

@@ -5,7 +5,7 @@ import type {RenameRequest} from "nova-shared/profile";
 import {pool} from "./Db";
 import {GetRedis} from "./Redis";
 import {GetGitHubOAuthConfig} from "./GitHubOAuth";
-import {CreateSession, DestroySession, GetSessionUserId, SESSION_COOKIE_NAME} from "./Session";
+import {ANON_ID_COOKIE_NAME, CreateSession, DestroySession, GetSessionUserId, SESSION_COOKIE_NAME} from "./Session";
 import {BuildClearCookie, BuildSetCookie, GetCookie} from "./Cookies";
 import {GetClientIp, IsRateLimited} from "./RateLimit";
 import {ReadBody} from "./Http";
@@ -29,18 +29,20 @@ function OAuthStateKey(state : string) : string {
 
 //Kicks off the redirect to GitHub - state is a random, server-generated, single-use key into
 //Redis (not the playerId itself) so a tampered state param can't link GitHub to the wrong
-//account; only the value this server already put there is ever trusted back.
-async function HandleGitHubLogin(req : IncomingMessage, res : ServerResponse, url : URL) : Promise<void> {
+//account; only the value this server already put there is ever trusted back. playerId itself
+//comes from the anon-id cookie, not a query param - ids get echoed back in public leaderboard
+//data, so trusting a client-supplied one here used to let anyone link/hijack any account.
+async function HandleGitHubLogin(req : IncomingMessage, res : ServerResponse) : Promise<void> {
     if (await IsRateLimited(GetClientIp(req), "github-login", LOGIN_RATE_LIMIT, LOGIN_RATE_LIMIT_WINDOW_SECONDS)) {
         res.writeHead(429);
         res.end();
         return;
     }
 
-    const playerId = url.searchParams.get("playerId");
+    const playerId = GetCookie(req, ANON_ID_COOKIE_NAME);
     if (!playerId) {
         res.writeHead(400);
-        res.end();
+        res.end("No local player identity found - reload the page and try again.");
         return;
     }
 
@@ -234,7 +236,7 @@ export async function HandleAuthRequest(req : IncomingMessage, res : ServerRespo
     const url = new URL(req.url ?? "", "http://localhost");
 
     if (url.pathname === "/api/auth/github/login" && req.method === "GET") {
-        await HandleGitHubLogin(req, res, url);
+        await HandleGitHubLogin(req, res);
         return true;
     }
     if (url.pathname === "/api/auth/github/callback" && req.method === "GET") {
