@@ -123,6 +123,12 @@ export class NVScene {
     public static SpawnActorsFromData(data : LevelData){
         NVScene.ApplyWorldSettings(data.worldSettings ?? {...DEFAULT_WORLD_SETTINGS});
         data.actorsToSpawn.forEach((entry : SpawnDescriptor) => {
+            //An uploaded level's JSON is untrusted - an unknown/bogus class would otherwise throw
+            //here and abort every actor after it for anyone who loads the level.
+            if (!ClassRegistry.has(entry.class)) {
+                console.warn(`Skipping actor with unknown class "${entry.class}"`);
+                return;
+            }
             NVScene.SpawnActor(entry);
         });
     }
