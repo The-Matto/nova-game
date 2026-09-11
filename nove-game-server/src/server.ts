@@ -1,5 +1,4 @@
 ﻿import {createServer} from "http";
-import {CreateSocketListener} from "./Sockets";
 import {HandleLevelsRequest} from "./LevelsApi";
 import {HandleLeaderboardRequest} from "./LeaderboardApi";
 import {HandlePlayersRequest} from "./PlayersApi";
@@ -34,7 +33,11 @@ const httpServer = createServer(async (req, res) => {
     }
 });
 
-CreateSocketListener(httpServer);
+//Disabled - unauthenticated (any UID) and unreachable via the Cloudflare proxy anyway (no code
+//path proxies /game), so it was pure attack surface for a feature (multiplayer/ghosts) nothing
+//actually uses yet. Sockets.ts is otherwise untouched - re-enable this once that's real and its
+//UID param is actually verified against a real session/player id.
+//CreateSocketListener(httpServer);
 
 //Railway (and most hosts) inject PORT and expect the app to bind to it, rather than a fixed one.
 const PORT = Number(process.env.PORT) || 8080;
