@@ -178,6 +178,21 @@ export async function HandleLeaderboardRequest(req : IncomingMessage, res : Serv
         //spoofing gap for anyone actually signed in. Anonymous callers keep today's behavior.
         const playerId = await ResolveEffectivePlayerId(req, parsed.playerId);
 
+        //A plausibility floor, not real anti-cheat - see LevelsApi.ts's ComputeMinPlausibleTime.
+        //null means the level predates this check or is missing spawn/goal data - fails open.
+        const levelRow = await pool.query("SELECT min_time_seconds FROM levels WHERE id = $1", [parsed.levelId]);
+        if (levelRow.rowCount === 0) {
+            res.writeHead(400);
+            res.end();
+            return true;
+        }
+        const minTimeSeconds = levelRow.rows[0].min_time_seconds;
+        if (minTimeSeconds !== null && parsed.timeSeconds < Number(minTimeSeconds)) {
+            res.writeHead(400);
+            res.end("Time is faster than this level allows.");
+            return true;
+        }
+
         let result;
         try {
             result = await pool.query(`

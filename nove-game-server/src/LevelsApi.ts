@@ -47,6 +47,47 @@ const MAX_LEVEL_DATA_BYTES = 2 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024;
 const THUMBNAIL_DATA_URL = /^data:(image\/(?:jpeg|png));base64,(.+)$/;
 
+//Generously above the player's actual walk speed (10, see NVPlayerPhysics) so a level using the
+//speed-boost powerup never produces a false-positive reject - this is meant to only ever catch an
+//obviously-faked near-zero submission, not to model real movement.
+const ASSUMED_MAX_PLAYER_SPEED = 40;
+//A floor under the distance-based one, for a spawn/goal placed right next to each other.
+const MIN_PLAUSIBLE_FLOOR_SECONDS = 0.25;
+
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const JPEG_SIGNATURE = Buffer.from([0xff, 0xd8, 0xff]);
+
+//The data URL prefix only claims a content type - doesn't prove the bytes after it actually are
+//one. Checked against the file's real magic bytes so arbitrary content can't ride in under an
+//image/* Content-Type just because the client's data: URL said so.
+function MatchesImageSignature(buffer : Buffer, contentType : string) : boolean {
+    if (contentType === "image/png") return buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE);
+    if (contentType === "image/jpeg") return buffer.subarray(0, JPEG_SIGNATURE.length).equals(JPEG_SIGNATURE);
+    return false;
+}
+
+function IsVector3Like(value : unknown) : value is {x : number, y : number, z : number} {
+    const v = value as Partial<{x : unknown, y : unknown, z : unknown}> | null;
+    return typeof v === "object" && v !== null
+        && typeof v.x === "number" && typeof v.y === "number" && typeof v.z === "number";
+}
+
+//A straight-line-distance-at-max-speed lower bound on how fast this level could possibly be
+//finished - null if it doesn't have both a player start and a goal (upload validation doesn't
+//enforce that server-side - see NVScene.GetMissingRequiredActorLabels for the client-side gate),
+//so callers should treat null as "don't enforce a floor" rather than rejecting everything.
+function ComputeMinPlausibleTime(levelData : any) : number | null {
+    const actors = levelData?.actorsToSpawn;
+    if (!Array.isArray(actors)) return null;
+
+    const spawn = actors.find(a => a?.class === "NVPlayerSpawn")?.location;
+    const goal = actors.find(a => a?.class === "NVGoalVolume")?.location;
+    if (!IsVector3Like(spawn) || !IsVector3Like(goal)) return null;
+
+    const distance = Math.hypot(goal.x - spawn.x, goal.y - spawn.y, goal.z - spawn.z);
+    return Math.max(MIN_PLAUSIBLE_FLOOR_SECONDS, distance / ASSUMED_MAX_PLAYER_SPEED);
+}
+
 function IsValidUpload(value : any) : value is UploadLevelRequest {
     return typeof value?.playerId === "string" && typeof value?.name === "string"
         && value.name.trim().length > 0 && value.name.trim().length <= MAX_NAME_LENGTH
@@ -167,6 +208,11 @@ async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : 
         res.end();
         return;
     }
+    if (!MatchesImageSignature(thumbnailBuffer, thumbnailContentType)) {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
 
     //A logged-in session always wins over whatever playerId the body claims - closes the
     //spoofing gap for anyone actually signed in. Anonymous callers keep today's behavior.
@@ -204,14 +250,15 @@ async function HandleUploadLevel(req : IncomingMessage, res : ServerResponse) : 
         UploadToR2(`levels/${id}/thumbnail.${thumbnailExtension}`, thumbnailBuffer, thumbnailContentType),
     ]);
 
+    const minTimeSeconds = ComputeMinPlausibleTime(parsed.levelData);
     const result = await pool.query(`
         WITH inserted AS (
-            INSERT INTO levels (id, author_id, name, path, thumbnail_url, description)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO levels (id, author_id, name, path, thumbnail_url, description, min_time_seconds)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description, total_plays
         )
         SELECT inserted.*, u.display_name AS created_by FROM inserted JOIN users u ON u.id = $2
-    `, [id, playerId, parsed.name.trim(), path, thumbnailUrl, parsed.description.trim()]);
+    `, [id, playerId, parsed.name.trim(), path, thumbnailUrl, parsed.description.trim(), minTimeSeconds]);
 
     const tags = [...new Set(parsed.tags)];
     if (tags.length > 0) {
@@ -261,6 +308,11 @@ async function HandleUpdateLevel(req : IncomingMessage, res : ServerResponse) : 
         res.end();
         return;
     }
+    if (!MatchesImageSignature(thumbnailBuffer, thumbnailContentType)) {
+        res.writeHead(400);
+        res.end();
+        return;
+    }
 
     //A logged-in session always wins over whatever playerId the body claims - same reasoning as
     //upload/rating/delete.
@@ -297,15 +349,17 @@ async function HandleUpdateLevel(req : IncomingMessage, res : ServerResponse) : 
     }
 
     //rating and total_plays are deliberately left untouched - an edit doesn't invalidate what
-    //players already thought of the level, or how many times it's been played.
+    //players already thought of the level, or how many times it's been played. min_time_seconds
+    //does get recomputed - a geometry change can move the goal/spawn.
+    const minTimeSeconds = ComputeMinPlausibleTime(parsed.levelData);
     const result = await pool.query(`
         WITH updated AS (
-            UPDATE levels SET name = $1, path = $2, thumbnail_url = $3, description = $4
+            UPDATE levels SET name = $1, path = $2, thumbnail_url = $3, description = $4, min_time_seconds = $6
             WHERE id = $5
             RETURNING id, name, author_id, rating, created_at, path, thumbnail_url, description, total_plays
         )
         SELECT updated.*, u.display_name AS created_by FROM updated JOIN users u ON u.id = updated.author_id
-    `, [parsed.name.trim(), path, thumbnailUrl, parsed.description.trim(), parsed.levelId]);
+    `, [parsed.name.trim(), path, thumbnailUrl, parsed.description.trim(), parsed.levelId, minTimeSeconds]);
 
     //Replace the tag set wholesale - simplest way to make it match the new submission exactly.
     await pool.query("DELETE FROM level_tags WHERE level_id = $1", [parsed.levelId]);
