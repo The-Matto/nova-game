@@ -111,7 +111,14 @@ export function ConsumePendingLevelSelection() : {id : string, path : string} | 
 //GameMode since UI reads this as React initial state before PlayInEditor.Initialize runs.
 export const EditorState = {
     isInEditor: GameMode.appMode === "createLevel",
+    //True once anything's been edited since the level was last loaded/saved/uploaded - lets
+    //Return to Menu skip the "unsaved changes" prompt when there's genuinely nothing to lose.
+    isDirty: false,
 };
+
+export function MarkLevelDirty() : void {
+    EditorState.isDirty = true;
+}
 
 //True whenever the OS cursor is needed and pointer lock is deliberately released - editor mode
 //or a modal like the level-complete screen (see Canvas.tsx's pointerlockchange handling).

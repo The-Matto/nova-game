@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import type {LevelSummary} from "nova-shared/level-listing";
 import {NVScene} from "../../../Three/NVScene";
-import {EditingLevel, LevelSelection} from "../../../Three/Utility/PlayerGlobals";
+import {EditingLevel, EditorState, LevelSelection} from "../../../Three/Utility/PlayerGlobals";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
 import {ListSavedLevels, type SavedLevel} from "../../../Three/Editor/EditorLevelStorage";
 import {ListLevelPresets, type LevelPreset} from "../../../Three/Editor/LevelPresets";
@@ -58,6 +58,7 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
 
     const loadSave = (save : SavedLevel) => {
         NVScene.LoadFromSnapshot(save.levelData);
+        EditorState.isDirty = false;
         onClose();
     };
 

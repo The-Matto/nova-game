@@ -6,6 +6,7 @@ import type {NVActor} from "../../../Three/Actor";
 import {DragNumberInput} from "../../UI/DragNumberInput";
 import {Vector3Input, type Axis} from "../../UI/Vector3Input";
 import {GetActorDisplayName} from "../../../Three/Editor/EditorPalette";
+import {MarkLevelDirty} from "../../../Three/Utility/PlayerGlobals";
 
 const isHexColor = (value : unknown) : value is string =>
     typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
@@ -52,6 +53,7 @@ export const EditorInspectorPanel = () => {
     const setValue = (key : string, value : unknown) => {
         (selectedActor as unknown as Record<string, unknown>)[key] = value;
         selectedActor.OnEditablePropertyChanged(key);
+        MarkLevelDirty();
         forceRerender(n => n + 1);
     };
 
@@ -60,6 +62,7 @@ export const EditorInspectorPanel = () => {
     const setTransform = (vector : THREE.Vector3 | THREE.Euler) => (axis : Axis, value : number) => {
         vector[axis] = vector instanceof THREE.Euler ? THREE.MathUtils.degToRad(value) : value;
         NVScene.RebuildWorldOctree();
+        MarkLevelDirty();
         forceRerender(n => n + 1);
     };
 
@@ -117,6 +120,7 @@ export const EditorInspectorPanel = () => {
                                 onChange={(axis, v) => {
                                     value[axis] = v;
                                     selectedActor.OnEditablePropertyChanged(key);
+                                    MarkLevelDirty();
                                     forceRerender(n => n + 1);
                                 }}
                                 sensitivity={options.sensitivity}

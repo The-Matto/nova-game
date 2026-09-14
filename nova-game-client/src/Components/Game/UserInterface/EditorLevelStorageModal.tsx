@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {NVScene} from "../../../Three/NVScene";
 import {Game} from "../../../Three/Game";
+import {EditorState} from "../../../Three/Utility/PlayerGlobals";
 import {DeleteSavedLevel, ListSavedLevels, SaveLevel, type SavedLevel} from "../../../Three/Editor/EditorLevelStorage";
 import type {LevelData} from "../../../Three/ClassDescripter";
 
@@ -84,11 +85,13 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
         }
         setSaveName("");
         setSaveError(null);
+        EditorState.isDirty = false;
         onClose();
     };
 
     const loadLevel = (level : SavedLevel) => {
         NVScene.LoadFromSnapshot(level.levelData);
+        EditorState.isDirty = false;
         onClose();
     };
 
@@ -121,6 +124,7 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
             return;
         }
         NVScene.LoadFromSnapshot(data);
+        EditorState.isDirty = false;
         onClose();
     };
 

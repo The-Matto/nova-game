@@ -7,6 +7,7 @@ import {Game} from "../Game.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {ModifierKeys} from "../../InputMaps.ts";
 import {SelectionOutline} from "./SelectionOutline.ts";
+import {MarkLevelDirty} from "../Utility/PlayerGlobals.ts";
 
 type Transform = {position : THREE.Vector3, quaternion : THREE.Quaternion, scale : THREE.Vector3};
 
@@ -51,6 +52,7 @@ export class EditorSelection {
                 } else {
                     EditorSelection.EndMultiSelectDrag();
                     NVScene.RebuildWorldOctree();
+                    MarkLevelDirty();
                 }
             });
 
@@ -101,6 +103,7 @@ export class EditorSelection {
         for (const actor of EditorSelection.selectedActors) {
             if (!NVScene.CanSpawnMoreLevelActors()) break;
             NVScene.SpawnActor(actor.ToSpawnDescriptor());
+            MarkLevelDirty();
         }
     }
 

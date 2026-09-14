@@ -3,6 +3,7 @@ import {NVScene} from "../NVScene.ts";
 import {MainCamera} from "../Camera.ts";
 import {EditorSelection} from "./EditorSelection.ts";
 import type {SpawnableItem} from "./EditorPalette.ts";
+import {MarkLevelDirty} from "../Utility/PlayerGlobals.ts";
 
 //How far in front of the camera a newly spawned actor appears.
 const SPAWN_DISTANCE = 4;
@@ -34,5 +35,6 @@ export class EditorSpawning {
         });
 
         EditorSelection.SelectActor(actor);
+        MarkLevelDirty();
     }
 }

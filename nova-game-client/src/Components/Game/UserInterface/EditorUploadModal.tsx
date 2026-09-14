@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {NVScene} from "../../../Three/NVScene";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
+import {EditorState} from "../../../Three/Utility/PlayerGlobals";
 import {LEVEL_TAGS} from "nova-shared/level-tags";
 import type {LevelTag} from "nova-shared/level-tags";
 
@@ -35,6 +36,7 @@ export const EditorUploadModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
                 }),
             });
             if (!res.ok) throw new Error(`Server responded ${res.status}`);
+            EditorState.isDirty = false;
             onClose();
         } catch {
             setStatus('error');

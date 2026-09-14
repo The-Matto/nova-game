@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {NVScene} from "../../../Three/NVScene";
 import {EnsureRegistered} from "../../../Three/Utility/PlayerIdentity";
-import {EditingLevel} from "../../../Three/Utility/PlayerGlobals";
+import {EditingLevel, EditorState} from "../../../Three/Utility/PlayerGlobals";
 
 //Overwrites EditingLevel.id in place - name/tags/description carry over unchanged (see
 //LevelBrowser.tsx's "Edit Level"), only the level data and thumbnail are actually fresh.
@@ -27,6 +27,7 @@ export const EditorUpdateModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
                 }),
             });
             if (!res.ok) throw new Error(`Server responded ${res.status}`);
+            EditorState.isDirty = false;
             onClose();
         } catch {
             setStatus('error');

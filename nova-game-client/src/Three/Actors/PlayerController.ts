@@ -1,7 +1,7 @@
 import {InputInfo, keyActions, mousePosition} from "../../InputMaps.ts";
 import type {NVPawn} from "../Pawn.ts";
 import {Vector2} from "three";
-import {CursorState, EditorState, GameMode, PlayerStatics, UIState} from "../Utility/PlayerGlobals";
+import {CursorState, EditorState, GameMode, MarkLevelDirty, PlayerStatics, UIState} from "../Utility/PlayerGlobals";
 import {EditorSelection} from "../Editor/EditorSelection.ts";
 import {GameEvents} from "../Utility/GameEvents.ts";
 import {PlayInEditor} from "../Editor/PlayInEditor.ts";
@@ -239,6 +239,7 @@ export class PlayerController {
 
         EditorSelection.ClearSelection();
         for (const actor of actors) NVScene.DestroyActor(actor);
+        MarkLevelDirty();
     }
 
     //'P' - starts a fresh PIE session from editor mode; during gameplay it opens/closes the pause

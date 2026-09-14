@@ -165,6 +165,7 @@ export class NVScene {
     public static async LoadLevelFromPath(path : string) : Promise<void> {
         NVScene.ResetLevelState();
         await NVScene.LoadLevel(path);
+        EditorState.isDirty = false;
     }
 
     //Same as ReloadLevel, but respawns from an in-memory snapshot (see SerializeLevel) instead

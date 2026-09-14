@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {NVScene, MAX_LEVEL_ACTORS} from "../../../Three/NVScene";
 import {Game} from "../../../Three/Game";
-import {EditingLevel, PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
+import {EditingLevel, EditorState, MarkLevelDirty, PlayerStatics} from "../../../Three/Utility/PlayerGlobals";
 import {GameEvents} from "../../../Three/Utility/GameEvents";
 import {DragNumberInput} from "../../UI/DragNumberInput";
 import {EditorLevelStorageModal} from "./EditorLevelStorageModal";
@@ -105,6 +105,13 @@ const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
     if (showOptions) return <OptionsMenu onBack={() => setShowOptions(false)} />;
     if (showLeaveConfirm) return <LeaveConfirmModal onCancel={() => setShowLeaveConfirm(false)} />;
 
+    //Nothing to lose if the level hasn't actually been touched since it was loaded/saved/
+    //uploaded - skip the prompt and leave straight away instead of nagging every time.
+    const handleReturnToMenu = () => {
+        if (EditorState.isDirty) setShowLeaveConfirm(true);
+        else window.location.reload();
+    };
+
     return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/25">
         <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
             <div className="text-4xl font-bold text-orange-500">Menu</div>
@@ -122,7 +129,7 @@ const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
             </button>
             <button
                 className="mt-4 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
-                onClick={() => setShowLeaveConfirm(true)}
+                onClick={handleReturnToMenu}
             >
                 Return to Menu
             </button>
@@ -186,6 +193,7 @@ export const EditorWorldSettingsPanel = () => {
     //local state above is just for controlled inputs, not the source of truth.
     const applySettings = (next : Partial<typeof NVScene.worldSettings>) => {
         NVScene.ApplyWorldSettings({...NVScene.worldSettings, ...next});
+        MarkLevelDirty();
     };
 
     //After loading a saved/imported level, the panel's own controls need to catch up to whatever
