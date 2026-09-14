@@ -50,16 +50,17 @@ repo layout, vision, and conventions that apply everywhere (comment-length rule 
   the repo root's `functions/api/[[path]].ts` (not under this package - Cloudflare Pages resolves
   Functions relative to the project's Root Directory setting, which is the repo root, same reason
   `npm install` needs to run there for the workspaces to link). It forwards every `/api/*` request
-  to the Railway server's URL at
-  Cloudflare's edge, so the browser only ever sees its own domain (no CORS needed, and the
-  client's `fetch('/api/...')` calls stay relative, no build-time base-URL env var needed). A
-  declarative `public/_redirects` proxy rule was tried first and looked right, but never actually
-  proxied anything live - every `/api/*` path silently fell through to the SPA's `index.html`
-  instead (confirmed by curl-ing a nonsense `/api/*` path and getting `index.html` back, not a
-  404 from anywhere real) - not fully root-caused, just replaced with something that reliably
-  works. If the Railway URL/domain ever changes, the hardcoded target in that function needs
-  updating to match. Note the function explicitly strips the incoming `Host` header before
-  forwarding - forwarding the original one breaks TLS/SNI against Railway, same class of bug the
+  to the Railway server's URL at Cloudflare's edge, so the browser only ever sees its own domain
+  (no CORS needed, and the client's `fetch('/api/...')` calls stay relative, no build-time
+  base-URL env var needed). A declarative `public/_redirects` proxy rule was tried first and
+  looked right, but never actually proxied anything live - every `/api/*` path silently fell
+  through to the SPA's `index.html` instead (confirmed by curl-ing a nonsense `/api/*` path and
+  getting `index.html` back, not a 404 from anywhere real) - not fully root-caused, just replaced
+  with something that reliably works. If the Railway URL/domain ever changes, the hardcoded
+  target in that function needs updating to match (see TODO.md - moving this to a Cloudflare env
+  var instead is a planned follow-up). Note the function explicitly strips the incoming `Host`
+  header before forwarding - forwarding the original one breaks TLS/SNI against Railway, same
+  class of bug the
   local dev proxy needed `changeOrigin: true` for. WebSocket traffic (`/game`) isn't proxied by
   this and would need a different approach if that ever becomes load-bearing (it isn't yet - see
   root CLAUDE.md's Vision).

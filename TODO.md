@@ -74,6 +74,10 @@ High-level task list. See [CLAUDE.md](CLAUDE.md) for the project brief and archi
       from the client's own domain to the Railway server - same-origin from the browser's
       perspective, no CORS/base-URL-env-var needed. Needs updating if the Railway URL/domain
       ever changes (it's hardcoded, not derived).
+- [ ] Move that hardcoded Railway URL into a Cloudflare Pages env var (`RAILWAY_API_URL`) instead
+      - keeps the repo unaware of infra addresses, and the URL becomes changeable from the
+      dashboard without a code change/redeploy. Needs the env var set in Cloudflare first, or
+      every `/api/*` request 500s the moment this ships.
 - [x] `nova-cleanup-cron` — a separate Railway service (same repo/Postgres) running
       `CleanupAnonymousUsers.ts` on a daily cron schedule.
 - [ ] Migrate `railway.json` (Config as Code) to `.railway/railway.ts` (Infrastructure as Code) -
