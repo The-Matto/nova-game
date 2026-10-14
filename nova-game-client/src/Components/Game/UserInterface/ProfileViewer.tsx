@@ -15,14 +15,14 @@ const ProfileLevelRow = ({thumbnailUrl, name, detail, onPlay} : {
     detail : ReactNode,
     onPlay : () => void,
 }) => (
-    <div className="flex items-center gap-3 text-white">
+    <div className="flex items-center gap-3 text-bone border-b border-ink-700 pb-2">
         {thumbnailUrl
-            ? <img src={thumbnailUrl} alt="" className="w-16 h-9 object-cover rounded-lg bg-slate-800 shrink-0" />
-            : <div className="w-16 h-9 rounded-lg bg-slate-800 shrink-0" />}
-        <span className="flex-1 truncate">{name}</span>
-        <span className="text-orange-500 text-sm shrink-0">{detail}</span>
+            ? <img src={thumbnailUrl} alt="" className="nv-thumb w-16 h-9 shrink-0" />
+            : <div className="nv-thumb w-16 h-9 shrink-0" />}
+        <span className="flex-1 truncate font-semibold">{name}</span>
+        <span className="font-mono text-ember text-sm shrink-0">{detail}</span>
         <button
-            className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-orange-500 text-sm cursor-pointer shrink-0"
+            className="nv-btn nv-btn-sm nv-btn-go shrink-0"
             onClick={onPlay}
         >
             Play
@@ -51,24 +51,25 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
     //(unclaimed) profile still needs this to be "own", to see the claim-account rundown below.
     const isOwnProfile = playerId === PlayerIdentity.id;
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-2xl max-h-[80vh]">
-            {error && <div className="text-red-400 py-6 text-center">{error}</div>}
-            {!error && !profile && <div className="text-white/50 py-6 text-center">Loading profile…</div>}
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="nv-panel flex flex-col gap-4 px-10 py-8 w-full max-w-2xl max-h-[80vh]">
+            <div className="nv-label">Player Profile</div>
+            {error && <div className="text-blood py-6 text-center">{error}</div>}
+            {!error && !profile && <div className="nv-label py-6 text-center">Loading profile…</div>}
 
             {profile && <>
                 {isOwnProfile && profile.deletionAt === null && <RenameField profile={profile} onRenamed={setProfile} />}
                 {isOwnProfile && profile.deletionAt !== null && <>
-                    <div className="text-3xl font-bold text-orange-500">{profile.displayName}</div>
+                    <div className="nv-title text-5xl">{profile.displayName}</div>
                     <AccountClaimNotice deletionAt={profile.deletionAt} />
                 </>}
-                {!isOwnProfile && <div className="text-3xl font-bold text-orange-500">{profile.displayName}</div>}
+                {!isOwnProfile && <div className="nv-title text-5xl">{profile.displayName}</div>}
 
-                <div className="flex flex-col overflow-y-auto gap-6">
+                <div className="nv-scroll flex flex-col overflow-y-auto gap-6 pr-1">
                     <div>
-                        <div className="text-lg font-semibold text-orange-500/80 mb-2">Levels created</div>
+                        <div className="nv-label mb-2">Levels created</div>
                         {profile.levels.length === 0
-                            ? <div className="text-white/50 text-sm">No levels uploaded yet.</div>
+                            ? <div className="text-ash text-sm">No levels uploaded yet.</div>
                             : <div className="flex flex-col gap-2">
                                 {profile.levels.map(level => (
                                     <ProfileLevelRow
@@ -83,9 +84,9 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
                     </div>
 
                     <div>
-                        <div className="text-lg font-semibold text-orange-500/80 mb-2">Personal bests</div>
+                        <div className="nv-label mb-2">Personal bests</div>
                         {profile.personalBests.length === 0
-                            ? <div className="text-white/50 text-sm">No runs recorded yet.</div>
+                            ? <div className="text-ash text-sm">No runs recorded yet.</div>
                             : <div className="flex flex-col gap-2">
                                 {profile.personalBests.map(pb => (
                                     <ProfileLevelRow
@@ -102,10 +103,10 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
             </>}
 
             <button
-                className="self-start bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
+                className="nv-btn self-start"
                 onClick={onClose}
             >
-                Back
+                ← Back
             </button>
         </div>
     </div>;
@@ -117,13 +118,13 @@ export const ProfileViewer = ({playerId, onClose} : {playerId : string, onClose 
 //deliberate enough path.
 const AccountClaimNotice = ({deletionAt} : {deletionAt : string}) => {
     const daysLeft = Math.max(1, Math.ceil((new Date(deletionAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
-    return <div className="flex flex-col gap-2 border border-orange-500/30 rounded-xl bg-slate-800/50 px-4 py-3">
-        <div className="text-sm text-white/80">
+    return <div className="flex flex-col gap-2 border-l-2 border-ember bg-ember/10 px-4 py-3">
+        <div className="text-sm text-bone">
             This account is temporary and will be deleted in {daysLeft} day{daysLeft === 1 ? "" : "s"} unless you
             claim it by linking a login.
         </div>
         <button
-            className="self-start bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-orange-500 text-sm cursor-pointer"
+            className="nv-btn nv-btn-primary nv-btn-sm self-start"
             onClick={() => SignInWithGitHub()}
         >
             Connect GitHub
@@ -140,9 +141,9 @@ const RenameField = ({profile, onRenamed} : {profile : PlayerProfile, onRenamed 
 
     if (!editing) {
         return <div className="flex items-center gap-3">
-            <div className="text-3xl font-bold text-orange-500">{profile.displayName}</div>
+            <div className="nv-title text-5xl">{profile.displayName}</div>
             <button
-                className="text-orange-500/60 hover:text-orange-500 text-sm cursor-pointer"
+                className="nv-btn nv-btn-ghost nv-btn-sm"
                 onClick={() => { setDraft(profile.displayName); setEditing(true); }}
             >
                 Edit
@@ -180,17 +181,17 @@ const RenameField = ({profile, onRenamed} : {profile : PlayerProfile, onRenamed 
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
             maxLength={40}
-            className="text-3xl font-bold text-orange-500 bg-transparent border-b border-orange-500/40 outline-none w-64"
+            className="nv-input text-2xl font-bold w-72"
         />
         <button
-            className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-orange-500 text-sm cursor-pointer disabled:opacity-50"
+            className="nv-btn nv-btn-primary nv-btn-sm"
             onClick={save}
             disabled={saving}
         >
             Save
         </button>
         <button
-            className="text-orange-500/60 hover:text-orange-500 text-sm cursor-pointer"
+            className="nv-btn nv-btn-ghost nv-btn-sm"
             onClick={() => setEditing(false)}
         >
             Cancel

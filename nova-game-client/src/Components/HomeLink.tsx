@@ -3,7 +3,7 @@
 export const HomeLink = () => (
     <a
         href="https://mattheritage.dev/"
-        className="fixed top-2 left-2 z-40 text-white text-base hover:text-orange-300 hover:underline"
+        className="fixed top-2 left-2 z-40 font-mono text-[11px] uppercase tracking-[0.2em] text-ash hover:text-molten"
     >
         ← mattheritage.dev
     </a>

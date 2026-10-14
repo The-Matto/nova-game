@@ -16,10 +16,15 @@ export const TargetsRemaining = () => {
     }, []);
 
     //One icon per remaining target - served straight from public/, no import needed.
-    return <div className="absolute top-16 left-6 flex flex-col gap-1">
-        <div className="text-white text-lg">Targets Remaining</div>
+    const remaining = LevelObjectives.GetIncomplete();
+
+    return <div className="absolute top-16 left-6 flex flex-col gap-1.5">
+        <div className="flex items-baseline gap-2">
+            <span className="nv-label text-bone/70">Targets</span>
+            <span className="font-mono font-bold text-xl text-molten">{remaining.length}</span>
+        </div>
         <div className="flex gap-2">
-            {LevelObjectives.GetIncomplete().map((objective, i) => (
+            {remaining.map((objective, i) => (
                 <img key={i} src="/T_NV_Target.png" alt="" className="w-10 h-10" title={objective.label} />
             ))}
         </div>

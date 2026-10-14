@@ -21,29 +21,29 @@ export const EditorPalettePanel = () => {
         }))
         .filter(category => category.items.length > 0);
 
-    return <div className="pointer-events-auto w-36 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
-        <div className="text-x2 font-bold mb-3">Editor</div>
+    return <div className="nv-panel nv-scroll pointer-events-auto w-40 max-h-[85vh] overflow-y-auto p-3">
+        <div className="nv-title text-2xl mb-3">Spawn</div>
 
         <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search..."
-            className="w-full mb-3 bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none"
+            className="nv-input w-full mb-3 text-sm py-1"
         />
 
         {visibleCategories.length === 0 && (
-            <div className="text-sm text-orange-500/60">No matches.</div>
+            <div className="text-sm text-ash">No matches.</div>
         )}
 
         {visibleCategories.map(category => (
             <div key={category.label} className="mb-3 last:mb-0">
-                <div className="text-xs uppercase tracking-wide text-orange-500/60 mb-1">{category.label}</div>
-                <div className="flex flex-col gap-1">
+                <div className="nv-label mb-1 text-molten">{category.label}</div>
+                <div className="flex flex-col gap-0.5">
                     {category.items.map(item => (
                         <button
                             key={item.label}
-                            className="flex items-center gap-2 text-left bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
+                            className="nv-row flex items-center gap-2 text-left px-1.5 py-1 text-xs font-semibold text-bone"
                             onClick={() => EditorSpawning.SpawnFromPalette(item)}
                         >
                             <img

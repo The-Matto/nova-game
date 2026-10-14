@@ -24,19 +24,19 @@ export const LevelRatingWidget = ({levelId} : {levelId : string}) => {
     const displayValue = hovered ?? selected ?? 0;
 
     return <div className="flex flex-col items-center gap-1">
-        <div className="text-sm text-orange-500/70">Rate this level</div>
+        <div className="nv-label">Rate this level</div>
         <div className="flex gap-1" onMouseLeave={() => setHovered(null)}>
             {[1, 2, 3, 4, 5].map(star => (
                 <button
                     key={star}
-                    className="text-2xl leading-none cursor-pointer"
+                    className="text-3xl leading-none cursor-pointer transition-transform hover:scale-110"
                     onMouseEnter={() => setHovered(star)}
                     onClick={() => rate(star)}
                 >
-                    <span className={star <= displayValue ? "text-orange-500" : "text-white/20"}>★</span>
+                    <span className={star <= displayValue ? "text-ember" : "text-ink-600"}>★</span>
                 </button>
             ))}
         </div>
-        {selected !== null && <div className="text-xs text-orange-500/50">Thanks for rating!</div>}
+        {selected !== null && <div className="nv-label text-acid">Rating saved</div>}
     </div>;
 };

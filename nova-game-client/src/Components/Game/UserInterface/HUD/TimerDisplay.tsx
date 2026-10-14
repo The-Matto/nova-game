@@ -15,7 +15,10 @@ export const TimerDisplay = () => {
         return () => cancelAnimationFrame(frame);
     }, []);
 
-    return <div className="absolute top-6 left-1/2 -translate-x-1/2 text-2xl font-mono text-white">
-        {FormatLevelTime(LevelTimer.elapsedTime)}
+    return <div className="absolute top-5 left-1/2 -translate-x-1/2 flex flex-col items-center">
+        <div className="nv-label text-bone/70">Time</div>
+        <div className="font-mono font-bold text-3xl text-bone tabular-nums bg-ink-950/60 border-b-2 border-molten px-4 py-0.5">
+            {FormatLevelTime(LevelTimer.elapsedTime)}
+        </div>
     </div>;
 };

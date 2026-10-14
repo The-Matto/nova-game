@@ -8,8 +8,8 @@ export const LeaderboardPanel = ({data, error} : {
     data : LeaderboardResponse | null,
     error : string | null,
 }) => {
-    return <div className="flex flex-col gap-3 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-8 w-72">
-        <div className="text-2xl font-bold text-orange-500">Leaderboard</div>
+    return <div className="nv-panel flex flex-col gap-3 px-7 py-6 w-80">
+        <div className="nv-title text-3xl">Leaderboard</div>
         <LeaderboardList data={data} error={error} />
     </div>;
 };

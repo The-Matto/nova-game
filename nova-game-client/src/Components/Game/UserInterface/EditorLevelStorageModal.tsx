@@ -27,22 +27,22 @@ const SavedLevelCard = ({level, onLoad, onDelete} : {
             <img
                 src={level.thumbnailDataUrl}
                 alt=""
-                className="w-full aspect-video object-cover rounded-lg bg-slate-800"
+                className="nv-thumb w-full aspect-video"
             />
-            <div className="text-xs text-orange-100 truncate">{level.name}</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-bone truncate">{level.name}</div>
         </button>
 
         <button
-            className="absolute bottom-6 right-1 w-5 h-5 flex items-center justify-center rounded-md bg-slate-950/70 hover:bg-slate-800 text-white text-xs cursor-pointer"
+            className="absolute bottom-6 right-1 w-5 h-5 flex items-center justify-center bg-ink-950 border border-ink-600 hover:border-molten text-bone text-xs cursor-pointer"
             onClick={e => { e.stopPropagation(); setShowMenu(v => !v); }}
         >
             ⋮
         </button>
 
         {showMenu && (
-            <div className="absolute bottom-11 right-1 bg-slate-800 rounded-lg overflow-hidden text-xs z-10">
+            <div className="absolute bottom-11 right-1 bg-ink-900 border border-ink-600 text-xs z-10">
                 <button
-                    className="block w-full px-3 py-1.5 text-left text-red-400 hover:bg-slate-700 cursor-pointer"
+                    className="block w-full px-3 py-1.5 text-left uppercase tracking-wider font-semibold text-blood hover:bg-blood hover:text-ink-950 cursor-pointer"
                     onClick={e => { e.stopPropagation(); setShowMenu(false); onDelete(); }}
                 >
                     Delete
@@ -128,17 +128,17 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
         onClose();
     };
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-6 w-full max-w-md max-h-[80vh]">
-            <div className="flex gap-2">
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="nv-panel flex flex-col gap-4 px-8 py-6 w-full max-w-md max-h-[80vh]">
+            <div className="flex">
                 <button
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${mode === 'save' ? "bg-orange-500 text-slate-950 font-bold" : "bg-slate-800 text-orange-500 hover:bg-slate-700"}`}
+                    className={`nv-tab ${mode === 'save' ? "nv-tab-active" : ""}`}
                     onClick={() => setMode('save')}
                 >
                     Save
                 </button>
                 <button
-                    className={`flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${mode === 'load' ? "bg-orange-500 text-slate-950 font-bold" : "bg-slate-800 text-orange-500 hover:bg-slate-700"}`}
+                    className={`nv-tab ${mode === 'load' ? "nv-tab-active" : ""}`}
                     onClick={() => setMode('load')}
                 >
                     Load
@@ -153,11 +153,11 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
                         onChange={e => setSaveName(e.target.value)}
                         placeholder="Level name..."
                         autoFocus
-                        className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+                        className="w-full nv-input text-sm"
                     />
-                    {saveError && <div className="text-sm text-red-400">{saveError}</div>}
+                    {saveError && <div className="text-sm text-blood">{saveError}</div>}
                     <button
-                        className="bg-emerald-700 hover:bg-emerald-600 rounded-lg px-3 py-2 text-sm text-orange-100 cursor-pointer disabled:opacity-50"
+                        className="nv-btn nv-btn-go"
                         onClick={saveCurrentLevel}
                         disabled={!saveName.trim()}
                     >
@@ -165,14 +165,14 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
                     </button>
 
                     <button
-                        className="self-start text-xs text-orange-500/60 hover:text-orange-500 cursor-pointer"
+                        className="self-start font-mono text-[10px] uppercase tracking-widest text-ash hover:text-molten cursor-pointer"
                         onClick={() => setShowJsonExport(v => !v)}
                     >
                         {showJsonExport ? "Hide" : "Export as JSON instead"}
                     </button>
                     {showJsonExport && (
                         <button
-                            className="bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-xs text-orange-500 cursor-pointer self-start"
+                            className="nv-btn nv-btn-sm self-start"
                             onClick={exportJson}
                         >
                             {jsonCopied ? "Copied!" : "Copy level JSON to clipboard"}
@@ -182,8 +182,8 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
             )}
 
             {mode === 'load' && (
-                <div className="flex flex-col gap-3 overflow-y-auto">
-                    {levels.length === 0 && <div className="text-sm text-white/50">Nothing saved yet.</div>}
+                <div className="nv-scroll flex flex-col gap-3 overflow-y-auto">
+                    {levels.length === 0 && <div className="text-sm text-ash">Nothing saved yet.</div>}
                     <div className="grid grid-cols-3 gap-3">
                         {levels.map(level => (
                             <SavedLevelCard
@@ -196,7 +196,7 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
                     </div>
 
                     <button
-                        className="self-start text-xs text-orange-500/60 hover:text-orange-500 cursor-pointer"
+                        className="self-start font-mono text-[10px] uppercase tracking-widest text-ash hover:text-molten cursor-pointer"
                         onClick={() => setShowJsonImport(v => !v)}
                     >
                         {showJsonImport ? "Hide" : "Import from JSON instead"}
@@ -208,11 +208,11 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
                                 onChange={e => setImportText(e.target.value)}
                                 placeholder="Paste level JSON..."
                                 rows={4}
-                                className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm resize-none"
+                                className="w-full nv-input text-sm resize-none"
                             />
-                            {importError && <div className="text-sm text-red-400">{importError}</div>}
+                            {importError && <div className="text-sm text-blood">{importError}</div>}
                             <button
-                                className="self-start bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-xs text-orange-500 cursor-pointer"
+                                className="nv-btn nv-btn-sm self-start"
                                 onClick={importJson}
                             >
                                 Load
@@ -223,7 +223,7 @@ export const EditorLevelStorageModal = ({onClose} : {onClose : () => void}) => {
             )}
 
             <button
-                className="self-start bg-slate-800 hover:bg-slate-700 rounded-lg px-4 py-2 text-sm text-orange-500/70 cursor-pointer"
+                className="nv-btn nv-btn-ghost self-start"
                 onClick={onClose}
             >
                 Close

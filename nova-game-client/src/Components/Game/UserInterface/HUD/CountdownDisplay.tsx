@@ -34,19 +34,22 @@ export const CountdownDisplay = () => {
     return <div className="absolute inset-0 flex items-center justify-center">
         <style>{`
             @keyframes countdown-pop {
-                from { transform: scale(0.3); }
-                to { transform: scale(1); }
+                from { transform: scale(0.3) skewX(-8deg); }
+                to { transform: scale(1) skewX(-8deg); }
             }
         `}</style>
         <div
-            className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-40 bg-slate-950/60 border-y border-orange-500/40"
+            className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-44 flex flex-col justify-between bg-ink-950/70"
             style={{opacity: bannerOpacity}}
-        />
+        >
+            <div className="nv-hazard" />
+            <div className="nv-hazard" />
+        </div>
         {/* key remounts this element per number, restarting the pop animation each time it changes. */}
         <div
             key={displayValue}
-            className="relative z-10 text-8xl font-bold text-orange-500"
-            style={{animation: "countdown-pop 0.3s ease-out"}}
+            className="nv-title relative z-10 text-[9rem] text-molten"
+            style={{animation: "countdown-pop 0.3s ease-out", textShadow: "5px 5px 0 var(--color-ink-950)"}}
         >
             {displayValue}
         </div>

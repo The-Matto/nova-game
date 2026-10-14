@@ -87,7 +87,7 @@ export const LevelCompleteOverlay = () => {
     };
 
     if (isComplete) {
-        return <div className="absolute inset-0 z-30 flex items-center justify-center gap-6 bg-slate-950/25">
+        return <div className="nv-backdrop absolute inset-0 z-30 flex items-center justify-center gap-6">
             {isNewPB && <ConfettiBurst />}
 
             {/* Explicitly positioned/z-indexed, not just DOM order - LeaderboardPanel/
@@ -101,33 +101,31 @@ export const LevelCompleteOverlay = () => {
                 </div>
             )}
 
-            <div className="relative z-10 flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
-                <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl font-mono font-bold text-orange-500">
-                    {FormatLevelTime(LevelTimer.elapsedTime)}
+            <div className="nv-panel relative z-10 flex flex-col items-center gap-5 px-12 pt-0 pb-9">
+                <div className="nv-hazard self-stretch -mx-12" />
+                <div className="flex flex-col items-center gap-1 mt-4">
+                    <div className="nv-label">Final Time</div>
+                    <div className="font-mono font-bold text-6xl text-ember tabular-nums">
+                        {FormatLevelTime(LevelTimer.elapsedTime)}
+                    </div>
+                    {isNewPB && <div className="nv-chip nv-chip-hot mt-1">New Personal Best</div>}
                 </div>
-                <div className="text-5xl font-bold text-orange-500">Level Complete!</div>
+                <div className="nv-title text-6xl">Level Complete</div>
                 {GameMode.appMode !== "createLevel" && (
                     <LevelRatingWidget levelId={LevelSelection.selectedLevelId} />
                 )}
-                <button
-                    className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                    onClick={retry}
-                >
-                    Retry
-                </button>
-                {GameMode.appMode === "createLevel" && (
-                    <button
-                        className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                        onClick={returnToEditor}
-                    >
-                        Return to Editor
+                <div className="flex gap-3">
+                    <button className="nv-btn nv-btn-go nv-btn-lg" onClick={retry}>
+                        Retry
                     </button>
-                )}
-                <button
-                    className="mt-4 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
-                    onClick={returnToMenu}
-                >
-                    Return to Menu
+                    {GameMode.appMode === "createLevel" && (
+                        <button className="nv-btn nv-btn-lg" onClick={returnToEditor}>
+                            Return to Editor
+                        </button>
+                    )}
+                </div>
+                <button className="nv-btn nv-btn-ghost" onClick={returnToMenu}>
+                    ← Return to Menu
                 </button>
             </div>
         </div>;

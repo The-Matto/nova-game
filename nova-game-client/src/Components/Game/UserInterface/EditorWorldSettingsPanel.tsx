@@ -24,13 +24,13 @@ const ActorLimitBar = () => {
     const isFull = count >= MAX_LEVEL_ACTORS;
 
     return <div className="mb-3">
-        <div className="flex justify-between text-[10px] uppercase tracking-wide text-orange-500/60 mb-1">
+        <div className="nv-label flex justify-between mb-1">
             <span>Actors</span>
-            <span>{count}/{MAX_LEVEL_ACTORS}</span>
+            <span className={isFull ? "text-blood" : "text-bone"}>{count}/{MAX_LEVEL_ACTORS}</span>
         </div>
-        <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-1.5 bg-ink-950 border border-ink-600">
             <div
-                className={`h-full rounded-full ${isFull ? 'bg-red-500' : 'bg-orange-500'}`}
+                className={`h-full ${isFull ? 'bg-blood' : 'bg-molten'}`}
                 style={{width: `${fraction * 100}%`}}
             />
         </div>
@@ -55,10 +55,10 @@ const LeaveConfirmModal = ({onCancel} : {onCancel : () => void}) => {
         window.location.reload();
     };
 
-    return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-6 w-full max-w-sm">
-            <div className="text-lg font-bold text-orange-500">Leave Editor?</div>
-            <div className="text-sm text-white/70">Any unsaved changes to this level will be lost.</div>
+    return <div className="nv-backdrop fixed inset-0 z-50 flex items-center justify-center">
+        <div className="nv-panel flex flex-col gap-4 px-8 py-6 w-full max-w-sm">
+            <div className="nv-title text-4xl">Leave Editor?</div>
+            <div className="text-sm text-bone/80">Any unsaved changes to this level will be lost.</div>
 
             <input
                 type="text"
@@ -67,11 +67,11 @@ const LeaveConfirmModal = ({onCancel} : {onCancel : () => void}) => {
                 onKeyDown={e => { if (e.key === "Enter") saveAndLeave(); }}
                 placeholder="Level name to save as..."
                 autoFocus
-                className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+                className="w-full nv-input text-sm"
             />
-            {saveError && <div className="text-sm text-red-400">{saveError}</div>}
+            {saveError && <div className="text-sm text-blood">{saveError}</div>}
             <button
-                className="bg-emerald-700 hover:bg-emerald-600 rounded-lg px-3 py-2 text-sm text-orange-100 cursor-pointer disabled:opacity-50"
+                className="nv-btn nv-btn-go"
                 onClick={saveAndLeave}
                 disabled={!saveName.trim()}
             >
@@ -80,13 +80,13 @@ const LeaveConfirmModal = ({onCancel} : {onCancel : () => void}) => {
 
             <div className="flex gap-2">
                 <button
-                    className="flex-1 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm text-orange-500/70 cursor-pointer"
+                    className="nv-btn nv-btn-ghost flex-1"
                     onClick={onCancel}
                 >
                     Cancel
                 </button>
                 <button
-                    className="flex-1 bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-2 text-sm text-red-400/80 hover:text-red-400 cursor-pointer"
+                    className="nv-btn nv-btn-danger flex-1"
                     onClick={() => window.location.reload()}
                 >
                     Leave Without Saving
@@ -112,26 +112,22 @@ const EditorMenuOverlay = ({onClose} : {onClose : () => void}) => {
         else window.location.reload();
     };
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/25">
-        <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
-            <div className="text-4xl font-bold text-orange-500">Menu</div>
-            <button
-                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={onClose}
-            >
-                Resume Editing
-            </button>
-            <button
-                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={() => setShowOptions(true)}
-            >
-                Options
-            </button>
-            <button
-                className="mt-4 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
-                onClick={handleReturnToMenu}
-            >
-                Return to Menu
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="nv-panel flex flex-col gap-6 pl-6 pr-12 py-9 w-[26rem]">
+            <div className="px-4">
+                <div className="nv-label">Editor</div>
+                <div className="nv-title text-7xl">Menu</div>
+            </div>
+            <div className="flex flex-col">
+                <button className="nv-menu-item nv-menu-item-sm" onClick={onClose}>
+                    <span className="nv-menu-index">01</span>Resume Editing
+                </button>
+                <button className="nv-menu-item nv-menu-item-sm" onClick={() => setShowOptions(true)}>
+                    <span className="nv-menu-index">02</span>Options
+                </button>
+            </div>
+            <button className="nv-btn nv-btn-ghost self-start" onClick={handleReturnToMenu}>
+                ← Return to Menu
             </button>
         </div>
     </div>;
@@ -206,20 +202,20 @@ export const EditorWorldSettingsPanel = () => {
         setShowStorageModal(false);
     };
 
-    return <div className="pointer-events-auto w-40 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-4 text-orange-500">
+    return <div className="nv-panel nv-scroll pointer-events-auto w-44 max-h-[85vh] overflow-y-auto p-3">
         {showMenu && <EditorMenuOverlay onClose={() => setShowMenu(false)} />}
 
-        <div className="text-x2 font-bold mb-3">World Settings</div>
+        <div className="nv-title text-2xl mb-3">World</div>
 
         <div className="flex gap-1.5 mb-3">
             <button
-                className="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded-lg px-1.5 py-1 text-xs font-bold cursor-pointer"
+                className="nv-btn nv-btn-go nv-btn-sm flex-1"
                 onClick={() => PlayerStatics.PlayerController?.EnterPlayMode()}
             >
                 ▶ Play
             </button>
             <button
-                className="bg-slate-800 hover:bg-slate-700 rounded-lg px-2 py-1 text-xs cursor-pointer"
+                className="nv-btn nv-btn-sm"
                 onClick={() => setShowMenu(true)}
             >
                 ☰
@@ -229,24 +225,24 @@ export const EditorWorldSettingsPanel = () => {
         <ActorLimitBar />
 
         <div className="flex flex-col gap-2 mb-3">
-            <label className="flex items-center justify-between text-xs">
+            <label className="flex items-center justify-between text-xs text-ash">
                 <span>Sky Color</span>
                 <input
                     type="color"
                     value={skyColor}
                     onChange={e => { setSkyColor(e.target.value); applySettings({skyColor: e.target.value}); }}
-                    className="w-16 h-5 bg-slate-800 rounded-lg outline-none cursor-pointer"
+                    className="w-16 h-5 nv-field cursor-pointer"
                 />
             </label>
-            <label className="flex items-center justify-between text-xs">
+            <label className="flex items-center justify-between text-xs text-ash">
                 <span>Kill Height</span>
                 <DragNumberInput
                     value={killY}
                     onChange={v => { setKillY(v); applySettings({killY: v}); }}
-                    className="w-16 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
+                    className="w-16 nv-field"
                 />
             </label>
-            <label className="flex items-center justify-between text-xs">
+            <label className="flex items-center justify-between text-xs text-ash">
                 <span>Fog Distance</span>
                 <DragNumberInput
                     value={fogDistance}
@@ -254,10 +250,10 @@ export const EditorWorldSettingsPanel = () => {
                     min={1}
                     max={100}
                     sensitivity={1}
-                    className="w-16 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
+                    className="w-16 nv-field"
                 />
             </label>
-            <label className="flex items-center justify-between text-xs">
+            <label className="flex items-center justify-between text-xs text-ash">
                 <span>Lava Rise Speed</span>
                 <DragNumberInput
                     value={lavaRiseSpeed}
@@ -265,25 +261,25 @@ export const EditorWorldSettingsPanel = () => {
                     min={0}
                     max={5}
                     sensitivity={0.05}
-                    className="w-16 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
+                    className="w-16 nv-field"
                 />
             </label>
         </div>
 
         <div className="flex flex-col gap-2 mb-3">
             <button
-                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
+                className="nv-btn nv-btn-sm w-full"
                 onClick={() => setShowStorageModal(true)}
             >
                 Save / Load
             </button>
             <button
-                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg px-1.5 py-1 text-xs cursor-pointer"
+                className="nv-btn nv-btn-sm w-full"
                 onClick={openUploadFlow}
             >
                 Upload
             </button>
-            {uploadValidationError && <div className="text-[10px] text-red-400">{uploadValidationError}</div>}
+            {uploadValidationError && <div className="text-[10px] text-blood">{uploadValidationError}</div>}
         </div>
 
         {showStorageModal && (

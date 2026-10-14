@@ -18,6 +18,7 @@ const GRAVITY = 1400; //px/s^2
 //forever - reads as a gentle float down rather than freefall.
 const MAX_FALL_SPEED = 160;
 const OFFSCREEN_MARGIN = 60;
+const COLORS = ["#ff4d1a", "#ffb020", "#c8ff2e", "#f3eadb"];
 
 function SpawnParticle(id : number) : Particle {
     const originX = window.innerWidth / 2 + (Math.random() - 0.5) * window.innerWidth * 0.5;
@@ -29,7 +30,7 @@ function SpawnParticle(id : number) : Particle {
         vx: (Math.random() - 0.5) * 500,
         vy: -600 - Math.random() * 500,
         size: 6 + Math.random() * 8,
-        color: `hsl(${Math.random() * 360}, 85%, 60%)`,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
         rotation: Math.random() * 360,
         rotationSpeed: (Math.random() - 0.5) * 360,
     };
@@ -72,7 +73,7 @@ export const ConfettiBurst = () => {
         {particlesRef.current.map(p => (
             <div
                 key={p.id}
-                className="absolute rounded-sm"
+                className="absolute"
                 style={{left: p.x, top: p.y, width: p.size, height: p.size, backgroundColor: p.color, transform: `rotate(${p.rotation}deg)`}}
             />
         ))}

@@ -43,11 +43,11 @@ export const EditorUploadModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
         }
     };
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-6 w-full max-w-md">
-            <div className="text-lg font-bold text-orange-500">Upload Level</div>
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="flex flex-col gap-4 nv-panel px-8 py-6 w-full max-w-md">
+            <div className="nv-title text-4xl">Upload Level</div>
 
-            <img src={thumbnailDataUrl} alt="" className="w-full aspect-video object-cover rounded-lg bg-slate-800" />
+            <img src={thumbnailDataUrl} alt="" className="nv-thumb w-full aspect-video" />
 
             <input
                 type="text"
@@ -56,7 +56,7 @@ export const EditorUploadModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
                 onKeyDown={e => { if (e.key === "Enter") upload(); }}
                 placeholder="Level name..."
                 autoFocus
-                className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+                className="w-full nv-input text-sm"
             />
 
             <textarea
@@ -65,7 +65,7 @@ export const EditorUploadModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
                 placeholder="Describe your level... (optional)"
                 maxLength={500}
                 rows={3}
-                className="w-full bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm resize-none"
+                className="w-full nv-input text-sm resize-none"
             />
 
             <div className="flex flex-wrap gap-1.5">
@@ -73,25 +73,23 @@ export const EditorUploadModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
                     <button
                         key={tag}
                         onClick={() => toggleTag(tag)}
-                        className={`px-2.5 py-1 rounded-full text-xs cursor-pointer ${
-                            tags.includes(tag) ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70 hover:text-orange-500"
-                        }`}
+                        className={`nv-chip ${tags.includes(tag) ? "nv-chip-active" : ""}`}
                     >
                         {tag}
                     </button>
                 ))}
             </div>
-            {status === 'error' && <div className="text-sm text-red-400">Upload failed - try again.</div>}
+            {status === 'error' && <div className="text-sm text-blood">Upload failed - try again.</div>}
 
             <div className="flex gap-2">
                 <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-4 py-2 text-sm text-orange-500/70 cursor-pointer"
+                    className="nv-btn nv-btn-ghost"
                     onClick={onClose}
                 >
                     Cancel
                 </button>
                 <button
-                    className="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded-lg px-4 py-2 text-sm text-orange-100 cursor-pointer disabled:opacity-50"
+                    className="nv-btn nv-btn-go flex-1"
                     onClick={upload}
                     disabled={status === 'uploading' || !name.trim()}
                 >

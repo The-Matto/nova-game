@@ -18,12 +18,12 @@ const Vector3Row = ({label, vector, onChange, sensitivity} : {
     sensitivity? : number,
 }) => (
     <div className="flex items-center gap-1 text-xs">
-        <span className="w-11 shrink-0">{label}</span>
+        <span className="w-11 shrink-0 text-ash uppercase text-[10px] tracking-wider">{label}</span>
         <Vector3Input
             vector={vector}
             onChange={onChange}
             sensitivity={sensitivity}
-            className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none text-xs"
+            className="flex-1 min-w-0 nv-field"
         />
     </div>
 );
@@ -74,10 +74,11 @@ export const EditorInspectorPanel = () => {
         THREE.MathUtils.radToDeg(rotation.z),
     );
 
-    return <div className="pointer-events-auto w-56 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-xl p-3 text-orange-500">
-        <div className="text-base font-bold mb-1.5">{GetActorDisplayName(selectedActor.spawnDescriptor.class)}</div>
+    return <div className="nv-panel nv-scroll pointer-events-auto w-60 max-h-[85vh] overflow-y-auto p-3">
+        <div className="nv-label">Inspector</div>
+        <div className="nv-title text-2xl mb-2 truncate">{GetActorDisplayName(selectedActor.spawnDescriptor.class)}</div>
 
-        <div className="flex flex-col gap-1.5 mb-2">
+        <div className="flex flex-col gap-1.5 mb-2 pb-2 border-b border-ink-600">
             <Vector3Row label="Location" vector={position} onChange={setTransform(position)} sensitivity={0.05} />
             <Vector3Row label="Rotation" vector={rotationDegrees} onChange={setTransform(rotation)} sensitivity={1} />
             <Vector3Row label="Scale" vector={scale} onChange={setTransform(scale)} sensitivity={0.02} />
@@ -87,12 +88,12 @@ export const EditorInspectorPanel = () => {
             <div className="flex flex-col gap-1.5">
                 {properties.map(({key, value, options}) => (
                     <label key={key} className="flex items-center gap-2 text-xs">
-                        <span className="w-16 shrink-0 capitalize">{key}</span>
+                        <span className="w-16 shrink-0 capitalize text-ash">{key}</span>
                         {options.choices ? (
                             <select
                                 value={String(value)}
                                 onChange={e => setValue(key, e.target.value)}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none cursor-pointer"
+                                className="flex-1 min-w-0 nv-field cursor-pointer"
                             >
                                 {options.choices.map(choice => (
                                     <option key={choice} value={choice}>{choice}</option>
@@ -103,6 +104,7 @@ export const EditorInspectorPanel = () => {
                                 type="checkbox"
                                 checked={value}
                                 onChange={e => setValue(key, e.target.checked)}
+                                className="accent-molten cursor-pointer"
                             />
                         ) : typeof value === 'number' ? (
                             <DragNumberInput
@@ -112,7 +114,7 @@ export const EditorInspectorPanel = () => {
                                 max={options.max}
                                 isInteger={options.isInteger}
                                 sensitivity={options.sensitivity}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
+                                className="flex-1 min-w-0 nv-field"
                             />
                         ) : value instanceof THREE.Vector3 ? (
                             <Vector3Input
@@ -124,21 +126,21 @@ export const EditorInspectorPanel = () => {
                                     forceRerender(n => n + 1);
                                 }}
                                 sensitivity={options.sensitivity}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none text-xs"
+                                className="flex-1 min-w-0 nv-field"
                             />
                         ) : isHexColor(value) ? (
                             <input
                                 type="color"
                                 value={value}
                                 onChange={e => setValue(key, e.target.value)}
-                                className="flex-1 h-5 bg-slate-800 rounded-lg outline-none cursor-pointer"
+                                className="flex-1 h-5 nv-field cursor-pointer"
                             />
                         ) : (
                             <input
                                 type="text"
                                 value={String(value)}
                                 onChange={e => setValue(key, e.target.value)}
-                                className="flex-1 min-w-0 bg-slate-800 rounded-lg px-1 py-px text-orange-100 outline-none"
+                                className="flex-1 min-w-0 nv-field"
                             />
                         )}
                     </label>

@@ -5,21 +5,23 @@ import {PlayerIdentity} from "../../../Three/Utility/PlayerIdentity";
 import {ProfileViewer} from "./ProfileViewer";
 
 //One ranked row, shared by the post-game panel and the level browser's preview - the local
-//player's own row always renders in amber, everyone else in white/orange. The name opens that
+//player's own row always renders in ember, everyone else in bone. The name opens that
 //player's profile, local player included.
 export const LeaderboardRow = ({rank, entry} : {rank : number, entry : LeaderboardEntry}) => {
     const [showProfile, setShowProfile] = useState(false);
     const isLocalPlayer = entry.playerId === PlayerIdentity.id;
 
-    return <div className={`flex items-center gap-3 text-sm px-2 py-1 rounded-lg ${isLocalPlayer ? "bg-amber-400/10" : ""}`}>
+    const rankColor = isLocalPlayer || rank === 1 ? "text-ember" : rank <= 3 ? "text-bone" : "text-ash";
+
+    return <div className={`flex items-center gap-3 text-sm px-2 py-1 border-l-2 ${isLocalPlayer ? "bg-ember/10 border-ember" : "border-transparent"}`}>
         {showProfile && <ProfileViewer playerId={entry.playerId} onClose={() => setShowProfile(false)} />}
-        <div className={`w-6 ${isLocalPlayer ? "text-amber-400" : "text-white/50"}`}>{rank}</div>
+        <div className={`w-7 font-mono text-xs ${rankColor}`}>{String(rank).padStart(2, "0")}</div>
         <button
-            className={`flex-1 min-w-0 truncate text-left font-semibold underline cursor-pointer ${isLocalPlayer ? "text-amber-400" : "text-white"}`}
+            className={`flex-1 min-w-0 truncate text-left font-semibold cursor-pointer hover:text-molten ${isLocalPlayer ? "text-ember" : "text-bone"}`}
             onClick={() => setShowProfile(true)}
         >
             {entry.playerName}
         </button>
-        <div className={`font-mono ${isLocalPlayer ? "text-amber-400" : "text-orange-400"}`}>{FormatLevelTime(entry.timeSeconds)}</div>
+        <div className={`font-mono tabular-nums ${isLocalPlayer ? "text-ember" : "text-bone"}`}>{FormatLevelTime(entry.timeSeconds)}</div>
     </div>;
 };

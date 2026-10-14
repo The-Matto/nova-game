@@ -12,19 +12,19 @@ const DaysUntil = (isoDate : string) : number =>
 //GitHub silently skips its own consent screen for an already-authorized app - this stands in
 //for that missing "are you sure" moment, so signing in is never a single accidental click.
 const SignInConfirm = ({onCancel} : {onCancel : () => void}) => (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/25">
-        <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8">
-            <div className="text-2xl font-bold text-orange-500">Sign in with GitHub?</div>
-            <div className="text-sm text-orange-500/80">You'll be sent to github.com to authorize Nova Game.</div>
+    <div className="nv-backdrop fixed inset-0 z-30 flex items-center justify-center">
+        <div className="nv-panel flex flex-col items-center gap-4 px-10 py-8">
+            <div className="nv-title text-4xl">Sign in with GitHub?</div>
+            <div className="text-sm text-ash">You'll be sent to github.com to authorize Nova Game.</div>
             <div className="flex gap-4 mt-2">
                 <button
-                    className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-orange-500 cursor-pointer"
+                    className="nv-btn"
                     onClick={onCancel}
                 >
                     Cancel
                 </button>
                 <button
-                    className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-orange-500 cursor-pointer"
+                    className="nv-btn nv-btn-primary"
                     onClick={() => SignInWithGitHub()}
                 >
                     Continue
@@ -58,19 +58,20 @@ const WelcomePrompt = ({onDone} : {onDone : (name : string) => void}) => {
             .finally(() => setSaving(false));
     };
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8">
-            <div className="text-2xl font-bold text-orange-500">Welcome! Choose a username</div>
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="nv-panel flex flex-col items-center gap-4 px-10 py-8">
+            <div className="nv-label">Welcome to Nova</div>
+            <div className="nv-title text-4xl">Choose a username</div>
             <input
                 autoFocus
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") save(); }}
                 maxLength={40}
-                className="text-xl text-orange-500 bg-transparent border-b border-orange-500/40 outline-none w-64 text-center"
+                className="nv-input text-xl w-72 text-center"
             />
             <button
-                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-orange-500 cursor-pointer disabled:opacity-50"
+                className="nv-btn nv-btn-primary nv-btn-lg"
                 onClick={save}
                 disabled={saving}
             >
@@ -130,24 +131,24 @@ export const AccountSection = () => {
         {showSignInConfirm && <SignInConfirm onCancel={() => setShowSignInConfirm(false)} />}
         {profilePlayerId && <ProfileViewer playerId={profilePlayerId} onClose={() => setProfilePlayerId(null)} />}
         {showWelcomePrompt && <WelcomePrompt onDone={newName => { setName(newName); setShowWelcomePrompt(false); }} />}
-        <div className="absolute top-4 right-4 flex items-center gap-3 text-orange-500 text-sm border border-orange-500/40 rounded-xl bg-slate-900/80 px-4 py-2">
+        <div className="absolute top-4 right-4 flex items-center gap-3 text-bone text-sm border-l-2 border-molten bg-ink-900/90 pl-4 pr-2 py-2">
             {loggedIn
                 ? <>
-                    <span>Signed in as <button className="underline cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
+                    <span className="text-ash">Signed in as <button className="font-bold text-bone hover:text-molten cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
                     <button
-                        className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"
+                        className="nv-btn nv-btn-sm"
                         onClick={() => SignOutOfGitHub().then(() => { setLoggedIn(false); setName(PlayerIdentity.name); })}
                     >
                         Sign out
                     </button>
                 </>
                 : <>
-                    <span>Playing as <button className="underline cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
+                    <span className="text-ash">Playing as <button className="font-bold text-bone hover:text-molten cursor-pointer" onClick={openOwnProfile}>{name}</button></span>
                     {daysLeft !== null && (
-                        <span className="text-orange-500/60">{daysLeft} day{daysLeft === 1 ? "" : "s"} left to claim account</span>
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-ember">{daysLeft} day{daysLeft === 1 ? "" : "s"} left to claim account</span>
                     )}
                     <button
-                        className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"
+                        className="nv-btn nv-btn-sm"
                         onClick={() => setShowSignInConfirm(true)}
                     >
                         Sign in with GitHub

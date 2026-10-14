@@ -37,6 +37,15 @@ export const ControlsHint = () => {
     const lines = isInEditor ? EDITOR_CONTROLS : PLAY_CONTROLS;
 
     return <div className="absolute bottom-2 inset-x-0 z-10 flex flex-col items-center gap-0.5 pointer-events-none">
-        {lines.map((line, i) => <div key={i} className="text-sm text-white">{line}</div>)}
+        {lines.map((line, i) => (
+            <div key={i} className="flex gap-3 font-mono text-[11px] uppercase tracking-wider text-bone/80 [text-shadow:0_1px_2px_#000]">
+                {line.split(" · ").map((part, j) => (
+                    <span key={j} className="flex gap-3">
+                        {j > 0 && <span className="text-molten">/</span>}
+                        {part}
+                    </span>
+                ))}
+            </div>
+        ))}
     </div>;
 };

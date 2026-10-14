@@ -18,13 +18,13 @@ const TABS : {tab : Tab, label : string}[] = [
 //(optional - a preset without one just falls back to "No preview") and a name.
 const LevelTile = ({name, thumbnailSrc, onClick} : {name : string, thumbnailSrc? : string, onClick : () => void}) => (
     <button
-        className="flex flex-col gap-1 text-left cursor-pointer"
+        className="group flex flex-col gap-1 text-left cursor-pointer"
         onClick={onClick}
     >
         {thumbnailSrc
-            ? <img src={thumbnailSrc} alt="" className="w-full aspect-video object-cover rounded-lg bg-slate-800" />
-            : <div className="w-full aspect-video rounded-lg bg-slate-800 flex items-center justify-center text-orange-500/30 text-xs">No preview</div>}
-        <div className="text-xs text-orange-100 truncate">{name}</div>
+            ? <img src={thumbnailSrc} alt="" className="nv-thumb w-full aspect-video group-hover:border-molten" />
+            : <div className="nv-thumb w-full aspect-video flex items-center justify-center nv-label group-hover:border-molten">No preview</div>}
+        <div className="text-sm font-semibold uppercase tracking-wide text-bone group-hover:text-molten truncate">{name}</div>
     </button>
 );
 
@@ -75,15 +75,18 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
         onClose();
     };
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-6 w-full max-w-2xl max-h-[80vh]">
-            <div className="text-lg font-bold text-orange-500">New Level</div>
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="nv-panel flex flex-col gap-4 px-8 py-6 w-full max-w-2xl max-h-[80vh]">
+            <div>
+                <div className="nv-label">Editor</div>
+                <div className="nv-title text-4xl">Start From</div>
+            </div>
 
-            <div className="flex gap-2">
+            <div className="flex">
                 {TABS.map(({tab: t, label}) => (
                     <button
                         key={t}
-                        className={`flex-1 rounded-lg px-3 py-2 text-sm cursor-pointer ${tab === t ? "bg-orange-500 text-slate-950 font-bold" : "bg-slate-800 text-orange-500 hover:bg-slate-700"}`}
+                        className={`nv-tab ${tab === t ? "nv-tab-active" : ""}`}
                         onClick={() => setTab(t)}
                     >
                         {label}
@@ -91,9 +94,9 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
                 ))}
             </div>
 
-            <div className="overflow-y-auto">
+            <div className="nv-scroll overflow-y-auto">
                 {tab === 'presets' && (
-                    presets === null ? <div className="text-sm text-white/50 py-6 text-center">Loading…</div> :
+                    presets === null ? <div className="text-sm text-ash py-6 text-center">Loading…</div> :
                     <div className="grid grid-cols-4 gap-3">
                         {/* Not a real preset (see BlankLevel.json/MainMenu.openEditor, which
                         already loaded it) - just needs to close the modal. Always first, even
@@ -111,7 +114,7 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
                 )}
 
                 {tab === 'saves' && (
-                    saves.length === 0 ? <div className="text-sm text-white/50 py-6 text-center">Nothing saved yet.</div> :
+                    saves.length === 0 ? <div className="text-sm text-ash py-6 text-center">Nothing saved yet.</div> :
                     <div className="grid grid-cols-4 gap-3">
                         {saves.map(save => (
                             <LevelTile key={save.name} name={save.name} thumbnailSrc={save.thumbnailDataUrl} onClick={() => loadSave(save)} />
@@ -120,9 +123,9 @@ export const EditorStartupModal = ({onClose} : {onClose : () => void}) => {
                 )}
 
                 {tab === 'uploads' && (
-                    uploadsError ? <div className="text-sm text-red-400 py-6 text-center">{uploadsError}</div> :
-                    uploads === null ? <div className="text-sm text-white/50 py-6 text-center">Loading…</div> :
-                    uploads.length === 0 ? <div className="text-sm text-white/50 py-6 text-center">You haven't uploaded any levels yet.</div> :
+                    uploadsError ? <div className="text-sm text-blood py-6 text-center">{uploadsError}</div> :
+                    uploads === null ? <div className="text-sm text-ash py-6 text-center">Loading…</div> :
+                    uploads.length === 0 ? <div className="text-sm text-ash py-6 text-center">You haven't uploaded any levels yet.</div> :
                     <div className="grid grid-cols-4 gap-3">
                         {uploads.map(level => (
                             <LevelTile key={level.id} name={level.name} thumbnailSrc={level.thumbnailUrl} onClick={() => loadUpload(level)} />

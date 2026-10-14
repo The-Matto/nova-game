@@ -62,7 +62,7 @@ function App() {
     return (
         <>
           <HomeLink/>
-          <p id="fps-counter" className="fixed top-9 left-2 z-20 text-white text-xs">FPS: 0</p>
+          <p id="fps-counter" className="fixed top-8 left-2 z-20 font-mono text-[10px] tracking-widest text-ash">FPS: 0</p>
           <ReactInputHandler/>
           <ThreeCanvas/>
         </>

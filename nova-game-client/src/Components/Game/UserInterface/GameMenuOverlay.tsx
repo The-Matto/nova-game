@@ -75,11 +75,19 @@ export const GameMenuOverlay = () => {
     if (!reason) return null;
     if (showOptions) return <OptionsMenu onBack={() => setShowOptions(false)} />;
 
-    return <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/25">
+    const isDead = reason === 'died';
+    const items = [
+        ...(reason === 'paused' ? [{label: "Resume", onClick: () => PlayerStatics.PlayerCharacter?.Resume()}] : []),
+        {label: "Retry", onClick: retry},
+        {label: "Options", onClick: () => setShowOptions(true)},
+        ...(GameMode.appMode === "createLevel" ? [{label: "Return to Editor", onClick: returnToEditor}] : []),
+    ];
+
+    return <div className="nv-backdrop absolute inset-0 z-30 flex items-center justify-center">
         <AccountSection />
-        {reason === 'died' && (
+        {isDead && (
             <div className="absolute inset-0 pointer-events-none" style={{
-                background: "radial-gradient(circle, transparent 30%, rgba(185,28,28,0.85) 100%)",
+                background: "radial-gradient(circle, transparent 30%, rgba(255,40,72,0.75) 100%)",
                 animation: "death-vignette-grow 1.2s ease-out forwards",
             }}>
                 <style>{`
@@ -90,41 +98,20 @@ export const GameMenuOverlay = () => {
                 `}</style>
             </div>
         )}
-        <div className="flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-12 py-10">
-            <div className="text-5xl font-bold text-orange-500">{reason === 'died' ? "You Died" : "Paused"}</div>
-            {reason === 'paused' && (
-                <button
-                    className="bg-emerald-700 hover:bg-emerald-600 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                    onClick={() => PlayerStatics.PlayerCharacter?.Resume()}
-                >
-                    Resume
-                </button>
-            )}
-            <button
-                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={retry}
-            >
-                Retry
-            </button>
-            <button
-                className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={() => setShowOptions(true)}
-            >
-                Options
-            </button>
-            {GameMode.appMode === "createLevel" && (
-                <button
-                    className="bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                    onClick={returnToEditor}
-                >
-                    Return to Editor
-                </button>
-            )}
-            <button
-                className="mt-4 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
-                onClick={returnToMenu}
-            >
-                Return to Menu
+        <div className="nv-panel relative flex flex-col gap-6 pl-6 pr-12 py-9 w-[26rem]">
+            <div className="px-4">
+                <div className="nv-label">{isDead ? "Run terminated" : "Run on hold"}</div>
+                <div className={`nv-title text-7xl ${isDead ? "text-blood" : ""}`}>{isDead ? "You Died" : "Paused"}</div>
+            </div>
+            <div className="flex flex-col">
+                {items.map((item, i) => (
+                    <button key={item.label} className="nv-menu-item nv-menu-item-sm" onClick={item.onClick}>
+                        <span className="nv-menu-index">0{i + 1}</span>{item.label}
+                    </button>
+                ))}
+            </div>
+            <button className="nv-btn nv-btn-ghost self-start" onClick={returnToMenu}>
+                ← Return to Menu
             </button>
         </div>
     </div>;

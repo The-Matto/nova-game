@@ -49,7 +49,7 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
     };
 
     if (showOptions) {
-        return <div className="fixed inset-0 bg-slate-950">
+        return <div className="fixed inset-0 bg-ink-950">
             <OptionsMenu onBack={() => setShowOptions(false)} />
         </div>;
     }
@@ -58,32 +58,40 @@ export const MainMenu = ({onStart} : { onStart : () => void }) => {
         return <LevelBrowser onSelectLevel={playLevel} onEditLevel={editLevel} onBack={() => setShowLevelBrowser(false)} />;
     }
 
-    return <div className="fixed inset-0 flex items-center justify-center bg-slate-950 overflow-hidden">
+    const items = [
+        {label: "Play", hint: "Community levels", onClick: () => setShowLevelBrowser(true)},
+        {label: "Editor", hint: "Build your own", onClick: openEditor},
+        {label: "Options", hint: "Sensitivity · audio", onClick: () => setShowOptions(true)},
+    ];
+
+    return <div className="fixed inset-0 bg-ink-950 overflow-hidden">
         <div className="lava-background absolute inset-0" />
-        {/* Dulls the lava enough that it reads as a backdrop, not something competing with the
-        menu card itself. */}
-        <div className="absolute inset-0 bg-slate-950/55" />
+        {/* Heavier on the left so the menu reads cleanly while the lava still shows on the right. */}
+        <div className="absolute inset-0 bg-linear-to-r from-ink-950 via-ink-950/85 to-ink-950/30" />
+        <div className="nv-hazard absolute bottom-0 inset-x-0" />
         <AccountSection />
-        <div className="relative flex flex-col items-center gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-16 py-12">
-            <div className="text-6xl font-bold text-orange-500 mb-4">Nova Game</div>
-            <button
-                className="w-48 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={() => setShowLevelBrowser(true)}
-            >
-                Play
-            </button>
-            <button
-                className="w-48 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={openEditor}
-            >
-                Editor
-            </button>
-            <button
-                className="w-48 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer"
-                onClick={() => setShowOptions(true)}
-            >
-                Options
-            </button>
+
+        <div className="relative h-full flex flex-col justify-center gap-12 pl-[8vw]">
+            <div style={{animation: "nv-slide-in 0.5s ease-out both"}}>
+                <div className="nv-label mb-2">Time Trial · FPS · Level Editor</div>
+                <h1 className="nv-title text-[9rem] text-bone" style={{textShadow: "6px 6px 0 var(--color-molten-deep)"}}>
+                    Nova
+                </h1>
+            </div>
+
+            <nav className="flex flex-col gap-1 w-96">
+                {items.map((item, i) => (
+                    <div key={item.label} style={{animation: `nv-slide-in 0.4s ${0.1 + i * 0.07}s ease-out both`}}>
+                        <button className="nv-menu-item group" onClick={item.onClick}>
+                            <span className="nv-menu-index">0{i + 1}</span>
+                            <span className="flex-1">{item.label}</span>
+                            <span className="font-mono text-[10px] tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+                                {item.hint}
+                            </span>
+                        </button>
+                    </div>
+                ))}
+            </nav>
         </div>
     </div>;
 };

@@ -34,27 +34,27 @@ export const EditorUpdateModal = ({thumbnailDataUrl, onClose} : {thumbnailDataUr
         }
     };
 
-    return <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50">
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-8 py-6 w-full max-w-sm">
-            <div className="text-lg font-bold text-orange-500">Update Level</div>
+    return <div className="nv-backdrop fixed inset-0 z-40 flex items-center justify-center">
+        <div className="flex flex-col gap-4 nv-panel px-8 py-6 w-full max-w-sm">
+            <div className="nv-title text-4xl">Update Level</div>
 
-            <img src={thumbnailDataUrl} alt="" className="w-full aspect-video object-cover rounded-lg bg-slate-800" />
+            <img src={thumbnailDataUrl} alt="" className="nv-thumb w-full aspect-video" />
 
-            <div className="text-sm text-white/70">
-                This overwrites <span className="text-orange-100 font-semibold">{EditingLevel.name}</span> with your
+            <div className="text-sm text-bone/80">
+                This overwrites <span className="text-molten font-semibold">{EditingLevel.name}</span> with your
                 current changes - name, tags, and description stay the same.
             </div>
-            {status === 'error' && <div className="text-sm text-red-400">Update failed - try again.</div>}
+            {status === 'error' && <div className="text-sm text-blood">Update failed - try again.</div>}
 
             <div className="flex gap-2">
                 <button
-                    className="bg-slate-800 hover:bg-slate-700 rounded-lg px-4 py-2 text-sm text-orange-500/70 cursor-pointer"
+                    className="nv-btn nv-btn-ghost"
                     onClick={onClose}
                 >
                     Cancel
                 </button>
                 <button
-                    className="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded-lg px-4 py-2 text-sm text-orange-100 cursor-pointer disabled:opacity-50"
+                    className="nv-btn nv-btn-go flex-1"
                     onClick={update}
                     disabled={status === 'updating'}
                 >

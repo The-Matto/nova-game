@@ -35,8 +35,9 @@ export const ClickToPlayHint = () => {
     if (isInEditor || isModalOpen || isLocked) return null;
 
     return <div className="absolute inset-x-0 top-1/4 z-20 flex justify-center pointer-events-none">
-        <div className="text-white text-2xl font-bold bg-slate-950/60 px-6 py-3 rounded-xl">
-            Click to Play
+        <div className="nv-panel px-8 py-3 flex items-center gap-3" style={{animation: "nv-blink 1.4s ease-in-out infinite"}}>
+            <span className="w-2 h-2 bg-molten" />
+            <span className="nv-title text-3xl">Click to Play</span>
         </div>
     </div>;
 };

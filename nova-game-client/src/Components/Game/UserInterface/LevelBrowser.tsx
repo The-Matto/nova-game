@@ -8,9 +8,7 @@ import {AccountSection} from "./AccountSection";
 
 //Small pill used both for a level's own tags and the filter row - same look, different context.
 const TagPill = ({tag, active, onClick} : {tag : string, active? : boolean, onClick? : () => void}) => {
-    const className = `text-xs px-2 py-0.5 rounded-full ${
-        active ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70"
-    } ${onClick ? "cursor-pointer hover:text-orange-500" : ""}`;
+    const className = `nv-chip ${active ? "nv-chip-active" : ""}`;
     return onClick
         ? <button onClick={onClick} className={className}>{tag}</button>
         : <span className={className}>{tag}</span>;
@@ -20,9 +18,9 @@ const TagPill = ({tag, active, onClick} : {tag : string, active? : boolean, onCl
 //an icon font.
 const RatingStars = ({rating} : {rating : number}) => {
     const filled = Math.round(rating);
-    return <span className="text-orange-500">
-        {"★".repeat(filled)}{"☆".repeat(5 - filled)}
-        <span className="text-white/50 text-sm ml-1">{rating.toFixed(1)}</span>
+    return <span className="text-ember tracking-tight">
+        {"★".repeat(filled)}<span className="text-ink-600">{"★".repeat(5 - filled)}</span>
+        <span className="font-mono text-ash text-xs ml-1.5">{rating.toFixed(1)}</span>
     </span>;
 };
 
@@ -52,23 +50,23 @@ const LevelOwnerMenu = ({onEdit, onConfirmDelete} : {onEdit : () => void, onConf
     return <div className="relative">
         <button
             onClick={() => (open ? close() : setOpen(true))}
-            className="w-7 h-7 flex items-center justify-center rounded-md bg-slate-950/70 hover:bg-slate-800 text-white text-sm cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center bg-ink-950 border border-ink-600 hover:border-molten hover:text-molten text-bone text-sm cursor-pointer"
         >
             ⋮
         </button>
 
         {open && (
-            <div className="absolute top-8 right-0 bg-slate-800 rounded-lg overflow-hidden text-xs z-20 w-40 shadow-lg">
+            <div className="absolute top-8 right-0 bg-ink-900 border border-ink-600 text-xs z-20 w-44 shadow-[4px_4px_0_var(--color-ink-950)]">
                 {!confirming ? (
                     <>
                         <button
-                            className="block w-full px-3 py-2 text-left text-orange-100 hover:bg-slate-700 cursor-pointer"
+                            className="block w-full px-3 py-2 text-left uppercase tracking-wider font-semibold text-bone hover:bg-ink-700 hover:text-molten cursor-pointer"
                             onClick={onEdit}
                         >
                             Edit Level
                         </button>
                         <button
-                            className="block w-full px-3 py-2 text-left text-red-400 hover:bg-slate-700 cursor-pointer"
+                            className="block w-full px-3 py-2 text-left uppercase tracking-wider font-semibold text-blood hover:bg-blood hover:text-ink-950 cursor-pointer"
                             onClick={() => setConfirming(true)}
                         >
                             Delete Level
@@ -76,18 +74,18 @@ const LevelOwnerMenu = ({onEdit, onConfirmDelete} : {onEdit : () => void, onConf
                     </>
                 ) : (
                     <div className="px-3 py-2 flex flex-col gap-2">
-                        <div className="text-white/80">Delete permanently?</div>
-                        {error && <div className="text-red-400">Couldn't delete - try again.</div>}
+                        <div className="text-bone font-semibold">Delete permanently?</div>
+                        {error && <div className="text-blood">Couldn't delete - try again.</div>}
                         <div className="flex gap-2">
                             <button
-                                className="flex-1 bg-red-700 hover:bg-red-600 rounded px-2 py-1 text-white cursor-pointer disabled:opacity-50"
+                                className="nv-btn nv-btn-sm nv-btn-danger flex-1"
                                 onClick={doDelete}
                                 disabled={deleting}
                             >
                                 {deleting ? "…" : "Delete"}
                             </button>
                             <button
-                                className="flex-1 bg-slate-700 hover:bg-slate-600 rounded px-2 py-1 text-white/70 cursor-pointer"
+                                className="nv-btn nv-btn-sm nv-btn-ghost flex-1"
                                 onClick={close}
                                 disabled={deleting}
                             >
@@ -113,9 +111,9 @@ const POPULAR_THIS_WEEK_COUNT = 3;
 type SortMode = 'default' | 'popular' | 'new' | 'mostPlayed';
 
 const SORT_OPTIONS : {mode : SortMode, label : string}[] = [
-    {mode: 'popular', label: '🔥 Popular this week'},
-    {mode: 'mostPlayed', label: '🎮 Most Played'},
-    {mode: 'new', label: '🆕 New'},
+    {mode: 'popular', label: 'Hot this week'},
+    {mode: 'mostPlayed', label: 'Most played'},
+    {mode: 'new', label: 'Newest'},
 ];
 
 //Shown after clicking Play - list of community levels, fetched from the
@@ -202,30 +200,33 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
     const clampedPage = Math.min(page, pageCount - 1);
     const pagedLevels = sortedLevels?.slice(clampedPage * PAGE_SIZE, (clampedPage + 1) * PAGE_SIZE) ?? null;
 
-    return <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
+    return <div className="fixed inset-0 flex items-center justify-center bg-ink-950">
+        <div className="lava-background absolute inset-0 opacity-15" />
+        <div className="nv-hazard absolute bottom-0 inset-x-0" />
         <AccountSection />
-        <div className="flex flex-col gap-4 border border-orange-500/40 rounded-2xl bg-slate-900 px-10 py-8 w-full max-w-6xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center gap-4">
-                <div className="text-3xl font-bold text-orange-500">Select Level</div>
+        <div className="nv-panel flex flex-col gap-4 px-10 py-8 w-full max-w-6xl max-h-[86vh]">
+            <div className="flex items-end gap-6">
+                <div>
+                    <div className="nv-label">Community levels{levels ? ` · ${levels.length}` : ""}</div>
+                    <div className="nv-title text-6xl">Select Level</div>
+                </div>
                 <input
                     type="text"
                     value={search}
                     onChange={e => { setSearch(e.target.value); setPage(0); }}
                     placeholder="Search by name..."
-                    className="flex-1 bg-slate-800 rounded-lg px-3 py-2 text-orange-100 placeholder-orange-500/40 outline-none text-sm"
+                    className="nv-input flex-1 text-sm"
                 />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-white/40">Sort:</span>
+                    <span className="nv-label mr-1">Sort</span>
                     {SORT_OPTIONS.map(opt => (
                         <button
                             key={opt.mode}
                             onClick={() => toggleSort(opt.mode)}
-                            className={`text-xs px-2.5 py-1 rounded-full cursor-pointer ${
-                                sortMode === opt.mode ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70 hover:text-orange-500"
-                            }`}
+                            className={`nv-chip ${sortMode === opt.mode ? "nv-chip-active" : ""}`}
                         >
                             {opt.label}
                         </button>
@@ -233,12 +234,12 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                 </div>
                 <button
                     onClick={() => { setMyLevelsOnly(current => !current); setPage(0); }}
-                    className={`text-xs px-2.5 py-1 rounded-full cursor-pointer ${
-                        myLevelsOnly ? "bg-orange-500 text-slate-950" : "bg-slate-800 text-orange-500/70 hover:text-orange-500"
-                    }`}
+                    className={`nv-chip ${myLevelsOnly ? "nv-chip-active" : ""}`}
                 >
-                    👤 My Levels
+                    My levels
                 </button>
+                <div className="w-px h-4 bg-ink-600" />
+                <span className="nv-label">Tags</span>
                 <div className="flex flex-wrap gap-1.5">
                     {LEVEL_TAGS.map(tag => (
                         <TagPill key={tag} tag={tag} active={selectedTags.includes(tag)} onClick={() => toggleTag(tag)} />
@@ -246,7 +247,7 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 px-4 text-[11px] uppercase tracking-wide text-orange-500/50 font-semibold">
+            <div className="nv-label flex items-center gap-4 px-4 pb-1 border-b border-ink-600">
                 <div className="w-24 shrink-0" />
                 <div className="flex-1">Level</div>
                 <div className="w-32">Created By</div>
@@ -255,40 +256,41 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                 <div className="w-24 text-right">Uploaded</div>
             </div>
 
-            <div className="flex flex-col overflow-y-auto flex-1 min-h-0">
-                {error && <div className="text-red-400 py-6 text-center">{error}</div>}
-                {!error && !levels && <div className="text-white/50 py-6 text-center">Loading levels…</div>}
-                {!error && levels?.length === 0 && <div className="text-white/50 py-6 text-center">No levels yet.</div>}
+            <div className="nv-scroll flex flex-col gap-1 overflow-y-auto flex-1 min-h-0">
+                {error && <div className="text-blood py-6 text-center">{error}</div>}
+                {!error && !levels && <div className="nv-label py-6 text-center">Loading levels…</div>}
+                {!error && levels?.length === 0 && <div className="text-ash py-6 text-center">No levels yet.</div>}
                 {!error && levels && levels.length > 0 && filteredLevels?.length === 0 && (
-                    <div className="text-white/50 py-6 text-center">No levels match the current filters.</div>
+                    <div className="text-ash py-6 text-center">No levels match the current filters.</div>
                 )}
 
                 {pagedLevels?.map(level => {
                     const isExpanded = expandedId === level.id;
                     const isOwnLevel = playerId !== null && level.authorId === playerId;
-                    return <div key={level.id} className="rounded-xl overflow-hidden shrink-0">
+                    return <div key={level.id} className="shrink-0">
                         <div className="relative">
                             <button
                                 onClick={() => setExpandedId(isExpanded ? null : level.id)}
-                                className={`w-full flex items-center gap-4 px-4 py-3 text-left cursor-pointer ${isOwnLevel && isExpanded ? "pr-12" : ""} ${isExpanded ? "bg-orange-500/15" : "hover:bg-slate-800"}`}
+                                className={`nv-row w-full flex items-center gap-4 px-4 py-2.5 text-left ${isOwnLevel && isExpanded ? "pr-12" : ""} ${isExpanded ? "nv-row-active" : "bg-transparent"}`}
                             >
                                 {level.thumbnailUrl
-                                    ? <img src={level.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg bg-slate-800" />
-                                    : <div className="w-24 h-14 rounded-lg bg-slate-800" />}
+                                    ? <img src={level.thumbnailUrl} alt="" className="nv-thumb w-24 h-14" />
+                                    : <div className="nv-thumb w-24 h-14" />}
                                 <div className="flex-1 min-w-0 flex flex-col gap-1">
-                                    <div className="text-xl text-white font-semibold truncate">
-                                        {popularLevelIds.has(level.id) && '🔥 '}{level.name}
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="font-display font-extrabold uppercase text-2xl leading-none text-bone truncate">{level.name}</span>
+                                        {popularLevelIds.has(level.id) && <span className="nv-chip nv-chip-hot shrink-0">Hot</span>}
                                     </div>
                                     {level.tags.length > 0 && <div className="flex flex-wrap gap-1">
                                         {level.tags.map(tag => <TagPill key={tag} tag={tag} />)}
                                     </div>}
                                 </div>
-                                <div className="w-32 text-white/70 text-sm">by {level.createdBy}</div>
+                                <div className="w-32 text-ash text-sm truncate">{level.createdBy}</div>
                                 <div className="w-32"><RatingStars rating={level.rating} /></div>
-                                <div className="w-24 text-orange-500/70 text-sm shrink-0">
+                                <div className="w-24 font-mono text-bone text-sm shrink-0">
                                     {level.totalPlays > 0 && level.totalPlays}
                                 </div>
-                                <div className="w-24 text-white/50 text-sm text-right">
+                                <div className="w-24 font-mono text-ash text-xs text-right">
                                     {new Date(level.uploadedAt).toLocaleDateString()}
                                 </div>
                             </button>
@@ -300,19 +302,19 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
                             )}
                         </div>
 
-                        {isExpanded && <div className="flex gap-6 px-6 pb-6 pt-2 bg-slate-800/50">
+                        {isExpanded && <div className="flex gap-6 px-6 pb-6 pt-4 bg-ink-800 border-l-2 border-molten">
                             {level.thumbnailUrl
-                                ? <img src={level.thumbnailUrl} alt="" className="w-64 h-36 object-cover rounded-lg bg-slate-900 shrink-0" />
-                                : <div className="w-64 h-36 rounded-lg bg-slate-900 shrink-0" />}
+                                ? <img src={level.thumbnailUrl} alt="" className="nv-thumb w-64 h-36 shrink-0" />
+                                : <div className="nv-thumb w-64 h-36 shrink-0" />}
                             <div className="flex-1 min-w-0">
-                                {level.description && <div className="text-sm text-white/70 mb-3">{level.description}</div>}
+                                {level.description && <div className="text-sm text-bone/80 mb-3">{level.description}</div>}
                                 <LevelLeaderboardPreview levelId={level.id} />
                             </div>
                             <button
-                                className="self-end bg-emerald-700 hover:bg-emerald-600 px-6 py-3 rounded-xl text-xl text-orange-500 cursor-pointer shrink-0"
+                                className="nv-btn nv-btn-go nv-btn-lg self-end shrink-0"
                                 onClick={() => onSelectLevel(level)}
                             >
-                                Play
+                                Play ▸
                             </button>
                         </div>}
                     </div>;
@@ -320,17 +322,17 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
             </div>
 
             {pageCount > 1 && (
-                <div className="flex items-center justify-center gap-4 text-orange-500">
+                <div className="flex items-center justify-center gap-4">
                     <button
-                        className="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-default rounded-lg px-3 py-1.5 text-sm cursor-pointer"
+                        className="nv-btn nv-btn-sm"
                         onClick={() => setPage(clampedPage - 1)}
                         disabled={clampedPage === 0}
                     >
                         ← Prev
                     </button>
-                    <div className="text-sm text-white/50">Page {clampedPage + 1} of {pageCount}</div>
+                    <div className="nv-label">Page {clampedPage + 1} / {pageCount}</div>
                     <button
-                        className="bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-default rounded-lg px-3 py-1.5 text-sm cursor-pointer"
+                        className="nv-btn nv-btn-sm"
                         onClick={() => setPage(clampedPage + 1)}
                         disabled={clampedPage >= pageCount - 1}
                     >
@@ -340,10 +342,10 @@ export const LevelBrowser = ({onSelectLevel, onEditLevel, onBack} : {
             )}
 
             <button
-                className="self-start bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-xl text-lg text-orange-500/70 cursor-pointer"
+                className="nv-btn self-start"
                 onClick={onBack}
             >
-                Back
+                ← Back
             </button>
         </div>
     </div>;
