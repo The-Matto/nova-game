@@ -147,12 +147,27 @@ async function HandleProfile(req : IncomingMessage, res : ServerResponse, url : 
     res.end(JSON.stringify(profile));
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+//Lets a browser check its remembered id survived CleanupAnonymousUsers before reusing it.
+async function HandleExists(res : ServerResponse, url : URL) : Promise<void> {
+    const playerId = url.searchParams.get("playerId") ?? "";
+    const exists = UUID_PATTERN.test(playerId)
+        && (await pool.query("SELECT 1 FROM users WHERE id = $1", [playerId])).rowCount! > 0;
+    res.writeHead(200, {"Content-Type": "application/json"});
+    res.end(JSON.stringify({exists}));
+}
+
 //Returns true if it handled the request, so the caller knows to fall through to a 404 otherwise.
 export async function HandlePlayersRequest(req : IncomingMessage, res : ServerResponse) : Promise<boolean> {
     const url = new URL(req.url ?? "", "http://localhost");
 
     if (url.pathname === "/api/players" && req.method === "POST") {
         await HandleRegister(req, res);
+        return true;
+    }
+    if (url.pathname === "/api/players/exists" && req.method === "GET") {
+        await HandleExists(res, url);
         return true;
     }
     if (url.pathname === "/api/players/profile" && req.method === "GET") {

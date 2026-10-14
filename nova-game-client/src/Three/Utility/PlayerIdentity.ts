@@ -48,38 +48,54 @@ let registerPromise : Promise<string> | null = null;
 //fetching "your rank"), rather than relying on some earlier call having already resolved.
 export function EnsureRegistered() : Promise<string> {
     if (PlayerIdentity.id) return Promise.resolve(PlayerIdentity.id);
+    if (!registerPromise) registerPromise = ResolveSavedOrRegister();
+    return registerPromise;
+}
 
+//An unclaimed account gets wiped server-side after a week (CleanupAnonymousUsers.ts), but its id
+//lingers in localStorage - so a saved id is checked once before reuse. Only a definite "gone"
+//re-registers; a network failure keeps the saved id rather than minting a duplicate account.
+async function ResolveSavedOrRegister() : Promise<string> {
+    let savedId : string | null = null;
     try {
-        const savedId = localStorage.getItem(ID_STORAGE_KEY);
-        if (savedId) {
-            PlayerIdentity.id = savedId;
-            return Promise.resolve(savedId);
-        }
+        savedId = localStorage.getItem(ID_STORAGE_KEY);
     } catch {
         //Ignore - fall through to registering fresh.
     }
 
-    if (!registerPromise) {
-        registerPromise = fetch('/api/players', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({displayName: PlayerIdentity.name}),
-        })
-            .then(res => {
-                if (!res.ok) throw new Error(`Server responded ${res.status}`);
-                return res.json();
-            })
-            .then((dto : PlayerIdentityDto) => {
-                PlayerIdentity.id = dto.id;
-                try {
-                    localStorage.setItem(ID_STORAGE_KEY, dto.id);
-                } catch {
-                    //Ignore - not critical if this fails.
-                }
-                return dto.id;
-            });
+    if (savedId) {
+        const exists = await fetch(`/api/players/exists?playerId=${encodeURIComponent(savedId)}`)
+            .then(res => res.ok ? res.json() : {exists: true})
+            .then((body : {exists : boolean}) => body.exists)
+            .catch(() => true);
+        if (exists) {
+            PlayerIdentity.id = savedId;
+            return savedId;
+        }
     }
-    return registerPromise;
+
+    return Register();
+}
+
+function Register() : Promise<string> {
+    return fetch('/api/players', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({displayName: PlayerIdentity.name}),
+    })
+        .then(res => {
+            if (!res.ok) throw new Error(`Server responded ${res.status}`);
+            return res.json();
+        })
+        .then((dto : PlayerIdentityDto) => {
+            PlayerIdentity.id = dto.id;
+            try {
+                localStorage.setItem(ID_STORAGE_KEY, dto.id);
+            } catch {
+                //Ignore - not critical if this fails.
+            }
+            return dto.id;
+        });
 }
 
 //Checks the current session cookie against the server and syncs PlayerIdentity to match - call

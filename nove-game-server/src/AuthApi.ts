@@ -23,6 +23,10 @@ const LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
 //GitHub's API requires a User-Agent on every request - it's not optional like most REST APIs.
 const GITHUB_USER_AGENT = "nova-game";
 
+//Stored as the state's playerId when the browser has no anon-id cookie (registered before the
+//cookie existed, or cleared cookies) - the callback then mints a fresh account instead of linking.
+const NO_ANON_PLAYER = "none";
+
 function OAuthStateKey(state : string) : string {
     return `oauth_state:${state}`;
 }
@@ -39,12 +43,7 @@ async function HandleGitHubLogin(req : IncomingMessage, res : ServerResponse) : 
         return;
     }
 
-    const playerId = GetCookie(req, ANON_ID_COOKIE_NAME);
-    if (!playerId) {
-        res.writeHead(400);
-        res.end("No local player identity found - reload the page and try again.");
-        return;
-    }
+    const playerId = GetCookie(req, ANON_ID_COOKIE_NAME) ?? NO_ANON_PLAYER;
 
     const state = randomBytes(24).toString("base64url");
     await GetRedis().set(OAuthStateKey(state), playerId, "EX", OAUTH_STATE_TTL_SECONDS);
@@ -132,7 +131,17 @@ async function HandleGitHubCallback(req : IncomingMessage, res : ServerResponse,
     );
 
     const isFirstLink = existing.rowCount === 0;
-    const sessionUserId : string = isFirstLink ? playerId : existing.rows[0].user_id;
+    let sessionUserId : string = isFirstLink ? playerId : existing.rows[0].user_id;
+
+    //The anon cookie outlives the account itself (wiped after a week unclaimed) - linking to a
+    //deleted row would fail, so fall back to a fresh account like the no-cookie case.
+    const anonStillExists = playerId !== NO_ANON_PLAYER
+        && (await pool.query("SELECT 1 FROM users WHERE id = $1", [playerId])).rowCount! > 0;
+
+    if (isFirstLink && !anonStillExists) {
+        const created = await pool.query("INSERT INTO users (display_name) VALUES ($1) RETURNING id", [name ?? "Player"]);
+        sessionUserId = created.rows[0].id;
+    }
 
     if (isFirstLink) {
         await pool.query(
